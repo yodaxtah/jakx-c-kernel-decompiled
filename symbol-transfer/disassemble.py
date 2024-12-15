@@ -11,7 +11,7 @@ symbol_table = currentProgram().getSymbolTable()
 for symbol in symbol_table.getAllSymbols(False):
     if symbol.getSymbolType() == SymbolType.LABEL: # [SymbolType.FUNCTION, SymbolType.LABEL]:
         address = symbol.getAddress()
-        if getInstructionAt(address) is None and "switch" not in name:
+        if getInstructionAt(address) is None and "switch" not in symbol.getName():
             goTo(address) # goTo(toAddr(int("00113d90", 16)))
             print(f"Disassemble symbol {symbol.getName()} at {address}?")
             execute_dissambler = prompt_confirmation()
