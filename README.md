@@ -17,7 +17,7 @@ As said, this project will focus on the C++ part of the code base, with the inte
 
 ## ELF overview
 
-There are 4509 occurrences of the pattern `"function"` in that dump, which should be the exact number of functions reversed. There might be a handful of functions that have not been disassembled (discovered) yet, but that number should be low. There are 1478 occurrences of the regex pattern `"FUN_........"`, hence a third of all functions have no information at all on known functions (yet). There are 1817 occurrences of the regex pattern `".*FUN_.........*"`, so additional information is available on about 300 of them, and this should be the number of functions that could not be matched. They are however not necessary to port the game, but they _might_ make it a little bit easier.
+Using one of the scripts, you can generate an exhaustive label [overview of the ELF](./elf/overview.json). There are 4512 occurrences of the pattern `"function"` in that dump, which should be the exact number of functions reversed. There might be a handful of functions that have not been disassembled (discovered) yet, but that number should be low. There are 1310 occurrences of the regex pattern `"FUN_........"`, hence a third of all functions have no information at all on known functions (yet). There are 1659 occurrences of the regex pattern `".*FUN_.........*"`, so additional information is available on about 300 of them, and this should be the number of functions that could not be matched. They are however not necessary to port the game, but they _might_ make it a little bit easier.
 
 ## Symbol matching
 
@@ -50,6 +50,8 @@ My naming scheme changed over time as I noticed I needed to be more precise on w
 The address of the binary dump from PCSX2 and the decrypted ELF match exactly. As most of the initial work was still in the memory dump, which was the most relevant for the decompilation of the `game/jakx` and `common/jakx` C++ code, I created a few scripts to go through the code and usually interactively ask whether to override a symbol or not.
 
 To execute them, I simply copied over the code into Ghidraton (but the Python Window should work to with some small changes, normally). Most scripts (are horribly coded but) work fine. It is recommended though to minimally understand what the scripts do, after all they're small anyway. If you're not familiar with the Ghidra API, some knowledge on them could always be handy --- you could ask Perplexity/ChatGPT, as they surprisingly know the API very well!
+
+Note however that some specific sce symbols (e.g. `sceLseek`, etc.) have a 8 byte address mismatch to my (and anyone's?) memory dump, for some reason. That might be a bug in the function label porting script, where I use +/- to offset and navigate the code.
 
 In one of the scripts, you might be getting this error when you try to apply a signature override in Ghidra. (I came across it when doing this manually.) This should occur whenever the function call has a BLUE label "ptr_addr1_addr2". If it's either WHITE or simply "LAB_addr", then it's fine and shouldn't happen.
 
@@ -95,6 +97,7 @@ Less important details to check:
   DAT_001f5b80_func3 = 0;
   ```
 - [ ] Compare print functions with new sources. NOTE: the print functions are a mess, don't try to fix their names, as sources will contradict. (For example, `fiprintf` in all binaries call each `_vfiprintf_r`, but differently.)
+- [ ] Iterate over all matches of the regex pattern `0x(1|2)[0-9a-f]{5}` to find addresses that should be labeled instead. Currently, there are 787 in [the decrypted ELF](./elf/cpp-dump/decrypted.c).
 - [ ] ... many more that I forgot to write down.
 
 ## Log
