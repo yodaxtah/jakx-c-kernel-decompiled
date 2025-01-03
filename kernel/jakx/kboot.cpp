@@ -39,126 +39,119 @@ void kboot_init_globals() {
   strcpy(DebugBootUser, username.c_str());
 }
 
-s32 goal_main(int argc, const char* const* argv) {
-  // only in PC port
-  InitParms(argc, argv);
-
-  masterConfig.aspect = ee::sceScfGetAspect();
-  auto sony_language = ee::sceScfGetLanguage();
-  masterConfig.inactive_timeout = 0;
+s32 goal_main(int argc,const_char **argv) {
+  bool bVar1;
+  undefined2 uVar2;
+  int iVar3;
+  uint uVar4;
+  undefined8 uVar5;
+  char acStack_40 [32];
+  
+  uVar5 = GetThreadId(argc,argv);
+  ChangeThreadPriority(uVar5,0x18);
+  sceGsSyncVCallback(0x26a918);
+  DAT_002833fc = 1;
+  FUN_0025cdcc();
+  masterConfig.aspect = sceScfGetAspect();
+  uVar2 = sceScfGetLanguage();
   masterConfig.volume = 100;
+  masterConfig.inactive_timeout = 0;
   masterConfig.timeout = 0;
-  switch (sony_language) {
-    case SCE_JAPANESE_LANGUAGE:
-      masterConfig.language = 6;  // ???
-      break;
-    case SCE_FRENCH_LANGUAGE:  // 2 -> 1
-      masterConfig.language = (u16)Language::French;
-      break;
-    case SCE_SPANISH_LANGUAGE:  // 3 -> 3
-      masterConfig.language = (u16)Language::Spanish;
-      break;
-    case SCE_GERMAN_LANGUAGE:  // 4 -> 2
-      masterConfig.language = (u16)Language::German;
-      break;
-    case SCE_ITALIAN_LANGUAGE:  // 5 -> 4
-      masterConfig.language = (u16)Language::Italian;
-      break;
-    case SCE_PORTUGUESE_LANGUAGE:
-      masterConfig.language = (u16)Language::Portuguese;
+  if (false) {
+switchD_00266820_caseD_1:
+    masterConfig.language = 0;
+  }
+  else {
+    switch(uVar2) {
+    case 0:
+      masterConfig.language = 6;
       break;
     default:
-      masterConfig.language = (u16)Language::English;
+      goto switchD_00266820_caseD_1;
+    case 2:
+      masterConfig.language = 1;
       break;
+    case 3:
+      masterConfig.language = 3;
+      break;
+    case 4:
+      masterConfig.language = 2;
+      break;
+    case 5:
+      masterConfig.language = 4;
+      break;
+    case 7:
+      masterConfig.language = 9;
+    }
   }
-  // Set up aspect ratio override in demo
-  if (!strcmp(DebugBootMessage, "demo") || !strcmp(DebugBootMessage, "demo-shared")) {
-    masterConfig.aspect = SCE_ASPECT_FULL;
+  iVar3 = strcmp(DebugBootMessage,"demo");
+  if ((iVar3 == 0) || (iVar3 = strcmp(DebugBootMessage,"demo-shared"), iVar3 == 0)) {
+    masterConfig.aspect = 1;
   }
-  // removed in PC port
-  //  DiskBoot = 1;
-  //  MasterDebug = 0;
-  //  DebugSegment = 0;
-
-  // Launch GOAL!
-  if (InitMachine() >= 0) {    // init kernel
-    KernelCheckAndDispatch();  // run kernel
-    ShutdownMachine();         // kernel died, we should too.
-    // movie playback stuff removed.
-  } else {
-    fprintf(stderr, "InitMachine failed\n");
-    exit(1);
+  DiskBoot = 1;
+  MasterDebug = 0;
+  DebugSegment = 0;
+  DebugSymbols = 0;
+  uVar4 = InitMachine();
+  bVar1 = (uVar4 & 0xfff00000) == 0xfff00000;
+  if (bVar1) {
+    printf("kboot: error; failed to initialize machine (result=0x%08x)\n",uVar4);
+    iVar3 = 2;
   }
-  return 0;
+  else {
+    iVar3 = KernelCheckAndDispatch();
+  }
+  ShutdownMachine(iVar3);
+  if (force_to_data_G == 2) {
+    LoadExecPS2("cdrom0:\\NETGUI\\NTGUI_EU.ELF;1",1,&movie_args_Q);
+  }
+  else if (force_to_data_G == 3) {
+    sprintf(acStack_40,"cdrom0:\\SCES_%.3s.%2s;1","532","86");
+  }
+  return (uint)bVar1;
 }
 
 void KernelDispatch(u32 dispatcher_func) {
-  // place our stack at the end of EE memory
-  u64 goal_stack = u64(g_ee_main_mem) + EE_MAIN_MEM_SIZE - 8;
-
-  // try to get a message from the listener, and process it if needed
-  Ptr<char> new_message = WaitForMessageAndAck();
-  if (new_message.offset) {
-    ProcessListenerMessage(new_message);
+  int iVar1;
+  code *pcVar2;
+  char *msg;
+  undefined4 unaff_s7_lo;
+  undefined4 unaff_s7_hi;
+  
+  msg = WaitForMessageAndAck();
+  if (msg != (char *)0x0) {
+    ProcessListenerMessage(msg);
   }
-
-  // remember the old listener
-  auto old_listener_function = ListenerFunction->value();
-
-  // run the kernel!
-  Timer dispatch_timer;
-  if (MasterUseKernel) {
-    call_goal_on_stack(Ptr<Function>(dispatcher_func), goal_stack, s7.offset, g_ee_main_mem);
-  } else {
-    // added, just calls the listener function
-    if (ListenerFunction->value() != s7.offset) {
-      auto result = call_goal_on_stack(Ptr<Function>(ListenerFunction->value()), goal_stack,
-                                       s7.offset, g_ee_main_mem);
-#ifdef __linux__
-      cprintf("%ld\n", result);
-#else
-      cprintf("%lld\n", result);
-#endif
-      ListenerFunction->value() = s7.offset;
-    }
-  }
-
-  float time_ms = dispatch_timer.getMs();
-  if (time_ms > 50) {
-    lg::print("Kernel dispatch time: {:.3f} ms\n", time_ms);
-  }
-
-  // flush stdout
+  iVar1 = *(int *)(ListenerFunction + -1);
+  (*(code *)dispatcher_func)();
   ClearPending();
-
-  // now run the extra "kernel function"
-  auto bonus_function = KernelFunction->value();
-  if (bonus_function != s7.offset) {
-    // clear the pending kernel function
-    KernelFunction->value() = s7.offset;
-    // and run
-    call_goal_on_stack(Ptr<Function>(bonus_function), goal_stack, s7.offset, g_ee_main_mem);
+  pcVar2 = *(code **)(KernelFunction + -1);
+  if ((long)(int)pcVar2 != CONCAT44(unaff_s7_hi,unaff_s7_lo)) {
+    *(undefined4 *)(KernelFunction + -1) = unaff_s7_lo;
+    (*pcVar2)();
   }
-
-  // send ack to indicate that the listener function has been processed and the result printed
-  if (MasterDebug && ListenerFunction->value() != old_listener_function) {
+  if ((MasterDebug != 0) && (*(int *)(ListenerFunction + -1) != iVar1)) {
     SendAck();
+    return;
   }
-
-  // prevent crazy spinning if we're not vsyncing (added)
-  if (time_ms < 4) {
-    std::this_thread::sleep_for(std::chrono::microseconds(1000));
-  }
+  return;
 }
 
 void KernelShutdown(u32 reason) {
-  MasterExit = (RuntimeExitStatus)reason;
+  if (force_to_data_G < reason) {
+    force_to_data_G = reason;
+  }
+  return;
 }
 
-void KernelCheckAndDispatch() {
-  while (MasterExit == RuntimeExitStatus::RUNNING) {
-    KernelDispatch(kernel_dispatcher->value());
+int KernelCheckAndDispatch(void) {
+  while ((force_to_data_G == 0 && (POWERING_OFF_W == false))) {
+    KernelDispatch(*(u32 *)(kernel_dispatcher + -1));
   }
+  if (POWERING_OFF_W != false) {
+    KernelShutdown(3);
+  }
+  return force_to_data_G;
 }
 
 }  // namespace jak3

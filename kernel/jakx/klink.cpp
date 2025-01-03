@@ -23,270 +23,132 @@ bool is_opengoal_object(void* data) {
 constexpr bool link_debug_printfs = false;
 }  // namespace
 
-void link_control::jak3_begin(Ptr<uint8_t> object_file,
-                              const char* name,
-                              int32_t size,
-                              Ptr<kheapinfo> heap,
-                              uint32_t flags) {
-  if (is_opengoal_object(object_file.c())) {
-    m_opengoal = true;
-    // save data from call to begin
-    m_object_data = object_file;
-    kstrcpy(m_object_name, name);
-    m_object_size = size;
-    m_heap = heap;
-    m_flags = flags;
+void jak3_begin(uint8_t *object_file,const_char *name,int32_t size,kheapinfo heap,uint32_t flags)
 
-    // initialize link control
-    m_entry.offset = 0;
-    m_heap_top = m_heap->top;
-    m_keep_debug = false;
-    m_opengoal = true;
-    m_busy = true;
-
-    if (link_debug_printfs) {
-      char* goal_name = object_file.cast<char>().c();
-      printf("link %s\n", m_object_name);
-      printf("link_control::begin %c%c%c%c\n", goal_name[0], goal_name[1], goal_name[2],
-             goal_name[3]);
-    }
-
-    // points to the beginning of the linking data
-    m_link_block_ptr = object_file + BASIC_OFFSET;
-    m_code_size = 0;
-    m_code_start = object_file;
-    m_state = 0;
-    m_segment_process = 0;
-
-    ObjectFileHeader* ofh = m_link_block_ptr.cast<ObjectFileHeader>().c();
-    if (ofh->goal_version_major != versions::GOAL_VERSION_MAJOR) {
-      fprintf(
-          stderr,
-          "VERSION ERROR: C Kernel built from GOAL %d.%d, but object file %s is from GOAL %d.%d\n",
-          versions::GOAL_VERSION_MAJOR, versions::GOAL_VERSION_MINOR, name, ofh->goal_version_major,
-          ofh->goal_version_minor);
-      ASSERT(false);
-    }
-    if (link_debug_printfs) {
-      printf("Object file header:\n");
-      printf(" GOAL ver %d.%d obj %d len %d\n", ofh->goal_version_major, ofh->goal_version_minor,
-             ofh->object_file_version, ofh->link_block_length);
-      printf(" segment count %d\n", ofh->segment_count);
-      for (int i = 0; i < N_SEG; i++) {
-        printf(" seg %d link 0x%04x, 0x%04x data 0x%04x, 0x%04x\n", i, ofh->link_infos[i].offset,
-               ofh->link_infos[i].size, ofh->code_infos[i].offset, ofh->code_infos[i].size);
-      }
-    }
-
-    m_version = ofh->object_file_version;
-    if (ofh->object_file_version < 4) {
-      // three segment file
-
-      // seek past the header
-      m_object_data.offset += ofh->link_block_length;
-      // todo, set m_code_size
-
-      if (m_link_block_ptr.offset < m_heap->base.offset ||
-          m_link_block_ptr.offset >= m_heap->top.offset) {
-        // the link block is outside our heap, or in the top of our heap.  It's somebody else's
-        // problem.
-        if (link_debug_printfs) {
-          printf("Link block somebody else's problem\n");
-        }
-
-        if (m_heap->base.offset <= m_object_data.offset &&    // above heap base
-            m_object_data.offset < m_heap->top.offset &&      // less than heap top (not needed?)
-            m_object_data.offset < m_heap->current.offset) {  // less than heap current
-          if (link_debug_printfs) {
-            printf("Code block in the heap, kicking it out for copy into heap\n");
-          }
-          m_heap->current = m_object_data;
-        }
-      } else {
-        // in our heap, we need to move it so we can free up its space later on
-        if (link_debug_printfs) {
-          printf("Link block needs to be moved!\n");
-        }
-
-        // allocate space for a new one
-        auto new_link_block = kmalloc(m_heap, ofh->link_block_length, KMALLOC_TOP, "link-block");
-        auto old_link_block = m_link_block_ptr - BASIC_OFFSET;
-
-        // copy it (was ultimate memcpy, but just use normal one to make it easier)
-        memmove(new_link_block.c(), old_link_block.c(), ofh->link_block_length);
-        m_link_block_ptr = new_link_block + BASIC_OFFSET;
-
-        // if we can save some memory here
-        if (old_link_block.offset < m_heap->current.offset) {
-          if (link_debug_printfs) {
-            printf("Kick out old link block\n");
-          }
-          m_heap->current = old_link_block;
-        }
-      }
-    } else {
-      ASSERT_MSG(false, "UNHANDLED OBJECT FILE VERSION");
-    }
-
-    if ((m_flags & LINK_FLAG_FORCE_DEBUG) && MasterDebug && !DiskBoot) {
-      m_keep_debug = true;
-    }
-  } else {
-    m_opengoal = false;
-    if (heap == kglobalheap) {
-      jak3::kmemopen_from_c(heap, name);
-      m_on_global_heap = true;
-    } else {
-      m_on_global_heap = false;
-    }
-    m_object_data = object_file;
-    kstrcpy(this->m_object_name, name);
-    m_object_size = size;
-    // l_hdr = (LinkHdrWithType*)this->m_object_data;
-    LinkHeaderV5* l_hdr = (LinkHeaderV5*)m_object_data.c();
-    m_flags = flags;
-    u16 version = l_hdr->core.version;
-
-    if (version == 4 || version == 2) {
-      // it's a v4 produced by opengoal... lets just try using jak2's linker
-      m_version = version;
-      printf("got version 4, falling back to jak1/jak2\n");
-      jak1_jak2_begin(object_file, name, size, heap, flags);
-      return;
-    }
-    ASSERT(version == 5);
-    m_heap_top = heap->top;
-    // this->unk_init1 = 1; TODO
-    m_busy = true;
-    m_heap = heap;
-    m_entry.offset = 0;
-    m_keep_debug = false;
-    m_link_hdr = &l_hdr->core;  // m_hdr_ptr
-    m_code_size = 0;
-    // this->m_ptr_2 = l_hdr; just used for cache flush, so skip it! not really the right thing??
-    m_state = 0;
-    m_segment_process = 0;
-    m_moved_link_block = 0;
-    if (version == 4) {
-      ASSERT_NOT_REACHED();
-    } else {
-      m_object_data.offset = object_file.offset + l_hdr->core.length_to_get_to_code;
-      if (version == 5) {
-        static_assert(0x50 == sizeof(LinkHeaderV5));
-        size = (size - l_hdr->core.link_length) - sizeof(LinkHeaderV5);
-      } else {
-        ASSERT_NOT_REACHED();
-      }
-      m_code_size = size;
-      if ((u8*)m_link_hdr < m_heap->base.c() || (u8*)m_link_hdr >= m_heap->top.c()) {
-        // the link block is outside our heap, or in the allocated top part.
-        // so we ignore it, and leave it as somebody else's problem.
-
-        // let's try to move the code part:
-        if (m_heap->base.offset <= m_object_data.offset &&    // above heap base
-            m_object_data.offset < m_heap->top.offset &&      // less than heap top (not needed?)
-            m_object_data.offset < m_heap->current.offset) {  // less than heap current
-          if (link_debug_printfs) {
-            printf("Code block in the heap, kicking it out for copy into heap\n");
-          }
-          m_heap->current = m_object_data;
-        }
-      } else {
-        // the link block is in the heap. This is problematic because we don't want to hang
-        // on to this long term, but executing the top-level may allocate on this heap, causing
-        // stuff to get added after the hole left by the link data.
-        // So, we make a temporary allocation on the top and move it there.
-
-        m_moved_link_block = true;
-        Ptr<u8> new_link_block_mem;
-        u8* link_block_move_dst;
-        u8* old_link_block;
-        u32 link_block_move_size;
-
-        if (m_link_hdr->version == 5) {
-          // the link block is inside our heap, but we'd like to avoid this.
-          // we'll copy the link block, and the header to the temporary part of our heap:
-
-          // where we loaded the link data:
-          auto offset_to_link_data = m_link_hdr->length_to_get_to_link;
-
-          // allocate memory for link data, and header (pvVar5)
-          new_link_block_mem = kmalloc(m_heap, m_link_hdr->link_length + sizeof(LinkHeaderV5),
-                                       KMALLOC_TOP, "link-block");
-
-          // we'll place the header and link block back to back in the newly alloated block,
-          // so patch up the offset for this new layout before copying
-          m_link_hdr->length_to_get_to_link = sizeof(LinkHeaderV5);
-
-          // move header!
-          memmove(new_link_block_mem.c(), object_file.c(), sizeof(LinkHeaderV5));
-
-          // dst: pvVar6
-          link_block_move_dst = new_link_block_mem.c() + sizeof(LinkHeaderV5);
-
-          // move link data! (pcVar8)
-          old_link_block = object_file.c() + offset_to_link_data;
-
-          link_block_move_size = m_link_hdr->link_length;
-        } else {
-          // hm, maybe only possible with version 2 or 3??
-          ASSERT_NOT_REACHED();
-        }
-
-        memmove(link_block_move_dst, old_link_block, link_block_move_size);
-
-        // update our pointer to the link header core.
-        m_link_hdr = &((LinkHeaderV5*)new_link_block_mem.c())->core;
-
-        // scary: update the heap to kick out all the link data (and likely the actual data too).
-        // we'll be relying on the linking process to copy the data as needed.l
-        if (old_link_block < m_heap->current.c()) {
-          if (link_debug_printfs) {
-            printf("Kick out old link block\n");
-          }
-          m_heap->current.offset = old_link_block - g_ee_main_mem;
-        }
-      }
-    }
-    if ((m_flags & LINK_FLAG_FORCE_DEBUG) && MasterDebug && !DiskBoot) {
-      m_keep_debug = true;
-    }
-    // hack:
-    m_version = m_link_hdr->version;
+{
+  short sVar1;
+  int iVar2;
+  kheapinfo *heap_00;
+  s32 *psVar3;
+  u8 *puVar4;
+  undefined *in_t0_lo;
+  undefined4 in_t1_lo;
+  int iVar5;
+  uint uVar6;
+  uint32_t *src;
+  
+  if (in_t0_lo == &DAT_0025bb70) {
+    kmemopen_from_c((kheapinfo *)&DAT_0025bb70,(const_char *)size);
+    object_file[0x94] = '\x01';
   }
+  else {
+    object_file[0x94] = '\0';
+  }
+  *(const_char **)object_file = name;
+  strcpy((char *)(object_file + 4),(char *)size);
+  iVar2 = *(int *)object_file;
+  *(undefined4 *)(object_file + 0x58) = *(undefined4 *)(in_t0_lo + 4);
+  *(undefined4 *)(object_file + 0x4c) = in_t1_lo;
+  *(uint32_t *)(object_file + 0x44) = flags;
+  *(undefined4 *)(object_file + 0x50) = 1;
+  *(undefined **)(object_file + 0x48) = in_t0_lo;
+  *(undefined4 *)(object_file + 0x54) = 0;
+  *(undefined4 *)(object_file + 0x5c) = 0;
+  *(int *)(object_file + 0x60) = iVar2 + 4;
+  *(undefined4 *)(object_file + 100) = 0;
+  *(int *)(object_file + 0x90) = iVar2;
+  *(undefined4 *)(object_file + 0x68) = 0;
+  *(undefined4 *)(object_file + 0x6c) = 0;
+  object_file[0x95] = '\0';
+  sVar1 = *(short *)(iVar2 + 8);
+  if (sVar1 == 4) {
+    iVar5 = *(int *)(iVar2 + 0xc);
+    *(int *)object_file = iVar2 + 0x10;
+    *(int *)(object_file + 100) = iVar5;
+    *(int *)(object_file + 0x60) = iVar2 + iVar5 + 0x14;
+  }
+  else {
+    iVar5 = *(int *)(iVar2 + 4);
+    *(int *)object_file = iVar2 + iVar5;
+    iVar5 = flags - iVar5;
+    if (sVar1 == 5) {
+      iVar5 = (flags - *(int *)(iVar2 + 0x10)) + -0x50;
+    }
+    *(int *)(object_file + 100) = iVar5;
+    heap_00 = *(kheapinfo **)(object_file + 0x48);
+    psVar3 = *(s32 **)(object_file + 0x60);
+    if ((int)psVar3 < (int)heap_00->base) {
+      puVar4 = *(u8 **)object_file;
+    }
+    else {
+      if ((int)psVar3 < (int)heap_00->top) {
+        sVar1 = *(short *)(psVar3 + 1);
+        object_file[0x95] = '\x01';
+        if (sVar1 == 5) {
+          src = (uint32_t *)(name + psVar3[2]);
+          puVar4 = kmalloc(heap_00,psVar3[3] + 0x50,0x2000,"link-block");
+          psVar3[2] = 0x50;
+          memcpy(&DAT_002d2f48,name,0x50);
+          ultimate_memcpy_G(puVar4 + 0x50,src,psVar3[3]);
+          memcpy(puVar4,&DAT_002d2f48,0x50);
+        }
+        else {
+          puVar4 = kmalloc(heap_00,*psVar3,0x2000,"link-block");
+          src = *(uint32_t **)(object_file + 0x60) + -1;
+          ultimate_memcpy_G(puVar4,src,**(uint32_t **)(object_file + 0x60));
+        }
+        *(u8 **)(object_file + 0x60) = puVar4 + 4;
+        if ((int)src < *(int *)(*(int *)(object_file + 0x48) + 8)) {
+          *(uint32_t **)(*(int *)(object_file + 0x48) + 8) = src;
+        }
+        goto LAB_0026f558;
+      }
+      puVar4 = *(u8 **)object_file;
+    }
+    if ((int)puVar4 < (int)heap_00->base) {
+      uVar6 = *(uint *)(object_file + 0x4c);
+      goto LAB_0026f55c;
+    }
+    if ((int)heap_00->top <= (int)puVar4) {
+      uVar6 = *(uint *)(object_file + 0x4c);
+      goto LAB_0026f55c;
+    }
+    if ((int)heap_00->current <= (int)puVar4) {
+      uVar6 = *(uint *)(object_file + 0x4c);
+      goto LAB_0026f55c;
+    }
+    heap_00->current = puVar4;
+  }
+LAB_0026f558:
+  uVar6 = *(uint *)(object_file + 0x4c);
+LAB_0026f55c:
+  if ((((uVar6 & 0x10) != 0) && (MasterDebug != 0)) && (DiskBoot == 0)) {
+    *(undefined4 *)(object_file + 0x5c) = 1;
+  }
+  return;
 }
 
-uint32_t link_control::jak3_work() {
-  auto old_debug_segment = DebugSegment;
-  if (m_keep_debug) {
-    DebugSegment = s7.offset + true_symbol_offset(g_game_version);
+uint32_t jak3_work(void)
+
+{
+  int iVar1;
+  int iVar2;
+  uint32_t uVar3;
+  int in_a0_lo;
+  int unaff_s7_lo;
+  
+  iVar2 = DebugSegment;
+  if (*(int *)(in_a0_lo + 0x5c) != 0) {
+    DebugSegment = unaff_s7_lo + 4;
   }
-
-  // set type tag of link block
-
-  uint32_t rv;
-
-  if (m_version == 3) {
-    ASSERT(m_opengoal);
-    *((m_link_block_ptr - 4).cast<u32>()) =
-        *((s7 + jak3_symbols::FIX_SYM_LINK_BLOCK - 1).cast<u32>());
-    rv = jak3_work_opengoal();
-  } else if (m_version == 5) {
-    ASSERT(!m_opengoal);
-    *(u32*)(((u8*)m_link_hdr) - 4) = *((s7 + jak3_symbols::FIX_SYM_LINK_BLOCK - 1).cast<u32>());
-    rv = jak3_work_v5();
-  } else if (m_version == 4 || m_version == 2) {
-    // Note: this is a bit of a hack. Jak 3 doesn't support v2/v4. But, OpenGOAL generates data
-    // objects in this format. We will just try reusing the jak 2 v2/v4 linker here and see if it
-    // works. See corresponding call to jak1_jak2_begin in begin.
-    rv = jak3_work_v2_v4();
-  } else {
-    ASSERT_MSG(false, fmt::format("UNHANDLED OBJECT FILE VERSION {} IN WORK!", m_version));
-    return 0;
+  iVar1 = *(int *)(in_a0_lo + 0x60);
+  *(undefined4 *)(iVar1 + -4) = *(undefined4 *)(unaff_s7_lo + 0x1f);
+  uVar3 = 0;
+  if (*(short *)(iVar1 + 4) == 5) {
+    uVar3 = jak3_work_opengoal();
   }
-
-  DebugSegment = old_debug_segment;
-  return rv;
+  DebugSegment = iVar2;
+  return uVar3;
 }
 
 namespace jak3 {
@@ -598,219 +460,393 @@ uint32_t symlink_v3(Ptr<uint8_t> link, Ptr<uint8_t> data) {
 }
 }  // namespace
 
-uint32_t link_control::jak3_work_opengoal() {
-  // note: I'm assuming that the allocation we used in jak2/jak1 will still work here. Once work_v5
-  // is done, we could revisit this.
-  ObjectFileHeader* ofh = m_link_block_ptr.cast<ObjectFileHeader>().c();
-  if (m_state == 0) {
-    // state 0 <- copying data.
-    // the actual game does all copying in one shot. I assume this is ok because v3 files are just
-    // code and always small.  Large data which takes too long to copy should use v2.
+uint32_t jak3_work_opengoal(void)
 
-    // loop over segments
-    for (s32 seg_id = ofh->segment_count - 1; seg_id >= 0; seg_id--) {
-      // link the infos
-      ofh->link_infos[seg_id].offset += m_link_block_ptr.offset;
-      ofh->code_infos[seg_id].offset += m_object_data.offset;
-
-      if (seg_id == DEBUG_SEGMENT) {
-        if (!DebugSegment) {
-          // clear code info if we aren't going to copy the debug segment.
-          ofh->code_infos[seg_id].offset = 0;
-          ofh->code_infos[seg_id].size = 0;
-        } else {
-          if (ofh->code_infos[seg_id].size == 0) {
-            // not actually present
-            ofh->code_infos[seg_id].offset = 0;
-          } else {
-            Ptr<u8> src(ofh->code_infos[seg_id].offset);
-            ofh->code_infos[seg_id].offset =
-                kmalloc(kdebugheap, ofh->code_infos[seg_id].size, 0, "debug-segment").offset;
-            if (ofh->code_infos[seg_id].offset == 0) {
-              MsgErr("dkernel: unable to malloc %d bytes for debug-segment\n",
-                     ofh->code_infos[seg_id].size);
-              return 1;
+{
+  byte bVar1;
+  byte bVar2;
+  int *piVar3;
+  int iVar4;
+  uint *puVar5;
+  short sVar6;
+  int iVar7;
+  u8 *puVar8;
+  Type *pTVar9;
+  code *pcVar10;
+  size_t sVar11;
+  int *in_a0_lo;
+  kheapinfo *heap;
+  void *dst;
+  char *pcVar12;
+  void *src;
+  undefined4 uVar13;
+  uint uVar14;
+  uint32_t size;
+  u64 methods;
+  uint *puVar15;
+  uint uVar16;
+  int *piVar17;
+  byte *pbVar18;
+  short *name;
+  uint uVar19;
+  int iVar20;
+  int iVar21;
+  int iVar22;
+  
+  iVar7 = (*(code *)PTR_read_clock_code_002836d0)();
+  if (in_a0_lo[0x1a] == 0) {
+    piVar3 = (int *)in_a0_lo[0x18];
+    bVar1 = *(byte *)(piVar3 + 4);
+    iVar20 = (int)piVar3 + piVar3[2] + -4;
+    in_a0_lo[0x1c] = (uint)bVar1;
+    piVar3[2] = iVar20;
+    iVar22 = bVar1 - 1;
+    in_a0_lo[0x23] = iVar20;
+LAB_0026f70c:
+    do {
+      iVar20 = iVar22 * 0x10;
+      if (iVar22 < 0) {
+        in_a0_lo[0x1b] = 0;
+        in_a0_lo[0x1a] = 1;
+        iVar20 = (*(code *)PTR_read_clock_code_002836d0)();
+        if (200000 < (uint)(iVar20 - iVar7)) {
+          return 0;
+        }
+        goto LAB_0026f94c;
+      }
+      iVar21 = in_a0_lo[0x23];
+      iVar4 = *in_a0_lo;
+      piVar17 = (int *)(iVar20 + iVar21);
+      *piVar17 = iVar21 + *piVar17;
+      piVar17[1] = iVar4 + piVar17[1];
+      if (iVar22 == 1) {
+        iVar20 = iVar21 + 0x10;
+        if (DebugSegment == 0) {
+          *(undefined4 *)(iVar21 + 0x18) = 0;
+          *(undefined4 *)(iVar21 + 0x14) = 0;
+        }
+        else {
+          if (*(int *)(iVar21 + 0x18) != 0) {
+            src = *(void **)(iVar21 + 0x14);
+            puVar8 = kmalloc(kdebugheap,*(int *)(iVar21 + 0x18),0,"debug-segment");
+            iVar20 = in_a0_lo[0x23];
+            *(u8 **)(iVar21 + 0x14) = puVar8;
+            dst = *(void **)(iVar20 + 0x14);
+            if (dst == (void *)0x0) {
+              uVar13 = *(undefined4 *)(iVar20 + 0x18);
+              pcVar12 = "dkernel: unable to malloc %d bytes for debug-segment~%";
+              goto LAB_0026f838;
             }
-            memmove(Ptr<u8>(ofh->code_infos[seg_id].offset).c(), src.c(),
-                    ofh->code_infos[seg_id].size);
+            size = *(uint32_t *)(iVar20 + 0x18);
+            goto LAB_0026f81c;
           }
+LAB_0026f8a4:
+          *(undefined4 *)(iVar20 + 4) = 0;
         }
-      } else if (seg_id == MAIN_SEGMENT) {
-        if (ofh->code_infos[seg_id].size == 0) {
-          ofh->code_infos[seg_id].offset = 0;
-        } else {
-          Ptr<u8> src(ofh->code_infos[seg_id].offset);
-          ofh->code_infos[seg_id].offset =
-              kmalloc(m_heap, ofh->code_infos[seg_id].size, 0, "main-segment").offset;
-          if (ofh->code_infos[seg_id].offset == 0) {
-            MsgErr("dkernel: unable to malloc %d bytes for main-segment\n",
-                   ofh->code_infos[seg_id].size);
-            return 1;
-          }
-          memmove(Ptr<u8>(ofh->code_infos[seg_id].offset).c(), src.c(),
-                  ofh->code_infos[seg_id].size);
-        }
-      } else if (seg_id == TOP_LEVEL_SEGMENT) {
-        if (ofh->code_infos[seg_id].size == 0) {
-          ofh->code_infos[seg_id].offset = 0;
-        } else {
-          Ptr<u8> src(ofh->code_infos[seg_id].offset);
-          ofh->code_infos[seg_id].offset =
-              kmalloc(m_heap, ofh->code_infos[seg_id].size, KMALLOC_TOP, "top-level-segment")
-                  .offset;
-          if (ofh->code_infos[seg_id].offset == 0) {
-            MsgErr("dkernel: unable to malloc %d bytes for top-level-segment\n",
-                   ofh->code_infos[seg_id].size);
-            return 1;
-          }
-          memmove(Ptr<u8>(ofh->code_infos[seg_id].offset).c(), src.c(),
-                  ofh->code_infos[seg_id].size);
-        }
-      } else {
-        printf("UNHANDLED SEG ID IN WORK V3 STATE 1\n");
+        goto LAB_0026f754;
       }
-    }
-
-    m_state = 1;
-    m_segment_process = 0;
-    return 0;
-  } else if (m_state == 1) {
-    // state 1: linking. For now all links are done at once. This is probably going to be fine on a
-    // modern computer.  But the game broke this into multiple steps.
-    if (m_segment_process < ofh->segment_count) {
-      if (ofh->code_infos[m_segment_process].offset) {
-        Ptr<u8> lp(ofh->link_infos[m_segment_process].offset);
-
-        while (*lp) {
-          switch (*lp) {
-            case LINK_TABLE_END:
-              break;
-            case LINK_SYMBOL_OFFSET:
-              lp = lp + 1;
-              lp = lp + symlink_v3(lp, Ptr<u8>(ofh->code_infos[m_segment_process].offset));
-              break;
-            case LINK_TYPE_PTR:
-              lp = lp + 1;  // seek past id
-              lp = lp + typelink_v3(lp, Ptr<u8>(ofh->code_infos[m_segment_process].offset));
-              break;
-            case LINK_DISTANCE_TO_OTHER_SEG_64:
-              lp = lp + 1;
-              lp = lp + cross_seg_dist_link_v3(lp, ofh, m_segment_process, 8);
-              break;
-            case LINK_DISTANCE_TO_OTHER_SEG_32:
-              lp = lp + 1;
-              lp = lp + cross_seg_dist_link_v3(lp, ofh, m_segment_process, 4);
-              break;
-            case LINK_PTR:
-              lp = lp + 1;
-              lp = lp + ptr_link_v3(lp, ofh, m_segment_process);
-              break;
-            default:
-              ASSERT_MSG(false, fmt::format("unknown link table thing {}", *lp));
-              break;
+      if (1 < iVar22) {
+        if (iVar22 == 2) {
+          iVar20 = iVar21 + 0x20;
+          if (*(int *)(iVar21 + 0x28) == 0) goto LAB_0026f8a4;
+          src = *(void **)(iVar21 + 0x24);
+          puVar8 = kmalloc((kheapinfo *)in_a0_lo[0x12],*(int *)(iVar21 + 0x28),0x2000,
+                           "top-level-segment");
+          iVar20 = in_a0_lo[0x23];
+          *(u8 **)(iVar21 + 0x24) = puVar8;
+          dst = *(void **)(iVar20 + 0x24);
+          if (dst == (void *)0x0) {
+            uVar13 = *(undefined4 *)(iVar20 + 0x28);
+            pcVar12 = "dkernel: unable to malloc %d bytes for top-level-segment~%";
+            goto LAB_0026f838;
           }
+          size = *(uint32_t *)(iVar20 + 0x28);
+LAB_0026f81c:
+          iVar22 = iVar22 + -1;
+          ultimate_memcpy_G(dst,src,size);
         }
+        else {
+          iVar22 = iVar22 + -1;
+        }
+        goto LAB_0026f70c;
       }
-
-      m_segment_process++;
-    } else {
-      // all done, can set the entry point to the top-level.
-      m_entry = Ptr<u8>(ofh->code_infos[TOP_LEVEL_SEGMENT].offset) + 4;
-      return 1;
-    }
-
-    return 0;
+      if (iVar22 != 0) {
+LAB_0026f754:
+        iVar22 = iVar22 + -1;
+        goto LAB_0026f70c;
+      }
+      if (*(int *)(iVar21 + 8) == 0) {
+        *(undefined4 *)(iVar21 + 4) = 0;
+        goto LAB_0026f754;
+      }
+      iVar21 = iVar20 + iVar21;
+      if (*(char *)((int)in_a0_lo + 0x95) == '\0') {
+        heap = (kheapinfo *)in_a0_lo[0x12];
+LAB_0026f7e8:
+        src = *(void **)(iVar21 + 4);
+        puVar8 = kmalloc(heap,*(s32 *)(iVar21 + 8),0,"main-segment");
+        iVar4 = in_a0_lo[0x23];
+        *(u8 **)(iVar21 + 4) = puVar8;
+        iVar20 = iVar20 + iVar4;
+        dst = *(void **)(iVar20 + 4);
+        if (dst == (void *)0x0) {
+          uVar13 = *(undefined4 *)(iVar20 + 8);
+          pcVar12 = "dkernel: unable to malloc %d bytes for main-segment~%";
+LAB_0026f838:
+          MsgErr(pcVar12,uVar13);
+          return 1;
+        }
+        size = *(uint32_t *)(iVar20 + 8);
+        goto LAB_0026f81c;
+      }
+      if (piVar3[3] + 0x50 <= *piVar3) {
+        heap = (kheapinfo *)in_a0_lo[0x12];
+        goto LAB_0026f7e8;
+      }
+      iVar20 = in_a0_lo[0x12];
+      uVar19 = iVar4 + in_a0_lo[0x19];
+      *(uint *)(iVar20 + 8) = uVar19;
+      iVar22 = -1;
+    } while (uVar19 < *(uint *)(iVar20 + 4));
+    MsgErr("dkernel: heap overflow~%");
   }
-
   else {
-    printf("WORK v3 INVALID STATE\n");
-    return 1;
+LAB_0026f94c:
+    iVar20 = in_a0_lo[0x1a];
+    if ((iVar20 < in_a0_lo[0x1c] + 1) && (in_a0_lo[0x1b] == 0)) {
+      iVar22 = in_a0_lo[0x23] + iVar20 * 0x10;
+      if ((*(int *)(iVar22 + -0xc) != 0) && (*(int *)(iVar22 + -8) != 0)) {
+        iVar21 = *(int *)(iVar22 + -0x10);
+        in_a0_lo[0x1b] = 1;
+        in_a0_lo[0x1f] = iVar21;
+        *(undefined *)(in_a0_lo + 0x22) = 0;
+        iVar22 = *(int *)(iVar22 + -0xc);
+        *in_a0_lo = iVar22;
+        in_a0_lo[0x21] = iVar22 + -4;
+        in_a0_lo[0x20] = iVar22;
+        goto LAB_0026f9c0;
+      }
+      in_a0_lo[0x1b] = 0;
+      in_a0_lo[0x1a] = iVar20 + 1;
+      goto LAB_0026f94c;
+    }
+LAB_0026f9c0:
+    if (iVar20 < in_a0_lo[0x1c] + 1) {
+      iVar20 = in_a0_lo[0x1b];
+      if (iVar20 == 1) {
+        iVar20 = 0x400;
+        if (*(char *)in_a0_lo[0x1f] != '\0') {
+LAB_0026f9e8:
+          do {
+            bVar1 = *(byte *)(in_a0_lo + 0x22);
+            while( true ) {
+              iVar22 = 0;
+              if (bVar1 == 0) {
+                in_a0_lo[0x21] = in_a0_lo[0x21] + (uint)*(byte *)in_a0_lo[0x1f] * 4;
+                pcVar12 = (char *)in_a0_lo[0x1f];
+              }
+              else {
+                pbVar18 = (byte *)in_a0_lo[0x1f];
+                bVar2 = *pbVar18;
+                while (bVar2 != 0) {
+                  puVar5 = (uint *)in_a0_lo[0x21];
+                  uVar19 = *puVar5;
+                  uVar14 = uVar19 >> 8 & 0xf;
+                  puVar15 = (uint *)((uVar19 >> 10 & 0x3c) + (int)puVar5);
+                  if (uVar19 >> 0x18 == 0) {
+                    *puVar5 = uVar19 + in_a0_lo[0x20];
+                  }
+                  else {
+                    uVar16 = *(int *)(uVar14 * 0x10 + in_a0_lo[0x23] + 4) +
+                             ((uVar19 & 0xff) << 0x10 | (uint)*(ushort *)puVar15);
+                    if ((DebugSegment == 0) && (uVar14 == 1)) {
+                      uVar16 = 0;
+                    }
+                    *puVar5 = uVar19 & 0xffff0000 | uVar16 >> 0x10;
+                    *puVar15 = *puVar15 & 0xffff0000 | uVar16 & 0xffff;
+                  }
+                  iVar22 = iVar22 + 1;
+                  in_a0_lo[0x21] = (int)(puVar5 + 1);
+                  bVar2 = iVar22 < (int)(uint)*pbVar18;
+                }
+                pcVar12 = (char *)in_a0_lo[0x1f];
+              }
+              if (*pcVar12 == -1) {
+                in_a0_lo[0x1f] = (int)(pcVar12 + 1);
+                goto LAB_0026f9e8;
+              }
+              in_a0_lo[0x1f] = (int)(pcVar12 + 1);
+              *(byte *)(in_a0_lo + 0x22) = bVar1 ^ 1;
+              iVar20 = iVar20 + -1;
+              if (pcVar12[1] == '\0') goto LAB_0026fb20;
+              if (iVar20 == 0) break;
+              bVar1 = *(byte *)(in_a0_lo + 0x22);
+            }
+            iVar22 = (*(code *)PTR_read_clock_code_002836d0)();
+            iVar20 = 0x400;
+            if (200000 < (uint)(iVar22 - iVar7)) {
+              return 0;
+            }
+          } while( true );
+        }
+LAB_0026fb20:
+        in_a0_lo[0x1f] = in_a0_lo[0x1f] + 1;
+        in_a0_lo[0x1b] = in_a0_lo[0x1b] + 1;
+        iVar20 = in_a0_lo[0x1b];
+      }
+      if (iVar20 != 2) goto LAB_0026fcac;
+      pbVar18 = (byte *)in_a0_lo[0x1f];
+      uVar19 = *(uint *)(in_a0_lo[0x23] + in_a0_lo[0x1a] * 0x10 + -4);
+      while( true ) {
+        bVar1 = *pbVar18;
+        uVar14 = (uint)bVar1;
+        if (uVar14 == 0) break;
+        in_a0_lo[0x1f] = (int)(pbVar18 + 1);
+        if ((bVar1 & 0x80) == 0) {
+          sVar6 = *(short *)(pbVar18 + 1);
+          in_a0_lo[0x1f] = (int)(pbVar18 + 3);
+          pTVar9 = (Type *)intern_from_c((int)sVar6,uVar14,(const_char *)(pbVar18 + 3));
+          pcVar12 = (char *)in_a0_lo[0x1f];
+        }
+        else {
+          iVar20 = (uVar14 & 0x3f) * 4;
+          if ((uVar14 & 0x3f) == 0x3f) {
+            bVar1 = pbVar18[1];
+            in_a0_lo[0x1f] = (int)(pbVar18 + 2);
+            methods = (long)(int)((uint)bVar1 * 4 + 3);
+          }
+          else {
+            methods = (long)iVar20;
+            if ((long)iVar20 != 0) {
+              methods = (long)(iVar20 + 3);
+            }
+          }
+          name = (short *)in_a0_lo[0x1f] + 1;
+          sVar6 = *(short *)in_a0_lo[0x1f];
+          in_a0_lo[0x1f] = (int)name;
+          pTVar9 = intern_type_from_c((int)sVar6,uVar14,(const_char *)name,methods);
+          pcVar12 = (char *)in_a0_lo[0x1f];
+        }
+        sVar11 = strlen(pcVar12);
+        in_a0_lo[0x1f] = in_a0_lo[0x1f] + (int)sVar11 + 1;
+        if ((uVar19 & 1) == 0) {
+          iVar20 = *in_a0_lo;
+          pcVar10 = (code *)symlink3_G;
+        }
+        else {
+          iVar20 = *in_a0_lo;
+          pcVar10 = (code *)symlink2_G;
+        }
+        iVar20 = (*pcVar10)(iVar20,pTVar9);
+        in_a0_lo[0x1f] = iVar20;
+        iVar20 = (*(code *)PTR_read_clock_code_002836d0)();
+        if (200000 < (uint)(iVar20 - iVar7)) {
+          return 0;
+        }
+        pbVar18 = (byte *)in_a0_lo[0x1f];
+      }
+      in_a0_lo[0x1b] = 0;
+      in_a0_lo[0x1a] = in_a0_lo[0x1a] + 1;
+      in_a0_lo[0x15] = *in_a0_lo + 4;
+      goto LAB_0026f94c;
+    }
+LAB_0026fcac:
+    update_goal_fns();
   }
+  return 1;
 }
 
-void link_control::jak3_finish(bool jump_from_c_to_goal) {
-  // CacheFlush(this->m_ptr_2, this->m_code_size);
-  auto old_debug_segment = DebugSegment;
-  if (m_keep_debug) {
-    // note - this probably doesn't work because DebugSegment isn't *debug-segment*.
-    DebugSegment = s7.offset + jak3_symbols::FIX_SYM_TRUE;
+void jak3_finish(bool jump_from_c_to_goal)
+
+{
+  short sVar1;
+  int iVar2;
+  int iVar3;
+  code *pcVar4;
+  char *a2;
+  int iVar5;
+  int iVar6;
+  int unaff_s7_lo;
+  int iVar7;
+  
+  FlushCache(0);
+  FlushCache(2);
+  iVar3 = DebugSegment;
+  if (*(int *)(jump_from_c_to_goal + 0x5c) != 0) {
+    DebugSegment = unaff_s7_lo + 4;
   }
-  if (m_flags & LINK_FLAG_FORCE_FAST_LINK) {
+  if ((*(uint *)(jump_from_c_to_goal + 0x4c) & 0x20) != 0) {
     FastLink = 1;
   }
-
-  *EnableMethodSet = *EnableMethodSet + m_keep_debug;
-
-  // printf("finish %s\n", m_object_name);
-  if (m_opengoal) {
-    // setup mips2c functions
-    const auto& it = Mips2C::gMips2CLinkCallbacks[GameVersion::Jak3].find(m_object_name);
-    if (it != Mips2C::gMips2CLinkCallbacks[GameVersion::Jak3].end()) {
-      for (auto& x : it->second) {
-        x();
+  iVar5 = (int)jump_from_c_to_goal;
+  iVar2 = *(int *)(iVar5 + 0x60);
+  sVar1 = *(short *)(iVar2 + 4);
+  *EnableMethodSet = *EnableMethodSet + *(int *)(iVar5 + 0x5c);
+  iVar6 = (int)jump_from_c_to_goal;
+  iVar7 = (int)jump_from_c_to_goal;
+  if (sVar1 == 5) {
+    pcVar4 = *(code **)(iVar5 + 0x54);
+    if (pcVar4 != (code *)0x0) {
+      if ((*(int *)(pcVar4 + -4) == *(int *)(unaff_s7_lo + 7)) &&
+         ((*(uint *)(iVar5 + 0x4c) & 5) != 0)) {
+        if ((*(uint *)(iVar5 + 0x4c) & 4) == 0) {
+          pcVar4 = *(code **)(unaff_s7_lo + 0x93);
+        }
+        else {
+          (*pcVar4)();
+          pcVar4 = *(code **)(unaff_s7_lo + 0x93);
+        }
+        (*pcVar4)();
+        if ((*(uint *)(iVar7 + 0x4c) & 1) != 0) {
+          output_segment_load((const_char *)(iVar2 + 0x11),*(void **)(iVar2 + 8),
+                              *(uint *)(iVar7 + 0x4c));
+        }
       }
-    }
-
-    // execute top level!
-    if (m_entry.offset && (m_flags & LINK_FLAG_EXECUTE)) {
-      if (jump_from_c_to_goal) {
-        u64 goal_stack = u64(g_ee_main_mem) + EE_MAIN_MEM_SIZE - 8;
-        call_goal_on_stack(m_entry.cast<Function>(), goal_stack, s7.offset, g_ee_main_mem);
-      } else {
-        call_goal(m_entry.cast<Function>(), 0, 0, 0, s7.offset, g_ee_main_mem);
+      else if ((pcVar4 != (code *)0x0) && ((*(uint *)(iVar7 + 0x4c) & 4) != 0)) {
+        a2 = basename_goal((char *)(iVar6 + 4));
+        call_method_of_type_arg2
+                  (*(u32 *)(iVar6 + 0x54),*(Type **)(*(u32 *)(iVar6 + 0x54) - 4),7,
+                   *(u32 *)(iVar6 + 0x48),(u32)a2);
       }
-    }
-
-    // inform compiler that we loaded.
-    if (m_flags & LINK_FLAG_OUTPUT_LOAD) {
-      output_segment_load(m_object_name, m_link_block_ptr, m_flags);
-    }
-  } else {
-    if (m_flags & LINK_FLAG_EXECUTE) {
-      auto entry = m_entry;
-      auto name = basename_goal(m_object_name);
-      strcpy(Ptr<char>(LINK_CONTROL_NAME_ADDR).c(), name);
-      // printf(" about to call... (0x%x)\n", entry.offset);
-      Ptr<jak3::Type> type(*((entry - 4).cast<u32>()));
-      // printf(" type is %s\n", jak3::sym_to_cstring(type->symbol));
-      jak3::call_method_of_type_arg2(entry.offset, type, GOAL_RELOC_METHOD, m_heap.offset,
-                                     Ptr<char>(LINK_CONTROL_NAME_ADDR).offset);
-      // printf("  done with call!\n");
     }
   }
-
-  *EnableMethodSet = *EnableMethodSet - this->m_keep_debug;
+  else {
+    MsgErr("dkernel: FATAL ERROR: unknown goal file version %d~%");
+  }
+  iVar2 = *(int *)(iVar6 + 0x48);
   FastLink = 0;
-  m_heap->top = m_heap_top;
-  DebugSegment = old_debug_segment;
-
-  m_busy = false;
-  if (m_on_global_heap) {
-    jak3::kmemclose();
+  *EnableMethodSet = *EnableMethodSet - *(int *)(iVar6 + 0x5c);
+  DebugSegment = iVar3;
+  *(undefined4 *)(iVar2 + 4) = *(undefined4 *)(iVar6 + 0x58);
+  *(undefined4 *)(iVar7 + 0x50) = 0;
+  if (*(char *)(iVar7 + 0x94) != '\0') {
+    kmemclose();
   }
   return;
 }
 
+
 namespace jak3 {
 
-Ptr<uint8_t> link_and_exec(Ptr<uint8_t> data,
-                           const char* name,
-                           int32_t size,
-                           Ptr<kheapinfo> heap,
-                           uint32_t flags,
-                           bool jump_from_c_to_goal) {
-  if (link_busy()) {
+uint8_t * link_and_exec(uint8_t *data,const_char *name,int32_t size,kheapinfo *heap,uint32_t flags,
+                       bool jump_from_c_to_goal)
+
+{
+  uint32_t uVar1;
+  long lVar2;
+  kheapinfo in_stack_ffffff30;
+  uint8_t *local_7c;
+  
+  lVar2 = link_busy();
+  if (lVar2 != 0) {
     printf("-------------> saved link is busy\n");
-    // probably won't end well...
   }
-  link_control lc;
-  lc.jak3_begin(data, name, size, heap, flags);
-  uint32_t done;
+  jak3_begin(&stack0xffffff30,(const_char *)data,(int32_t)name,in_stack_ffffff30,size);
   do {
-    done = lc.jak3_work();
-  } while (!done);
-  lc.jak3_finish(jump_from_c_to_goal);
-  return lc.m_entry;
+    uVar1 = jak3_work();
+  } while (uVar1 == 0);
+  jak3_finish(SUB41(&stack0xffffff30,0));
+  return local_7c;
 }
 
 u64 link_and_exec_wrapper(u64* args) {
@@ -825,24 +861,35 @@ u32 link_busy() {
 void link_reset() {
   saved_link_control.m_busy = 0;
 }
-uint64_t link_begin(u64* args) {
-  saved_link_control.jak3_begin(Ptr<u8>(args[0]), Ptr<char>(args[1]).c(), args[2],
-                                Ptr<kheapinfo>(args[3]), args[4]);
-  auto work_result = saved_link_control.jak3_work();
-  // if we managed to finish in one shot, take care of calling finish
-  if (work_result) {
-    // called from goal
-    saved_link_control.jak3_finish(false);
+uint64_t link_begin(u64 *args)
+
+{
+  kheapinfo heap;
+  uint32_t uVar1;
+  int32_t in_a1_lo;
+  uint32_t in_a2_lo;
+  undefined8 unaff_s0;
+  undefined8 unaff_retaddr;
+  
+  heap._8_8_ = unaff_retaddr;
+  heap._0_8_ = unaff_s0;
+  jak3_begin(&DAT_002d2f98,(const_char *)args,in_a1_lo,heap,in_a2_lo);
+  uVar1 = jak3_work();
+  if (uVar1 != 0) {
+    jak3_finish(true);
   }
-  return work_result != 0;
+  return (ulong)(uVar1 != 0);
 }
-uint64_t link_resume() {
-  auto work_result = saved_link_control.jak3_work();
-  if (work_result) {
-    // called from goal
-    saved_link_control.jak3_finish(false);
+uint64_t link_resume(void)
+
+{
+  uint32_t uVar1;
+  
+  uVar1 = jak3_work();
+  if (uVar1 != 0) {
+    jak3_finish(true);
   }
-  return work_result != 0;
+  return (ulong)(uVar1 != 0);
 }
 
 // Note: update_goal_fns changed to skip the hashtable lookup since symlink2/symlink3 are now fixed
@@ -854,25 +901,33 @@ uint64_t link_resume() {
  * but it may use the scratchpad.  It is implemented in GOAL, and falls back to normal C memcpy
  * if GOAL isn't loaded, or if the alignment isn't good enough.
  */
-void ultimate_memcpy(void* dst, void* src, uint32_t size) {
-  // only possible if alignment is good.
-  if (!(u64(dst) & 0xf) && !(u64(src) & 0xf) && !(u64(size) & 0xf) && size > 0xfff) {
-    if (!gfunc_774.offset) {
-      // GOAL function is unknown, lets see if its loaded:
-      auto sym_val = *((s7 + jak3_symbols::FIX_SYM_ULTIMATE_MEMCPY - 1).cast<u32>());
-      if (sym_val == 0) {
-        memmove(dst, src, size);
-        return;
-      }
-      gfunc_774.offset = sym_val;
-    }
+void ultimate_memcpy_G(void *dst,void *src,uint32_t size)
 
-    Ptr<u8>(call_goal(gfunc_774, make_u8_ptr(dst).offset, make_u8_ptr(src).offset, size, s7.offset,
-                      g_ee_main_mem))
-        .c();
-  } else {
-    memmove(dst, src, size);
+{
+  code *pcVar1;
+  int iVar2;
+  ulong __n;
+  int unaff_s7_lo;
+  
+  __n = (ulong)(int)size;
+  if ((src < dst) && ((int)((int)dst - size) < (int)src)) {
+    for (iVar2 = size - 1; iVar2 != -1; iVar2 = iVar2 + -1) {
+      *(undefined *)((int)dst + iVar2) = *(undefined *)((int)src + iVar2);
+    }
   }
+  else {
+    if ((((((uint)src & 0xf) != 0) || (((uint)dst & 0xf) != 0)) || ((__n & 0xf) != 0)) ||
+       ((__n < 0x1000 ||
+        ((pcVar1 = DAT_002836f8, DAT_002836f8 == (code *)0x0 &&
+         (pcVar1 = *(code **)(unaff_s7_lo + 0x283), *(code **)(unaff_s7_lo + 0x283) == (code *)0x0))
+        )))) {
+      memcpy(dst,src,__n);
+      return;
+    }
+    DAT_002836f8 = pcVar1;
+    (*DAT_002836f8)();
+  }
+  return;
 }
 
 }  // namespace jak3

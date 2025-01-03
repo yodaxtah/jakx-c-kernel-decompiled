@@ -33,36 +33,24 @@ void kdgo_init_globals() {
  * DONE,
  * MODIFIED : Added print statement to indicate when DGO load starts.
  */
-void BeginLoadingDGO(const char* name, Ptr<u8> buffer1, Ptr<u8> buffer2, Ptr<u8> currentHeap) {
-  u8 msgID = sMsgNum;
-  RPC_Dgo_Cmd* mess = sMsg + sMsgNum;
-  sMsgNum = sMsgNum ^ 1;     // toggle message buffer.
-  RpcSync(DGO_RPC_CHANNEL);  // make sure old RPC is finished
-
-  // put a dummy value here just to make sure the IOP overwrites it.
-  sMsg[msgID].status = DGO_RPC_RESULT_INIT;  // !! this is 666
-
-  // inform IOP of buffers
-  sMsg[msgID].buffer1 = buffer1.offset;
-  sMsg[msgID].buffer2 = buffer2.offset;
-
-  // also give a heap pointer so it can load the last object file directly into the heap to save the
-  // precious time.
-  sMsg[msgID].buffer_heap_top = currentHeap.offset;
-
-  // new for Jak 3: a unique ID.
-  sMsg[msgID].cgo_id = cgo_id;
-  cgo_id++;
-
-  // file name
-  strcpy(sMsg[msgID].name, name);
-  lg::debug("[Begin Loading DGO RPC] {}, 0x{:x}, 0x{:x}, 0x{:x}", name, buffer1.offset,
-            buffer2.offset, currentHeap.offset);
-  // this RPC will return once we have loaded the first object file.
-  // but we call async, so we don't block here.
-  RpcCall(DGO_RPC_CHANNEL, DGO_RPC_LOAD_FNO, true, mess, sizeof(RPC_Dgo_Cmd), mess,
-          sizeof(RPC_Dgo_Cmd));
-  sLastMsg = mess;
+void BeginLoadingDGO(const_char *name,u8 *buffer1,u8 *buffer2,u8 *currentHeap) {
+  int iVar1;
+  undefined *sendBuff;
+  
+  iVar1 = sMsgNum * 0x40;
+  sendBuff = &sMsg + iVar1;
+  sMsgNum = sMsgNum ^ 1;
+  RpcSync(4);
+  *(undefined2 *)(&DAT_002d3082 + iVar1) = 0x29a;
+  *(int *)(&DAT_002d30a0 + iVar1) = cgo_id;
+  *(u8 **)(&DAT_002d3084 + iVar1) = buffer1;
+  *(u8 **)(&DAT_002d3088 + iVar1) = buffer2;
+  cgo_id = cgo_id + 1;
+  *(u8 **)(&DAT_002d308c + iVar1) = currentHeap;
+  strcpy((char *)(iVar1 + 0x2d3090),name);
+  RpcCallProxy(4,0,true,sendBuff,0x40,sendBuff,0x40);
+  sLastMsg = sendBuff;
+  return;
 }
 
 /*!
@@ -72,31 +60,25 @@ void BeginLoadingDGO(const char* name, Ptr<u8> buffer1, Ptr<u8> buffer2, Ptr<u8>
  * DONE,
  * MODIFIED : added exception if the sLastMessage isn't set (game just returns null as buffer)
  */
-Ptr<u8> GetNextDGO(u32* lastObjectFlag) {
+u8 * GetNextDGO(u32 *lastObjectFlag) {
+  u8 *puVar1;
+  
   *lastObjectFlag = 1;
-  // Wait for RPC function to respond. This will happen once the first object file is loaded.
-  RpcSync(DGO_RPC_CHANNEL);
-  Ptr<u8> buffer(0);
-  if (sLastMsg) {
-    // if we got a good result, get pointer to object
-    if ((sLastMsg->status == DGO_RPC_RESULT_MORE) || (sLastMsg->status == DGO_RPC_RESULT_DONE)) {
-      buffer.offset =
-          sLastMsg->buffer1;  // buffer 1 always contains location of most recently loaded object.
+  puVar1 = (u8 *)0x0;
+  RpcSync(4);
+  if (sLastMsg != 0) {
+    if (*(short *)(sLastMsg + 2) == 2) {
+      puVar1 = *(u8 **)(sLastMsg + 4);
     }
-
-    // not the last one, so don't set the flag.
-    if (sLastMsg->status == DGO_RPC_RESULT_MORE) {
+    else if (*(short *)(sLastMsg + 2) == 0) {
+      puVar1 = *(u8 **)(sLastMsg + 4);
+    }
+    if (*(short *)(sLastMsg + 2) == 2) {
       *lastObjectFlag = 0;
     }
-
-    // no pending message.
-    sLastMsg = nullptr;
-  } else {
-    // I don't see how this case can happen unless there's a bug. The game does check for this and
-    // nothing in this case. (maybe from GOAL this can happen?)
-    printf("last message not set!\n");
+    sLastMsg = 0;
   }
-  return buffer;
+  return puVar1;
 }
 
 /*!
@@ -108,104 +90,97 @@ Ptr<u8> GetNextDGO(u32* lastObjectFlag) {
  *
  * Unlike jak 1, we update buffer1 and buffer2 here for borrow heap loads.
  */
-void ContinueLoadingDGO(Ptr<u8> b1, Ptr<u8> b2, Ptr<u8> heapPtr) {
-  u32 msgID = sMsgNum;
-  jak3::RPC_Dgo_Cmd* sendBuff = sMsg + sMsgNum;
+void ContinueLoadingDGO(u8 *heapPtr) {
+  undefined4 in_a1_lo;
+  undefined4 in_a2_lo;
+  int iVar1;
+  undefined *sendBuff;
+  
+  iVar1 = sMsgNum * 0x40;
   sMsgNum = sMsgNum ^ 1;
-  sendBuff->status = DGO_RPC_RESULT_INIT;
-  sMsg[msgID].buffer1 = b1.offset;
-  sMsg[msgID].buffer2 = b2.offset;
-  sMsg[msgID].buffer_heap_top = heapPtr.offset;
-  // the IOP will wait for this RpcCall to continue the DGO state machine.
-  RpcCall(DGO_RPC_CHANNEL, DGO_RPC_LOAD_NEXT_FNO, true, sendBuff, sizeof(jak3::RPC_Dgo_Cmd),
-          sendBuff, sizeof(jak3::RPC_Dgo_Cmd));
-  // this async RPC call will complete when the next object is fully loaded.
+  sendBuff = &sMsg + iVar1;
+  *(undefined4 *)(&DAT_002d308c + iVar1) = in_a2_lo;
+  *(undefined2 *)(&DAT_002d3082 + iVar1) = 0x29a;
+  *(u8 **)(&DAT_002d3084 + iVar1) = heapPtr;
+  *(undefined4 *)(&DAT_002d3088 + iVar1) = in_a1_lo;
+  RpcCallProxy(4,1,true,sendBuff,0x40,sendBuff,0x40);
   sLastMsg = sendBuff;
+  return;
 }
+
 /*!
  * Load and link a DGO file.
  * This does not use the mutli-threaded linker and will block until the entire file is done.
  */
-void load_and_link_dgo(u64 name_gstr, u64 heap_info, u64 flag, u64 buffer_size) {
-  auto name = Ptr<char>(name_gstr + 4).c();
-  auto heap = Ptr<kheapinfo>(heap_info);
-  load_and_link_dgo_from_c(name, heap, flag, buffer_size, false);
+void load_and_link_dgo(u64 name_gstr,u64 heap_info,u64 flag,u64 buffer_size)
+{
+  bool in_t0_lo;
+  
+  load_and_link_dgo_from_c((const_char *)((int)name_gstr + 4),(kheapinfo *)heap_info,(u32)flag,(s32)buffer_size,in_t0_lo);
+  return;
 }
 
 /*!
  * Load and link a DGO file.
  * This does not use the mutli-threaded linker and will block until the entire file is done.e
  */
-void load_and_link_dgo_from_c(const char* name,
-                              Ptr<kheapinfo> heap,
-                              u32 linkFlag,
-                              s32 bufferSize,
-                              bool jump_from_c_to_goal) {
-  Timer timer;
-  lg::debug("[Load and Link DGO From C] {}", name);
-  u32 oldShowStall = sShowStallMsg;
-
-  // remember where the heap top point is so we can clear temporary allocations
-  auto oldHeapTop = heap->top;
-
-  // allocate temporary buffers from top of the given heap
-  // align 64 for IOP DMA
-  // note: both buffers named dgo-buffer-2
-  auto buffer2 = kmalloc(heap, bufferSize, KMALLOC_TOP | KMALLOC_ALIGN_64, "dgo-buffer-2");
-  auto buffer1 = kmalloc(heap, bufferSize, KMALLOC_TOP | KMALLOC_ALIGN_64, "dgo-buffer-2");
-
-  // build filename.  If no extension is given, default to CGO.
-  char fileName[16];
-  kstrcpyup(fileName, name);
-  if (fileName[strlen(fileName) - 4] != '.') {
-    strcat(fileName, ".CGO");
+void load_and_link_dgo_from_c(const_char *name,kheapinfo *heap,u32 linkFlag,s32 bufferSize, bool jump_from_c_to_goal) {
+  u8 *buffer2;
+  u8 *buffer1;
+  int32_t *piVar1;
+  size_t sVar2;
+  undefined in_t1_lo;
+  char acStack_b4 [4];
+  char acStack_b0 [8];
+  undefined local_a8;
+  char acStack_90 [64];
+  u32 local_50;
+  u32 local_4c;
+  u8 *local_48;
+  undefined4 local_44;
+  
+  local_48 = heap->top;
+  local_4c = linkFlag;
+  buffer2 = kmalloc(heap,bufferSize,0x2040,"dgo-buffer-2");
+  buffer1 = kmalloc(heap,bufferSize,0x2040,"dgo-buffer-2");
+  local_50 = 0;
+  kstrcpyup(acStack_b0,name);
+  sVar2 = strlen(acStack_b0);
+  if (acStack_b4[(int)sVar2] != '.') {
+    local_a8 = 0;
+    strcat(acStack_b0,".CGO");
   }
-
-  // no stall messages, as this is a blocking load and when spending 100% CPU time on linking,
-  // the linker can beat the DVD drive.
-  sShowStallMsg = 0;
-
-  // start load on IOP.
-  BeginLoadingDGO(
-      fileName, buffer1, buffer2,
-      Ptr<u8>((heap->current + 0x3f).offset & 0xffffffc0));  // 64-byte aligned for IOP DMA
-
-  u32 lastObjectLoaded = 0;
-  while (!lastObjectLoaded) {
-    // check to see if next object is loaded (I believe it always is?)
-    auto dgoObj = GetNextDGO(&lastObjectLoaded);
-    if (!dgoObj.offset) {
-      continue;
-    }
-
-    // if we're on the last object, it is loaded at cheap->current.  So we can safely reset the two
-    // dgo-buffer allocations. We do this _before_ we link! This way, the last file loaded has more
-    // heap available, which is important when we need to use the entire memory.
-    if (lastObjectLoaded) {
-      heap->top = oldHeapTop;
-    }
-
-    // determine the size and name of the object we got
-    auto obj = dgoObj + 0x40;             // seek past dgo object header
-    u32 objSize = *(dgoObj.cast<u32>());  // size from object's link block
-
-    char objName[64];
-    strcpy(objName, (dgoObj + 4).cast<char>().c());  // name from dgo object header
-    lg::debug("[link and exec] {:18s} {} {:6d} heap-use {:8d} {:8d}: 0x{:x}", objName,
-              lastObjectLoaded, objSize, kheapused(kglobalheap),
-              kdebugheap.offset ? kheapused(kdebugheap) : 0, kglobalheap->current.offset);
-    {
-      auto p = scoped_prof(fmt::format("link-{}", objName).c_str());
-      link_and_exec(obj, objName, objSize, heap, linkFlag, jump_from_c_to_goal);  // link now!
-    }
-
-    // inform IOP we are done
-    if (!lastObjectLoaded) {
-      ContinueLoadingDGO(buffer1, buffer2, Ptr<u8>((heap->current + 0x3f).offset & 0xffffffc0));
+  local_44 = setStallMsg_G(0);
+  if (POWERING_OFF_W == false) {
+    BeginLoadingDGO(acStack_b0,buffer1,buffer2,(u8 *)((uint)(heap->current + 0x3f) & 0xffffffc0));
+    while( true ) {
+      do {
+        if ((local_50 != 0) || (POWERING_OFF_W != false)) goto LAB_00270d58;
+        piVar1 = (int32_t *)GetNextDGO(&local_50);
+      } while (piVar1 == (int32_t *)0x0);
+      if (local_50 != 0) {
+        heap->top = local_48;
+      }
+      FUN_0027cc90_patch(piVar1,bufferSize);
+      strcpy(acStack_90,(char *)(piVar1 + 1));
+      link_and_exec((uint8_t *)(piVar1 + 0x10),acStack_90,*piVar1,heap,local_4c,(bool)in_t1_lo);
+      if (local_50 != 0) break;
+      if (POWERING_OFF_W == false) {
+        ContinueLoadingDGO(buffer1);
+      }
     }
   }
-  lg::info("load_and_link_dgo_from_c took {:.3f} s\n", timer.getSeconds());
-  sShowStallMsg = oldShowStall;
+LAB_00270d58:
+  if (POWERING_OFF_W == false) {
+    setStallMsg_G(local_44);
+    return;
+  }
+  KernelShutdown(3);
+  ShutdownMachine(3);
+  Msg(6,"load_and_link_dgo_from_c: cannot continue; load aborted\n");
+  do {
+                    // WARNING: Do nothing block with infinite loop
+  } while( true );
 }
 
 }  // namespace jak3
