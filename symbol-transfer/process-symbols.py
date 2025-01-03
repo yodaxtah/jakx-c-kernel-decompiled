@@ -33,7 +33,6 @@ def prompt_option(options: dict, fallback_option = None):
 def process_symbols(start = None, stop = None):
     global MIN_OFFSET
     global MAX_OFFSET
-    print("process_symbols")
     options = {
         "+": "Increase address 4 bytes",
         "-": "Decrease address 4 bytes",
@@ -41,6 +40,7 @@ def process_symbols(start = None, stop = None):
         "p": "Go To Previous Function",
         "c": "Clear Code Bytes",
         "d": "Disassemble",
+        "s": "Edit Function Signature",
         "f": "Create Function",
         "l": "Label",
         "q": "Quit",
@@ -91,6 +91,31 @@ def process_symbols(start = None, stop = None):
                             print("Creating a function")
                             createFunction(address, None)
                             break
+                        case "s":
+
+                            # >>> toAddr(int("001201b8", 16))
+                            # <ghidra.program.model.address.GenericAddress object at 0x0000025167ACE170>
+                            # >>> a = toAddr(int("001201b8", 16))
+                            # >>> getFunctionAt(a)
+                            # <ghidra.program.database.function.FunctionDB object at 0x0000025164DF2350>
+                            # >>> f = getFunctionAt(a)
+                            # >>> f == None
+                            # False
+                            # >>> f.getSignature()
+                            # <ghidra.program.model.data.FunctionDefinitionDataType object at 0x00000251650ADC90>
+                            # >>> s = f.getSignature()
+                            # >>> help(s)
+                            # >>> str(s)
+                            # 'undefined FUN_001201b8(void)'
+
+                            # >>> service_provider = state().getTool()
+                            # >>> function_definition = CParserUtils.parseSignature(service_provider, getCurrentProgram(), str(s))
+                            # >>> function_definition.getName()
+                            # 'FUN_001201b8'
+                            # >>> str(function_definition)
+                            # 'undefined FUN_001201b8(void)'
+
+                            break
                         case "l":
                             print("Labeling")
                             for name in names:
@@ -117,5 +142,4 @@ def process_symbols(start = None, stop = None):
             return
 
 def ps(start = None, stop = None):
-    print("ps")
     process_symbols(start, stop)
