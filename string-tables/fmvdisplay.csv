@@ -1,0 +1,85 @@
+0025feed,"fmvdisplay.cpp"
+0025fefc,"_ZN3fmv11         DisplayInit                             ERNS_13DisplayParamsE"
+0025ff26,"_ZN3fmv13         DisplayCreate                           EjjNS_9EZoomModeEb"
+0025ff4f,"_ZN3fmv15         DisplayAddFrame                         EPNS_6DmaTagEb"
+0025ff76,"_ZN3fmv12         DisplayStart                            Ev"
+0025ff8e,"_ZN3fmv11         DisplayStop                             Ev"
+0025ffa5,"_ZN3fmv15         DisplaySetPause                         Eb"
+0025ffc0,"_ZN3fmv17         DisplaySetCaption                       EPKNS_6DmaTagE"
+0025ffe9,"_ZN3fmv17         DisplayGetCaption                       Ev"
+00260006,"_ZN3fmv16         DisplayIsFlushed                        Ev"
+00260022,"_ZN3fmv14         DisplayDestroy                          Ev"
+0026003c,"_ZN3fmv17         DisplayWorkVblank                       Ej"
+00260059,"_ZN3fmv26         DisplayGetQueuedFrameCount              Ev"
+0026007f,"_ZN3fmv28         DisplayGetUploadedFrameCount            Ev"
+002600a7,"_ZN3fmv12         _GetNumPages                            Eiii"
+002600c1,"_ZN3fmv27         _Build16x16TexUploadGifTags             EPNS_6DmaTagEpo
+002600f5,"_ZN3fmv25         _BuildClearAndDrawGifTags               EPNS_6DmaTagEbbjjjjjjjj
+0026012f,"_ZN3fmv34         _BuildContrastAndBrightnessGifTags      EPNS_6DmeTagEff
+
+0026016a,"_ZN3fmv22         s_a ClearAndDrawGifTags          E"
+0026018b,"_ZN3fmv31         s_a ContrastAndBrightnessGifTags E"
+002601b5,"_ZN3fmv17         s_p CaptionDmaTags               E"
+002601d1,"_ZN3fmv20         s_p NewCaptionDmaTags            E"
+002601f0,"_ZN3fmv14         s_a DmaCallTags                  E"
+00260209,"_ZN3fmv14         s_n NextCallTag                  E"
+00260222,"_ZN3fmv12         s_I nitParams                    E"
+00260239,"_ZN3fmv19         s_n DmaTagQueueDepth             E"
+00260257,"_ZN3fmv19         s_u DmaTagQueueCount             E"
+00260275,"_ZN3fmv20         s_u DmaTagUploadCount            E"
+00260294,"_ZN3fmv20         s_u DmaTexUploadCount            E"
+002602b3,"_ZN3fmv15         s_a pDmaTagQueue                 E"
+002602cd,"_ZN3fmv16         s_b VblankEnabled                E"
+002602e8,"_ZN3fmv22         s_a ClearAndDrawGifTags          E"
+00260309,"_ZN3fmv31         s_a ContrastAndBrightnessGifTags E"
+00260333,"_ZN3fmv17         s_p CaptionDmaTags               E"
+0026034f,"_ZN3fmv20         s_p NewCaptionDmaTags            E"
+0026036e,"_ZN3fmv14         s_a DmaCallTags                  E"
+00260387,"_ZN3fmv14         s_n NextCallTag                  E"
+002603a0,"_ZN3fmv12         s_I nitParams                    E"
+002603b7,"_ZN3fmv14         s_C reateParams                  E"
+002603d0,"_ZN3fmv19         s_n DmaTagQueueDepth             E"
+002603ee,"_ZN3fmv19         s_u DmaTagQueueCount             E"
+0026040c,"_ZN3fmv20         s_u DmaTagUploadCount            E"
+0026042b,"_ZN3fmv20         s_u DmaTexUploadCount            E"
+0026044a,"_ZN3fmv15         s_a pDmaTagQueue                 E"
+00260464,"_ZN3fmv16         s_b VblankEnabled                E"
+0026047f,"_ZN3fmv15         s_n FrameCounter                 E"
+00260499,"_ZN3fmv18         s_n PalFieldCounter              E"
+002604b6,"_ZN3fmv14         s_u LastFmvTime                  E"
+002604cf,"_ZN3fmv22         s_n DisplayedFieldCount          E"
+002604f0,"_ZN3fmv9          s_b Paused                       E"
+00260503,"_ZN3fmv7          s_b Stop                         E"
+
+00260514,"_ZN3fmv11         DisplayInitERNS_13DisplayParamsE"
+0026053e,"sceGsSyncPath"
+0026054c,"sceGsSyncV"
+00260557,"_ZN3fmv27         _Build16x16TexUploadGifTagsEPNS_6Dma
+0026058b,"_ZN3fmv13         DmaStartChainENS_11EDmaChannelEPNS_6
+002605c0,"_ZN3fmv25         _BuildClearAndDrawGifTagsEPNS_6DmaTa
+002605fa,"_ZN3fmv34         _BuildContrastAndBrightnessGifTagsEP
+00260635,"_ZN3fmv13         DisplayCreateEjjNS_9EZoomModeEb"
+0026065e,"_ZN3fmv14         DisplayDestroyEv"
+00260678,"_ZN3fmv15         DisplayAddFrameEPNS_6DmaTagEb"
+0026069f,"_ZN3fmv8          MpegIdleEv"
+002606b2,"DIntr"
+002606d6,"_ZN3fmv11         DisplayStopEv"
+002606ed,"_ZN3fmv16         DisplayIsFlushedEv"
+00260709,"_ZN3fmv15         DisplaySetPauseEb"
+00260724,"_ZN3fmv17         DisplaySetCaptionEPKNS_6DmaTagE"
+0026074d,"_ZN3fmv17         DisplayGetCaptionEv"
+0026076a,"DelayThread"
+00260776,"_ZN3fmv17         DisplayWorkVblankEj"
+00260793,"__divdi3"
+0026079c,"_ZN3fmv26         DisplayGetQueuedFrameCountEv"
+002607c2,"_ZN3fmv28         DisplayGetUploadedFrameCountEv"
+002607ea,"_ZN3fmv9          DmaIsBusyENS_11EDmaChannelE"
+0026080e,"_ZN3fmv12         _GetNumPagesEiii"
+
+
+        002600c1 5f 5a 4e        ds         "_ZN3fmv27_Build16x16TexUploadGifTagsEPNS_6Dma
+                 33 66 6d 
+                 76 32 37 
+        002600c1 5f 5a 4e        ds         "_ZN3fmv27_Build16x16TexUploadGifTagsEPNS_6Dma
+                 33 66 6d 
+                 76 32 37 
