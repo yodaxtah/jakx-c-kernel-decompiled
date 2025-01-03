@@ -144,7 +144,7 @@ void KernelShutdown(u32 reason) {
   return;
 }
 
-int KernelCheckAndDispatch(void) {
+int KernelCheckAndDispatch() {
   while ((force_to_data_G == 0 && (POWERING_OFF_W == false))) {
     KernelDispatch(*(u32 *)(kernel_dispatcher + -1));
   }

@@ -64,9 +64,7 @@ void fixed_sym_set(u32 offset, u32 value) {
 }
 }  // namespace
 
-u64 new_illegal(u32 allocation,u32 type)
-
-{
+u64 new_illegal(u32 allocation,u32 type) {
   int unaff_s7_lo;
   undefined4 unaff_s7_hi;
   
@@ -75,9 +73,7 @@ u64 new_illegal(u32 allocation,u32 type)
   return CONCAT44(unaff_s7_hi,unaff_s7_lo);
 }
 
-u64 alloc_from_heap(u32 heapSymbol,u32 type,s32 size,u32 pp)
-
-{
+u64 alloc_from_heap(u32 heapSymbol,u32 type,s32 size,u32 pp) {
   u8 *puVar1;
   u64 uVar2;
   void *__s;
@@ -126,9 +122,7 @@ LAB_0026b504:
 /*!
  * Allocate untyped memory.
  */
-u64 alloc_heap_memory(u32 heap,u32 size)
-
-{
+u64 alloc_heap_memory(u32 heap,u32 size) {
   u64 uVar1;
   u32 in_a3_lo;
   
@@ -141,9 +135,7 @@ u64 alloc_heap_memory(u32 heap,u32 size)
  * For allocating basics.
  * Called from GOAL.
  */
-u64 alloc_heap_object(u32 heap,u32 type,u32 size,u32 pp)
-
-{
+u64 alloc_heap_object(u32 heap,u32 type,u32 size,u32 pp) {
   u64 uVar1;
   u64 uVar2;
   
@@ -161,9 +153,7 @@ u64 alloc_heap_object(u32 heap,u32 type,u32 size,u32 pp)
 /*!
  * Allocate a structure and get the structure size from the type.
  */
-u64 new_structure(u32 heap,u32 type)
-
-{
+u64 new_structure(u32 heap,u32 type) {
   u64 uVar1;
   u32 in_a3_lo;
   
@@ -174,9 +164,7 @@ u64 new_structure(u32 heap,u32 type)
 /*!
  * Allocate a structure with a dynamic size
  */
-u64 new_dynamic_structure(u32 heap_symbol,u32 type,u32 size)
-
-{
+u64 new_dynamic_structure(u32 heap_symbol,u32 type,u32 size) {
   u64 uVar1;
   u32 in_a3_lo;
   
@@ -187,9 +175,7 @@ u64 new_dynamic_structure(u32 heap_symbol,u32 type,u32 size)
 /*!
  * Delete a structure.  Not supported, as it uses kfree, which doesn't do anything.
  */
-void delete_structure(u32 s)
-
-{
+void delete_structure(u32 s) {
   kfree((u8 *)s);
   return;
 }
@@ -197,9 +183,7 @@ void delete_structure(u32 s)
 /*!
  * Allocate a basic of fixed size.
  */
-u64 new_basic(u32 heap,u32 type,u32 size,u32 pp)
-
-{
+u64 new_basic(u32 heap,u32 type,u32 size,u32 pp) {
   u64 uVar1;
   
   uVar1 = alloc_heap_object(heap,type,(uint)*(ushort *)(type + 8),pp);
@@ -209,9 +193,7 @@ u64 new_basic(u32 heap,u32 type,u32 size,u32 pp)
 /*!
  * Delete a basic.  Not supported, as it uses kfree.
  */
-void delete_basic(u32 s)
-
-{
+void delete_basic(u32 s) {
   kfree((u8 *)(s - 0x10));
   return;
 }
@@ -219,9 +201,7 @@ void delete_basic(u32 s)
 /*!
  * Allocate a new pair and set its car and cdr.
  */
-u64 new_pair(u32 heap,u32 type,u32 car,u32 cdr)
-
-{
+u64 new_pair(u32 heap,u32 type,u32 car,u32 cdr) {
   u32 *puVar1;
   u64 uVar2;
   u64 uVar3;
@@ -242,16 +222,12 @@ u64 new_pair(u32 heap,u32 type,u32 car,u32 cdr)
 /*!
  * Delete a pair.  BUG
  */
-void delete_pair(u32 s)
-
-{
+void delete_pair(u32 s) {
   kfree((u8 *)(s - 8));
   return;
 }
 
-u64 make_string(u32 size)
-
-{
+u64 make_string(u32 size) {
   u64 uVar1;
   int iVar2;
   u32 in_a3_lo;
@@ -272,9 +248,7 @@ u64 make_string(u32 size)
  * Convert a C string to a GOAL string.
  * Allocates from the global heap and copies the string data.
  */
-String * make_string_from_c(const_char *c_str)
-
-{
+String * make_string_from_c(const_char *c_str) {
   String *pSVar1;
   size_t sVar2;
   u64 uVar3;
@@ -294,9 +268,7 @@ String * make_string_from_c(const_char *c_str)
   return pSVar1;
 }
 
-u64 make_debug_string_from_c(const_char *c_str)
-
-{
+u64 make_debug_string_from_c(const_char *c_str) {
   size_t sVar1;
   u64 uVar2;
   int iVar3;
@@ -540,9 +512,7 @@ Ptr<Function> make_stack_arg_function_from_c_win32(void* func) {
  *
  * The implementation is to create a simple trampoline function which jumps to the C function.
  */
-Function * make_function_from_c(void *func,bool arg3_is_pp)
-
-{
+Function * make_function_from_c(void *func,bool arg3_is_pp) {
   u64 uVar1;
   u32 in_a3_lo;
   undefined4 *mem;
@@ -586,9 +556,7 @@ Ptr<Function> make_stack_arg_function_from_c(void* func) {
 /*!
  * Create a GOAL function which does nothing and immediately returns.
  */
-u64 make_nothing_func(void)
-
-{
+u64 make_nothing_func() {
   undefined4 *mem;
   u64 uVar1;
   u32 in_a3_lo;
@@ -607,9 +575,7 @@ u64 make_nothing_func(void)
 /*!
  * Create a GOAL function which returns 0.
  */
-u64 make_zero_func(void)
-
-{
+u64 make_zero_func() {
   undefined4 *mem;
   u64 uVar1;
   u32 in_a3_lo;
@@ -625,9 +591,7 @@ u64 make_zero_func(void)
   return uVar1;
 }
 
-u64 symbol_to_string_from_c(u32 sym)
-
-{
+u64 symbol_to_string_from_c(u32 sym) {
   int iVar1;
   u64 uVar2;
   int unaff_s7_lo;
@@ -652,9 +616,7 @@ u64 symbol_to_string_from_c(u32 sym)
  *
  * This work on both Linux and Windows, but only supports up to 6 arguments.
  */
-void make_function_symbol_from_c(char *name,void *f)
-
-{
+void make_function_symbol_from_c(char *name,void *f) {
   u32 *puVar1;
   Function *pFVar2;
   bool arg3_is_pp;
@@ -677,9 +639,7 @@ Ptr<Function> make_stack_arg_function_symbol_from_c(const char* name, void* f) {
   return func;
 }
 
-u32 make_raw_function_symbol_from_c(const_char *name,u32 value)
-
-{
+u32 make_raw_function_symbol_from_c(const_char *name,u32 value) {
   u32 *puVar1;
   
   puVar1 = intern_from_c(-1,0,name);
@@ -687,9 +647,7 @@ u32 make_raw_function_symbol_from_c(const_char *name,u32 value)
   return value;
 }
 
-Symbol4 * set_fixed_symbol(FixedSymbolOffset offset,const_char *name,u32 value)
-
-{
+Symbol4 * set_fixed_symbol(FixedSymbolOffset offset,const_char *name,u32 value) {
   String *pSVar1;
   Symbol4 *pSVar2;
   int unaff_s7_lo;
@@ -704,9 +662,7 @@ Symbol4 * set_fixed_symbol(FixedSymbolOffset offset,const_char *name,u32 value)
   return pSVar2;
 }
 
-Symbol4 * find_symbol_in_area(const_char *name,u32 start,u32 end)
-
-{
+Symbol4 * find_symbol_in_area(const_char *name,u32 start,u32 end) {
   int iVar1;
   int unaff_s7_lo;
   
@@ -767,9 +723,7 @@ Ptr<Symbol4<u32>> intern_from_c_ht(const char* name) {
 /*!
  * Get a pointer to a symbol. Can provide the symbol id, the name, or both.
  */
-Symbol4 * find_symbol_from_c(uint16_t sym_id,const_char *name)
-
-{
+Symbol4 * find_symbol_from_c(uint16_t sym_id,const_char *name) {
   int iVar1;
   Symbol4 *pSVar2;
   int iVar3;
@@ -832,9 +786,7 @@ Symbol4 * find_symbol_from_c(uint16_t sym_id,const_char *name)
  * @param flags Optional flag (0x40) can force the symbol's name to be stored. This uses memory.
  *
  */
-u32 * intern_from_c(int sym_id,int flags,const_char *name)
-
-{
+u32 * intern_from_c(int sym_id,int flags,const_char *name) {
   int iVar1;
   Symbol4 *pSVar2;
   String *pSVar3;
@@ -888,9 +840,7 @@ LAB_0026bdd0:
   return (u32 *)pSVar2;
 }
 
-u64 intern(u32 name)
-
-{
+u64 intern(u32 name) {
   u32 *puVar1;
   
   puVar1 = intern_from_c(-1,0x40,(const_char *)(name + 4));
@@ -900,9 +850,7 @@ u64 intern(u32 name)
 /*!
  * Configure a type.
  */
-Type * set_type_values(Type *type,Type *parent,u64 flags)
-
-{
+Type * set_type_values(Type *type,Type *parent,u64 flags) {
   ushort uVar1;
   
   uVar1 = type->num_methods;
@@ -947,9 +895,7 @@ static bool is_valid_type(u32 addr) {
  * Given a symbol for the type name, allocate memory for a type and add it to the symbol table.
  * New: in Jak 2, there's a level type list
  */
-Type * alloc_and_init_type(undefined *sym,u32 method_count,bool force_global_type)
-
-{
+Type * alloc_and_init_type(undefined *sym,u32 method_count,bool force_global_type) {
   Type **ppTVar1;
   Type *pTVar2;
   uint size;
@@ -992,9 +938,7 @@ LAB_0026befc:
  * Like intern, but returns a type instead of a symbol. If the type doesn't exist, a new one is
  * allocated.
  */
-Type * intern_type_from_c(int a,int b,const_char *name,u64 methods)
-
-{
+Type * intern_type_from_c(int a,int b,const_char *name,u64 methods) {
   Type **sym;
   Type *pTVar1;
   
@@ -1022,9 +966,7 @@ Type * intern_type_from_c(int a,int b,const_char *name,u64 methods)
 /*!
  * Wrapper of intern_type_from_c to use with GOAL. It accepts a gstring as a name.
  */
-Type * intern_type(u32 name,u64 methods)
-
-{
+Type * intern_type(u32 name,u64 methods) {
   Type *pTVar1;
   
   pTVar1 = intern_type_from_c(-1,0,(const_char *)(name + 4),methods);
@@ -1034,10 +976,7 @@ Type * intern_type(u32 name,u64 methods)
 /*!
  * Setup a type which is located in a fixed spot of the symbol table.
  */
-Type * set_fixed_type(FixedSymbolTypeOffset offset,const_char *name,Symbol4 *parent_symbol,u64 flags
-                     ,u32 print,u32 inspect)
-
-{
+Type * set_fixed_type(FixedSymbolTypeOffset offset,const_char *name,Symbol4 *parent_symbol,u64 flags,u32 print,u32 inspect) {
   Function *pFVar1;
   Type *parent;
   String *pSVar2;
@@ -1077,9 +1016,7 @@ Type * set_fixed_type(FixedSymbolTypeOffset offset,const_char *name,Symbol4 *par
   return type;
 }
 
-Type * new_type(u32 symbol,u32 parent,u64 flags)
-
-{
+Type * new_type(u32 symbol,u32 parent,u64 flags) {
   ushort uVar1;
   Function *pFVar2;
   Type *pTVar3;
@@ -1148,9 +1085,7 @@ Type * new_type(u32 symbol,u32 parent,u64 flags)
 /*!
  * Is t1 a t2?
  */
-u64 type_typep(Type *t1,Type *t2)
-
-{
+u64 type_typep(Type *t1,Type *t2) {
   Type *pTVar1;
   int unaff_s7_lo;
   undefined4 unaff_s7_hi;
@@ -1168,9 +1103,7 @@ u64 type_typep(Type *t1,Type *t2)
   return (long)(unaff_s7_lo + 4);
 }
 
-u64 method_set(u32 type_,u32 method_id,u32 method)
-
-{
+u64 method_set(u32 type_,u32 method_id,u32 method) {
   Function *pFVar1;
   Type *pTVar2;
   int *piVar3;
@@ -1273,9 +1206,7 @@ LAB_0026c6c8:
 /*!
  * Call a GOAL method of a given type.
  */
-u64 call_method_of_type(u32 arg,Type *type,u32 method_id)
-
-{
+u64 call_method_of_type(u32 arg,Type *type,u32 method_id) {
   u64 uVar1;
   char *format;
   Type *pTVar2;
@@ -1302,9 +1233,7 @@ u64 call_method_of_type(u32 arg,Type *type,u32 method_id)
 /*!
  * Call a GOAL function with 2 arguments.
  */
-u64 call_goal_function_arg2(Function *func,u64 a,u64 b)
-
-{
+u64 call_goal_function_arg2(Function *func,u64 a,u64 b) {
   u64 uVar1;
   
   uVar1 = (*(code *)func)(a,b);
@@ -1314,9 +1243,7 @@ u64 call_goal_function_arg2(Function *func,u64 a,u64 b)
 /*!
  * Call a global GOAL function by name.
  */
-u64 call_goal_function_by_name(const_char *name)
-
-{
+u64 call_goal_function_by_name(const_char *name) {
   u32 *puVar1;
   u64 uVar2;
   
@@ -1333,9 +1260,7 @@ u64 print_symbol(u32 obj);
 /*!
  * Print an object with a newline after it to the GOAL PrintBuffer (not stdout)
  */
-u64 sprint(u32 obj)
-
-{
+u64 sprint(u32 obj) {
   u64 uVar1;
   
   uVar1 = print_object(obj);
@@ -1346,9 +1271,7 @@ u64 sprint(u32 obj)
 /*!
  * Like call_method_of_type, but has two arguments. Used to "relocate" v2/s4 loads.
  */
-u64 call_method_of_type_arg2(u32 arg,Type *type,u32 method_id,u32 a1,u32 a2)
-
-{
+u64 call_method_of_type_arg2(u32 arg,Type *type,u32 method_id,u32 a1,u32 a2) {
   u64 uVar1;
   char *format;
   Type *pTVar2;
@@ -1377,9 +1300,7 @@ u64 call_method_of_type_arg2(u32 arg,Type *type,u32 method_id,u32 a1,u32 a2)
  * Does not correctly handle 64 bit boxed integers or object64's correctly.
  * It is important that no objects of type object actually exist or this will loop!
  */
-u64 print_object(u32 obj)
-
-{
+u64 print_object(u32 obj) {
   u64 uVar1;
   ulong uVar2;
   
@@ -1416,9 +1337,7 @@ u64 print_object(u32 obj)
  * Default print method a basic.
  * Confirms basic is valid and prints the type name.
  */
-u64 print_basic(u32 obj)
-
-{
+u64 print_basic(u32 obj) {
   ulong uVar1;
   int unaff_s7_lo;
   undefined4 unaff_s7_hi;
@@ -1444,9 +1363,7 @@ u64 print_basic(u32 obj)
  * Print a pair as a LISP list.  Don't try to print circular lists or it will get stuck
  * Can print improper lists
  */
-u64 print_pair(u32 obj)
-
-{
+u64 print_pair(u32 obj) {
   uint uVar1;
   char *format;
   ulong uVar2;
@@ -1488,9 +1405,7 @@ LAB_0026ccc0:
 /*!
  * Print method for symbol.  Just prints the name without quotes or anything fancy.
  */
-u64 print_symbol(u32 obj)
-
-{
+u64 print_symbol(u32 obj) {
   char *format;
   ulong uVar1;
   ulong uVar2;
@@ -1517,11 +1432,7 @@ LAB_0026cec0:
 /*!
  * Print method for type.  Just prints the name without quotes
  */
-u64 print_type(u32 obj)
-
-{
-  char *format;
-  ulong uVar1;
+u64 print_type(u32 obj) {) { ulong uVar1;
   ulong uVar2;
   int unaff_s7_lo;
   
@@ -1542,9 +1453,7 @@ u64 print_type(u32 obj)
 /*!
  * Print method for string.  Prints the string in quotes.
  */
-u64 print_string(u32 obj)
-
-{
+u64 print_string(u32 obj) {
   char *format;
   ulong uVar1;
   ulong uVar2;
@@ -1572,9 +1481,7 @@ u64 print_string(u32 obj)
 /*!
  * Print method for function. Just prints the address because functions can't identify themselves.
  */
-u64 print_function(u32 obj)
-
-{
+u64 print_function(u32 obj) {
   int unaff_s7_lo;
   
   cprintf("#<compiled %s @ #x%x>",*(int *)((**(int **)(obj - 4) - unaff_s7_lo) + SymbolString) + 4,
@@ -1586,9 +1493,7 @@ u64 print_function(u32 obj)
  * Get the allocated size field of a basic.  By default we grab this from the type struct.
  * Dynamically sized basics should override this method.
  */
-u64 asize_of_basic(u32 it)
-
-{
+u64 asize_of_basic(u32 it) {
   return (ulong)*(ushort *)(*(int *)(it - 4) + 8);
 }
 
@@ -1598,9 +1503,7 @@ u64 asize_of_basic(u32 it)
  * and checks it against the symbol type pointer to see if its a symbol. It seems possible to have a
  * false positive for this check.
  */
-u64 copy_basic(u32 obj,u32 heap,u32 unused,u32 pp)
-
-{
+u64 copy_basic(u32 obj,u32 heap,u32 unused,u32 pp) {
   u64 __n;
   u64 uVar1;
   void *__src;
@@ -1625,9 +1528,7 @@ u64 inspect_symbol(u32 obj);
 /*!
  * Highest level inspect method. Won't inspect 64-bit bintegers correctly.
  */
-u64 inspect_object(u32 obj)
-
-{
+u64 inspect_object(u32 obj) {
   u64 uVar1;
   ulong uVar2;
   
@@ -1663,9 +1564,7 @@ u64 inspect_object(u32 obj)
 /*!
  * Inspect a pair.
  */
-u64 inspect_pair(u32 obj)
-
-{
+u64 inspect_pair(u32 obj) {
   cprintf("[%8x] pair ",(long)(int)obj);
   print_pair(obj);
   cprintf("\n");
@@ -1676,9 +1575,7 @@ u64 inspect_pair(u32 obj)
  * Inspect a string. There's a typo in allocated_length (has underscore instead of dash).
  * This typo is fixed in later games.
  */
-u64 inspect_string(u32 obj)
-
-{
+u64 inspect_string(u32 obj) {
   ulong uVar1;
   int unaff_s7_lo;
   
@@ -1697,9 +1594,7 @@ u64 inspect_string(u32 obj)
 /*!
  * Inspect a symbol.
  */
-u64 inspect_symbol(u32 obj)
-
-{
+u64 inspect_symbol(u32 obj) {
   ulong uVar1;
   int unaff_s7_lo;
   
@@ -1721,9 +1616,7 @@ u64 inspect_symbol(u32 obj)
 /*!
  * Inspect a type.
  */
-u64 inspect_type(u32 obj)
-
-{
+u64 inspect_type(u32 obj) {
   ulong uVar1;
   int unaff_s7_lo;
   
@@ -1753,9 +1646,7 @@ u64 inspect_type(u32 obj)
  * Inspect a basic. This is just a fallback for basics which don't know how to inspect themselves.
  * We just use print_object.
  */
-u64 inspect_basic(u32 obj)
-
-{
+u64 inspect_basic(u32 obj) {
   u64 uVar1;
   ulong uVar2;
   ulong unaff_s7;
@@ -1780,9 +1671,7 @@ u64 inspect_basic(u32 obj)
 /*!
  * Inspect a link block. This link block doesn't seem to be used at all.
  */
-u64 inspect_link_block(u32 ob)
-
-{
+u64 inspect_link_block(u32 ob) {
   cprintf("[%8x] link-block\n\tallocated-length: %d\n\tversion: %d\n\tfunction: ",(long)(int)ob,
           *(undefined4 *)ob,*(undefined2 *)(ob + 4));
   print_object(ob + *(int *)ob);
@@ -1800,9 +1689,7 @@ u64 pack_type_flag(u64 methods, u64 heap_base, u64 size) {
 }
 }  // namespace
 
-int InitHeapAndSymbol(void)
-
-{
+int InitHeapAndSymbol() {
   int iVar1;
   int iVar2;
   uint uVar3;
@@ -2196,9 +2083,7 @@ int InitHeapAndSymbol(void)
   return iVar12;
 }
 
-u64 load(u32 file_name_in,u32 heap_in)
-
-{
+u64 load(u32 file_name_in,u32 heap_in) {
   undefined4 uVar1;
   char *__src;
   u64 uVar2;
@@ -2218,9 +2103,7 @@ u64 load(u32 file_name_in,u32 heap_in)
   return uVar2;
 }
 
-u64 loadb(u32 file_name_in,u32 heap_in,u32 param3)
-
-{
+u64 loadb(u32 file_name_in,u32 heap_in,u32 param3) {
   char *__src;
   u8 *puVar1;
   ulong uVar2;
@@ -2237,9 +2120,7 @@ u64 loadb(u32 file_name_in,u32 heap_in,u32 param3)
   return uVar2;
 }
 
-u64 loadc(const_char *file_name,kheapinfo *heap,u32 flags)
-
-{
+u64 loadc(const_char *file_name,kheapinfo *heap,u32 flags) {
   undefined4 uVar1;
   char *__src;
   u64 uVar2;
@@ -2260,9 +2141,7 @@ u64 loadc(const_char *file_name,kheapinfo *heap,u32 flags)
   return uVar2;
 }
 
-u64 loado(u32 file_name_in,u32 heap_in)
-
-{
+u64 loado(u32 file_name_in,u32 heap_in) {
   char *__src;
   ulong uVar1;
   const_char *name;
@@ -2283,18 +2162,14 @@ u64 loado(u32 file_name_in,u32 heap_in)
 /*!
  * "Unload". Doesn't free memory, just informs listener we unloaded.
  */
-u64 unload(u32 name)
-
-{
+u64 unload(u32 name) {
   u64 in_v0;
   
   output_unload((const_char *)(name + 4));
   return in_v0;
 }
 
-s64 load_and_link(const_char *filename,char *decode_name,kheapinfo *heap,u32 flags)
-
-{
+s64 load_and_link(const_char *filename,char *decode_name,kheapinfo *heap,u32 flags) {
   u8 *data;
   uint8_t *puVar1;
   undefined in_t1_lo;

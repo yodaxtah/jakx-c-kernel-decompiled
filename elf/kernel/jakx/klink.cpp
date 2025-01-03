@@ -23,9 +23,7 @@ bool is_opengoal_object(void* data) {
 constexpr bool link_debug_printfs = false;
 }  // namespace
 
-void jak3_begin(uint8_t *object_file,const_char *name,int32_t size,kheapinfo heap,uint32_t flags)
-
-{
+void jak3_begin(uint8_t *object_file,const_char *name,int32_t size,kheapinfo heap,uint32_t flags) {
   short sVar1;
   int iVar2;
   kheapinfo *heap_00;
@@ -128,9 +126,7 @@ LAB_0026f55c:
   return;
 }
 
-uint32_t jak3_work(void)
-
-{
+uint32_t jak3_work() {
   int iVar1;
   int iVar2;
   uint32_t uVar3;
@@ -460,9 +456,7 @@ uint32_t symlink_v3(Ptr<uint8_t> link, Ptr<uint8_t> data) {
 }
 }  // namespace
 
-uint32_t jak3_work_opengoal(void)
-
-{
+uint32_t jak3_work_opengoal() {
   byte bVar1;
   byte bVar2;
   int *piVar3;
@@ -756,9 +750,7 @@ LAB_0026fcac:
   return 1;
 }
 
-void jak3_finish(bool jump_from_c_to_goal)
-
-{
+void jak3_finish(bool jump_from_c_to_goal) {
   short sVar1;
   int iVar2;
   int iVar3;
@@ -828,10 +820,7 @@ void jak3_finish(bool jump_from_c_to_goal)
 
 namespace jak3 {
 
-uint8_t * link_and_exec(uint8_t *data,const_char *name,int32_t size,kheapinfo *heap,uint32_t flags,
-                       bool jump_from_c_to_goal)
-
-{
+uint8_t * link_and_exec(uint8_t *data,const_char *name,int32_t size,kheapinfo *heap,uint32_t flags, bool jump_from_c_to_goal) {
   uint32_t uVar1;
   long lVar2;
   kheapinfo in_stack_ffffff30;
@@ -861,9 +850,7 @@ u32 link_busy() {
 void link_reset() {
   saved_link_control.m_busy = 0;
 }
-uint64_t link_begin(u64 *args)
-
-{
+uint64_t link_begin(u64 *args) {
   kheapinfo heap;
   uint32_t uVar1;
   int32_t in_a1_lo;
@@ -880,9 +867,7 @@ uint64_t link_begin(u64 *args)
   }
   return (ulong)(uVar1 != 0);
 }
-uint64_t link_resume(void)
-
-{
+uint64_t link_resume() {
   uint32_t uVar1;
   
   uVar1 = jak3_work();
@@ -901,9 +886,7 @@ uint64_t link_resume(void)
  * but it may use the scratchpad.  It is implemented in GOAL, and falls back to normal C memcpy
  * if GOAL isn't loaded, or if the alignment isn't good enough.
  */
-void ultimate_memcpy_G(void *dst,void *src,uint32_t size)
-
-{
+void ultimate_memcpy_G(void *dst,void *src,uint32_t size) {
   code *pcVar1;
   int iVar2;
   ulong __n;

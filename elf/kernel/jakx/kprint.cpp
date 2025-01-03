@@ -24,9 +24,7 @@
  * This function is a disaster. For now, it's copied from jak1 and then jak 2, with the obvious
  * fixes made, but it's probably worth another pass.
  */
-s32 format_impl_jak3(uint64_t *args)
-
-{
+s32 format_impl_jak3(uint64_t *args) {
   byte bVar1;
   byte *__src;
   Symbol4 *pSVar2;

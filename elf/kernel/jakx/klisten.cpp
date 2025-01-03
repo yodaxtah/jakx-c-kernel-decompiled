@@ -38,9 +38,7 @@ void klisten_init_globals() {
  * Also adds "kernel" to the kernel_packages list.
  * There was an "ACK" message sent here, but this is removed because we don't need it.
  */
-void InitListener(void)
-
-{
+void InitListener() {
   u32 *puVar1;
   u32 *puVar2;
   String *car;
@@ -74,9 +72,7 @@ void InitListener(void)
 /*!
  * Handle an incoming listener message
  */
-void ProcessListenerMessage(char *msg)
-
-{
+void ProcessListenerMessage(char *msg) {
   kheapinfo *heap;
   s32 sVar1;
   u32 uVar2;
@@ -150,9 +146,7 @@ LAB_00270664:
   return;
 }
 
-int sql_query_sync(String *string_in)
-
-{
+int sql_query_sync(String *string_in) {
   int iVar1;
   int unaff_s7_lo;
   undefined4 unaff_s7_hi;

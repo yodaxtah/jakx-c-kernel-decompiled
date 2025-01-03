@@ -41,9 +41,7 @@ using namespace ee;
  * DONE
  * Modified to use std::string, and removed call to fflush.
  */
-void InitParms(int argc,const_char **argv)
-
-{
+void InitParms(int argc,const_char **argv) {
   int iVar1;
   size_t sVar2;
   char *__src;
@@ -213,9 +211,7 @@ LAB_00268674:
 /*!
  * This is mostly copy-pasted from jak2 and very simplified until we have overlord 2.
  */
-s32 InitIOP(void)
-
-{
+s32 InitIOP() {
   bool bVar1;
   int iVar2;
   int iVar3;
@@ -464,7 +460,7 @@ LAB_002697f8:
 }
 
 // NOTE: This is a new function
-void InitVideo(void) {
+void InitVideo() {
   bool bVar1;
   int iVar2;
   undefined auStack_b0 [96];
@@ -507,9 +503,7 @@ void InitVideo(void) {
   return;
 }
 
-int InitMachine(void)
-
-{
+int InitMachine() {
   bool bVar1;
   int iVar2;
   u8 *mem;
@@ -596,9 +590,7 @@ int InitMachine(void)
   return -1;
 }
 
-int StopIOP_G(void)
-
-{
+int StopIOP_G() {
   int iVar1;
   
   iVar1 = Is_RPC_Initialized_G();
@@ -611,9 +603,7 @@ int StopIOP_G(void)
   return iVar1;
 }
 
-int ShutdownMachine(int reasonIndex)
-
-{
+int ShutdownMachine(int reasonIndex) {
   long lVar1;
   char *pcVar2;
   
@@ -649,9 +639,7 @@ int ShutdownMachine(int reasonIndex)
   return 0;
 }
 
-u32 KeybdGetData(u32 mouse)
-
-{
+u32 KeybdGetData(u32 mouse) {
   undefined1 *puVar1;
   byte bVar2;
   long lVar3;
@@ -710,9 +698,7 @@ LAB_0026a720:
   return mouse;
 }
 
-u32 MouseGetData(u32 mouse)
-
-{
+u32 MouseGetData(u32 mouse) {
   return mouse;
 }
 
@@ -720,9 +706,7 @@ u32 MouseGetData(u32 mouse)
  * Open a file-stream.  Name is a GOAL string. Mode is a GOAL symbol.  Use 'read for readonly
  * and anything else for write only.
  */
-u64 kopen(u64 fs,u64 name,u64 mode)
-
-{
+u64 kopen(u64 fs,u64 name,u64 mode) {
   s32 sVar1;
   undefined4 *puVar2;
   char *__format;
@@ -760,9 +744,7 @@ u64 kopen(u64 fs,u64 name,u64 mode)
   return fs;
 }
 
-void PutDisplayEnv(u32 ptr)
-
-{
+void PutDisplayEnv(u32 ptr) {
   uint uVar1;
   
   if (count_618 == 0) {
@@ -838,9 +820,7 @@ void InitMachine_PCPort() {
 }
 // End PC Stuff
 
-void InitMachineScheme(void)
-
-{
+void InitMachineScheme() {
   u32 *puVar1;
   u32 *puVar2;
   String *pSVar3;
