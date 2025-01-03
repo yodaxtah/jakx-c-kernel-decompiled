@@ -59,29 +59,75 @@ void kmachine_init_globals_common() {
  * DONE, EXACT
  */
 void InitCD() {
-  lg::info("Initializing CD drive. This may take a while...");
-  ee::sceCdInit(SCECdINIT);
-  ee::sceCdMmode(SCECdDVD);
-  while (ee::sceCdDiskReady(0) == SCECdNotReady) {
-    lg::debug("Drive not ready... insert a disk!");
+  s32 sVar1;
+  
+  if (cd_S_INITIALIZE_CD_W != '\0') {
+    while( true ) {
+      strlen("dkernel: Initializing DVD drive...\n");
+      printf("dkernel: Initializing DVD drive...\n");
+      sVar1 = sceCdInit(0);
+      if (sVar1 != 0) break;
+      printf("dkernel: DVD drive initialization failed, retrying...\n",0);
+    }
+    printf("dkernel: DVD drive initialized; result=%d\n",sVar1);
   }
-  lg::debug("Disk type {}\n", ee::sceCdGetDiskType());
+  return;
 }
 
 /*!
  * Initialize the GS and display the splash screen.
  * Not yet implemented. TODO
  */
-void InitVideo() {}
+void InitVideo() {
+  bool bVar1;
+  int iVar2;
+  undefined auStack_b0 [96];
+  ulong local_50;
+  ulong local_48;
+  ulong local_40;
+  ulong local_38;
+  undefined local_30;
+  undefined local_2f;
+  undefined local_2e;
+  
+  sceGsResetGraph(0,1,3,0);
+  sceGsSetDefLoadImage(auStack_b0,0x2c00,8,0,0,0,0x200,0xe0);
+  FlushCache(0);
+  sceGsExecLoadImage(auStack_b0,0x1000000);
+  sceGsSetDefLoadImage(auStack_b0,0x2c00,8,0,0,0xe0,0x200,0xe0);
+  FlushCache(0);
+  sceGsExecLoadImage(auStack_b0,0x1070000);
+  memset(&local_50,0,0x28);
+  local_48 = local_48 & 0xfffffffffffffffd | 1;
+  local_50 = local_50 & 0xfffffffffffffffd | 0x60;
+  local_40 = local_40 & 0xffc00000fff00000 | 0x1160;
+  if (false) {
+    trap(7);
+  }
+  local_38 = local_38 & 0xff800000e0000000 | 0x1bf9ff0204a28c;
+  local_30 = 0;
+  local_2f = 0;
+  local_2e = 0;
+  sceGsSyncV(0);
+  sceGsPutDispEnv(&local_50);
+  iVar2 = 4;
+  do {
+    sceGsSyncV(0);
+    bVar1 = -1 < iVar2;
+    iVar2 = iVar2 + -1;
+  } while (bVar1);
+  local_50 = local_50 | 2;
+  sceGsPutDispEnv(&local_50);
+  return;
+}
 
 /*!
  * Flush caches.  Does all the memory, regardless of what you specify
  */
-void CacheFlush(void* mem, int size) {
-  (void)mem;
-  (void)size;
-  // FlushCache(0);
-  // FlushCache(2);
+void CacheFlush(void* mem,int size) {
+  FlushCache(0);
+  FlushCache(2);
+  return;
 }
 
 /*!
@@ -89,17 +135,17 @@ void CacheFlush(void* mem, int size) {
  * Set the new_pad flag to 1 and state to 0.
  * Prints an error if it fails to open.
  */
-u64 CPadOpen(u64 cpad_info, s32 pad_number) {
-  auto cpad = Ptr<CPadInfo>(cpad_info).c();
-  if (cpad->cpad_file == 0) {
-    // not open, so we will open it
-    cpad->cpad_file =
-        ee::scePadPortOpen(pad_number, 0, pad_dma_buf + pad_number * SCE_PAD_DMA_BUFFER_SIZE);
-    if (cpad->cpad_file < 1) {
-      MsgErr("dkernel: !open cpad #%d (%d)\n", pad_number, cpad->cpad_file);
-    }
-    cpad->new_pad = 1;
-    cpad->state = 0;
+u64 CPadOpen(u64 cpad_info,s32 pad_number) {
+  int iVar1;
+  
+  if (cpad_info == 0) {
+    MsgErr("dkernel: error; NULL pad info\n");
+    cpad_info = 0;
+  }
+  else if (((uint)pad_number < 2) && (iVar1 = (int)cpad_info, *(int *)(iVar1 + 0x24) == 0)) {
+    *(undefined4 *)(iVar1 + 0x50) = 0;
+    *(undefined4 *)(iVar1 + 0x4c) = 1;
+    *(undefined4 *)(iVar1 + 0x24) = 1;
   }
   return cpad_info;
 }
@@ -108,258 +154,274 @@ u64 CPadOpen(u64 cpad_info, s32 pad_number) {
  * Not checked super carefully for jak 2, but looks the same
  */
 u64 CPadGetData(u64 cpad_info) {
-  using namespace ee;
-  auto cpad = Ptr<CPadInfo>(cpad_info).c();
-  auto pad_state = scePadGetState(cpad->number, 0);
-  if (pad_state == scePadStateDiscon) {
-    cpad->state = 0;
+  int iVar1;
+  long lVar2;
+  char* format;
+  byte *pbVar3;
+  undefined4 uVar4;
+  int iVar5;
+  undefined local_70;
+  char local_6f;
+  undefined local_60 [16];
+  byte local_50;
+  byte local_4f;
+  byte local_40 [16];
+  
+  if (cpad_info == 0) {
+    format = "dkernel: error; NULL pad info\n";
   }
-  cpad->valid = pad_state | 0x80;
-  switch (cpad->state) {
-    // case 99: // functional
-    default:  // controller is functioning as normal
-      if (pad_state == scePadStateStable || pad_state == scePadStateFindCTP1) {
-        scePadRead(cpad->number, 0, (u8*)cpad);
-        // ps2 controllers would send an enabled bit if the button was NOT pressed, but we don't do
-        // that here. removed code that flipped the bits.
-
-        if (cpad->change_time) {
-          scePadSetActDirect(cpad->number, 0, cpad->direct);
-        }
-        cpad->valid = pad_state;
+  else {
+    pbVar3 = (byte *)cpad_info;
+    if (1 < *(uint *)(pbVar3 + 0x20)) {
+      MsgErr("dkernel: error; invalid controller port index %d\n");
+      return cpad_info;
+    }
+    iVar1 = (&DAT_00283458_libpad)[*(uint *)(pbVar3 + 0x20)];
+    if (-1 < iVar1) {
+      lVar2 = scePad2GetState(iVar1);
+      if (lVar2 == 0) {
+        *(undefined4 *)(pbVar3 + 0x50) = 0;
       }
-      break;
-    case 0:  // unavailable
-      if (pad_state == scePadStateStable || pad_state == scePadStateFindCTP1) {
-        auto pad_mode = scePadInfoMode(cpad->number, 0, InfoModeCurID, 0);
-        if (pad_mode != 0) {
-          auto vibration_mode = scePadInfoMode(cpad->number, 0, InfoModeCurExID, 0);
-          if (vibration_mode > 0) {
-            // vibration supported
-            pad_mode = vibration_mode;
-          }
-          if (pad_mode == 4) {
-            // controller mode
-            cpad->state = 40;
-          } else if (pad_mode == 7) {
-            // dualshock mode
-            cpad->state = 70;
-          } else {
-            // who knows mode
-            cpad->state = 90;
-          }
+      iVar5 = *(int *)(pbVar3 + 0x50);
+      *pbVar3 = (byte)lVar2 | 0x80;
+      if (iVar5 == 0x46) {
+        lVar2 = sceVibGetProfile(iVar1,local_40);
+        if (lVar2 < 0) {
+          return cpad_info;
         }
-      }
-      break;
-    case 40:  // controller mode - check for extra modes
-      // cpad->change_time = 0;
-      cpad->change_time = 0;
-      if (scePadInfoMode(cpad->number, 0, InfoModeIdTable, -1) == 0) {
-        // no controller modes
-        cpad->state = 90;
+        if ((lVar2 < 1) || (uVar4 = 1, (local_40[0] & 3) == 0)) {
+          uVar4 = 0;
+        }
+        *(undefined4 *)(pbVar3 + 0x7c) = uVar4;
+        *(undefined4 *)(pbVar3 + 0x50) = 99;
         return cpad_info;
       }
-      cpad->state = 41;
-    case 41:  // controller mode - change to dualshock mode!
-      // try to enter the 2nd controller mode (dualshock for ds2's)
-      if (scePadSetMainMode(cpad->number, 0, 1, 3) == 1) {
-        cpad->state = 42;
-      }
-      break;
-    case 42:  // controller mode change check
-      if (scePadGetReqState(cpad->number, 0) == scePadReqStateFailed) {
-        // failed to change to DS2
-        cpad->state = 41;
-      }
-      if (scePadGetReqState(cpad->number, 0) == scePadReqStateComplete) {
-        // change successful. go back to the beginning.
-        cpad->state = 0;
-      }
-      break;
-    case 70:  // dualshock mode - check vibration
-      // get number of actuators (2 for DS2)
-      if (scePadInfoAct(cpad->number, 0, -1, 0) < 1) {
-        // no actuators means no vibration. skip to end!
-        // cpad->change_time = 0;
-        cpad->change_time = 0;
-        cpad->state = 99;
-      } else {
-        // we have actuators to use.
-        // cpad->change_time = 1;  // remember to update pad times.
-        cpad->change_time = 1;
-        cpad->state = 75;
-      }
-      break;
-    case 75:  // set actuator vib param info
-      if (scePadSetActAlign(cpad->number, 0, cpad->align) != 0) {
-        if (scePadInfoPressMode(cpad->number, 0) == 1) {
-          // pressure buttons supported
-          cpad->state = 76;
-        } else {
-          // no pressure buttons, done with controller setup
-          cpad->state = 99;
+      if (0x46 < iVar5) {
+        if (iVar5 != 99) {
+          return cpad_info;
         }
+        if (lVar2 != 1) {
+          return cpad_info;
+        }
+        lVar2 = scePad2Read(iVar1,pbVar3 + 2);
+        if (-1 < lVar2) {
+          iVar5 = (int)lVar2 + 1 >> 1;
+          if (0xf < iVar5) {
+            iVar5 = 0xf;
+          }
+          *(ushort *)(pbVar3 + 2) = ~*(ushort *)(pbVar3 + 2);
+          pbVar3[1] = (byte)iVar5 | 0x70;
+        }
+        *pbVar3 = 1;
+        if (*(int *)(pbVar3 + 0x7c) == 0) {
+          return cpad_info;
+        }
+        local_60[0] = 3;
+        local_50 = 0;
+        local_4f = 0;
+        if (pbVar3[0x54] < 6) {
+          local_50 = pbVar3[pbVar3[0x54] + 0x5a] & 1;
+        }
+        if (pbVar3[0x55] < 6) {
+          local_4f = pbVar3[pbVar3[0x55] + 0x5a] >> 7;
+          local_50 = local_50 | (byte)((pbVar3[pbVar3[0x55] + 0x5a] & 0x7f) << 1);
+        }
+        sceVibSetActParam(iVar1,1,local_60,2,&local_50);
+        return cpad_info;
       }
-      break;
-    case 76:  // enter pressure mode
-      if (scePadEnterPressMode(cpad->number, 0) == 1) {
-        cpad->state = 78;
+      if (iVar5 != 0) {
+        return cpad_info;
       }
-      break;
-    case 78:  // pressure mode request check
-      if (scePadGetReqState(cpad->number, 0) == scePadReqStateFailed) {
-        cpad->state = 76;
+      if (lVar2 != 1) {
+        return cpad_info;
       }
-      if (scePadGetReqState(cpad->number, 0) == scePadReqStateComplete) {
-        cpad->state = 99;
+      lVar2 = scePad2GetButtonProfile(iVar1,&local_70);
+      *(undefined4 *)(pbVar3 + 0x50) = 0x5a;
+      if (lVar2 < 4) {
+        return cpad_info;
       }
-      break;
-    case 90:
-      break;  // unsupported controller. too bad!
+      if (local_6f != -1) {
+        return cpad_info;
+      }
+      *(undefined4 *)(pbVar3 + 0x50) = 0x46;
+      return cpad_info;
+    }
+    format = "dkernel: error; invalid pad socket\n";
   }
-  return cpad_info;
+  MsgErr(format);
+  return 0;
 }
 
 // should make sure this works the same way in jak 2
-void InstallHandler(u32 handler_idx, u32 handler_func) {
-  switch (handler_idx) {
-    case 3:
-      vblank_interrupt_handler = handler_func;
-      break;
-    case 5:
-      vif1_interrupt_handler = handler_func;
-      break;
-    default:
-      lg::error("unknown handler: {}\n", handler_idx);
-      ASSERT(false);
-  }
+void InstallHandler(u32 handler_idx,u32 handler_func) {
+  DisableIntc(handler_idx);
+  AddIntcHandler(handler_idx,(void *)handler_func,0);
+  EnableIntc(handler_idx);
+  return;
 }
 
 // nothing used this in jak1, hopefully same for 2
 void InstallDebugHandler() {
-  ASSERT(false);
+  SetDebugHandler();
+  return;
 }
 
 /*!
  * Get length of a file.
  */
 s32 klength(u64 fs) {
-  auto file_stream = Ptr<FileStream>(fs).c();
-  if ((file_stream->flags ^ 1) & 1) {
-    // first flag bit not set. This means no errors
-    auto end_seek = ee::sceLseek(file_stream->file, 0, SCE_SEEK_END);
-    auto reset_seek = ee::sceLseek(file_stream->file, 0, SCE_SEEK_SET);
-    if (reset_seek < 0 || end_seek < 0) {
-      // seeking failed, flag it
-      file_stream->flags |= 1;
+  int iVar1;
+  int iVar2;
+  uint* puVar3;
+  uint uVar4;
+  
+  puVar3 = (uint *)fs;
+  iVar1 = 0;
+  if (((*(byte *)puVar3 ^ 1) & 1) != 0) {
+    iVar1 = sceLseek(puVar3[3],0,2);
+    iVar2 = sceLseek(puVar3[3],0,0);
+    if (iVar1 < 0) {
+      uVar4 = *puVar3;
     }
-    return end_seek;
-  } else {
-    return 0;
+    else {
+      if (-1 < iVar2) {
+        return iVar1;
+      }
+      uVar4 = *puVar3;
+    }
+    *puVar3 = uVar4 | 1;
   }
+  return iVar1;
 }
 
 /*!
  * Seek a file stream.
  */
-s32 kseek(u64 fs, s32 offset, s32 where) {
-  s32 result = -1;
-  auto file_stream = Ptr<FileStream>(fs).c();
-  if ((file_stream->flags ^ 1) & 1) {
-    result = ee::sceLseek(file_stream->file, offset, where);
-    if (result < 0) {
-      file_stream->flags |= 1;
-    }
+s32 kseek(u64 fs,s32 offset,s32 where) {
+  int iVar1;
+  uint* puVar2;
+  
+  iVar1 = -1;
+  puVar2 = (uint *)fs;
+  if ((((*(byte *)puVar2 ^ 1) & 1) != 0) && (iVar1 = sceLseek(puVar2[3],offset,where), iVar1 < 0)) {
+    *puVar2 = *puVar2 | 1;
   }
-  return result;
+  return iVar1;
 }
 
 /*!
  * Read from a file stream.
  */
-s32 kread(u64 fs, u64 buffer, s32 size) {
-  s32 result = -1;
-  auto file_stream = Ptr<FileStream>(fs).c();
-  if ((file_stream->flags ^ 1) & 1) {
-    result = ee::sceRead(file_stream->file, Ptr<u8>(buffer).c(), size);
-    if (result < 0) {
-      file_stream->flags |= 1;
-    }
+s32 kread(u64 fs,u64 buffer,s32 size) {
+  int iVar1;
+  uint* puVar2;
+  
+  iVar1 = -1;
+  puVar2 = (uint *)fs;
+  if ((((*(byte *)puVar2 ^ 1) & 1) != 0) &&
+     (iVar1 = sceRead(puVar2[3],(void *)buffer,size), iVar1 < 0)) {
+    *puVar2 = *puVar2 | 1;
   }
-  return result;
+  return iVar1;
 }
 
 /*!
  * Write to a file stream.
  */
-s32 kwrite(u64 fs, u64 buffer, s32 size) {
-  s32 result = -1;
-  auto file_stream = Ptr<FileStream>(fs).c();
-  if ((file_stream->flags ^ 1) & 1) {
-    result = ee::sceWrite(file_stream->file, Ptr<u8>(buffer).c(), size);
-    if (result < 0) {
-      file_stream->flags |= 1;
-    }
+s32 kwrite(u64 fs,u64 buffer,s32 size) {
+  int iVar1;
+  uint* puVar2;
+  
+  iVar1 = -1;
+  puVar2 = (uint *)fs;
+  if ((((*(byte *)puVar2 ^ 1) & 1) != 0) &&
+     (iVar1 = sceWrite(puVar2[3],(const_void *)buffer,size), iVar1 < 0)) {
+    *puVar2 = *puVar2 | 1;
   }
-  return result;
+  return iVar1;
 }
 
 /*!
  * Close a file stream.
  */
 u64 kclose(u64 fs) {
-  auto file_stream = Ptr<FileStream>(fs).c();
-  if ((file_stream->flags ^ 1) & 1) {
-    ee::sceClose(file_stream->file);
-    file_stream->file = -1;
+  undefined4 *puVar1;
+  
+  puVar1 = (undefined4 *)fs;
+  if (((*(byte *)puVar1 ^ 1) & 1) != 0) {
+    sceClose(puVar1[3]);
+    puVar1[3] = 0xffffffff;
   }
-  file_stream->flags = 0;
+  *puVar1 = 0;
   return fs;
 }
 
 // TODO dma_to_iop
-void dma_to_iop() {
-  ASSERT(false);
+bool dma_to_iop(void* param_1,int param_2,void* param_3) {
+  u32 id;
+  s32 sVar1;
+  SifDmaTransfer_t local_20;
+  
+  local_20.attr = 0;
+  local_20.src = param_1;
+  local_20.dest = param_3;
+  local_20.size = param_2;
+  id = sceSifSetDma(&local_20,1);
+  if (id != 0) {
+    do {
+      sVar1 = sceSifDmaStat(id);
+    } while (-1 < sVar1);
+  }
+  return id == 0;
 }
 
-u64 DecodeLanguage() {
-  return masterConfig.language;
+u64 DecodeLanguage()
+{
+  return (ulong)masterConfig.language;
 }
 
-u64 DecodeAspect() {
-  return masterConfig.aspect;
+u64 DecodeAspect()
+{
+  return (ulong)masterConfig.aspect;
 }
 
-u64 DecodeVolume() {
-  return masterConfig.volume;
+u64 DecodeVolume()
+{
+  return (ulong)masterConfig.volume;
 }
 
 // NOTE: this is originally hardcoded, and returns different values depending on the disc region.
 // it returns 0 for NTSC-U, 1 for PAL and 2 for NTSC-J
-u64 DecodeTerritory() {
-  return GAME_TERRITORY_SCEA;
+u64 DecodeTerritory()
+{
+  return 1;
 }
 
-u64 DecodeTimeout() {
-  return masterConfig.timeout;
+u64 DecodeTimeout()
+{
+  return (ulong)masterConfig.timeout;
 }
 
-u64 DecodeInactiveTimeout() {
-  return masterConfig.inactive_timeout;
+u64 DecodeInactiveTimeout()
+{
+  return (ulong)masterConfig.inactive_timeout;
 }
 
 void DecodeTime(u32 ptr) {
-  Ptr<ee::sceCdCLOCK> clock(ptr);
-  // in jak2, if this fails, they do a sceScfGetLocalTimefromRTC
-  sceCdReadClock(clock.c());
+  long lVar1;
+  
+  if ((ptr != 0) && (lVar1 = FUN_0027476c_called_in_DecodeTime_implicit_dkernel(), lVar1 != 0)) {
+    sceScfGetLocalTimefromRTC(ptr);
+  }
+  return;
 }
 
-void vif_interrupt_callback(int bucket_id) {
-  // added for the PC port for faking VIF interrupts from the graphics system.
-  if (vif1_interrupt_handler && MasterExit == RuntimeExitStatus::RUNNING) {
-    call_goal(Ptr<Function>(vif1_interrupt_handler), bucket_id, 0, 0, s7.offset, g_ee_main_mem);
-  }
-}
+// void vif_interrupt_callback(int bucket_id) {
+//   // added for the PC port for faking VIF interrupts from the graphics system.
+//   if (vif1_interrupt_handler && MasterExit == RuntimeExitStatus::RUNNING) {
+//     call_goal(Ptr<Function>(vif1_interrupt_handler), bucket_id, 0, 0, s7.offset, g_ee_main_mem);
+//   }
+// }
 
 /// PC PORT FUNCTIONS BEGIN
 

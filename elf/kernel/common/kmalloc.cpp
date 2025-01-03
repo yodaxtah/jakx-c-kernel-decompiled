@@ -127,81 +127,82 @@ u32 kheapused(Ptr<kheapinfo> heap) {
  * @return        : memory.  0 if we run out of room
  * DONE, PRINT ADDED
  */
-Ptr<u8> kmalloc(Ptr<kheapinfo> heap, s32 size, u32 flags, char const* name) {
-  uint32_t alignment_flag = flags & 0xfff;
-
-  // if we got a null heap, put it on the global heap, but warn about it
-  if (!heap.offset) {
-    // the 0 is uninitialized in jak1, set to zero in jak 2. might just be compiler differences.
-    Msg(6, "-----------> kmalloc: alloc %s,  mem %s #x%x (a:%d  %dbytes)\n", "DEBUG", name, 0,
-        alignment_flag, size);
-    heap = kglobalheap;
+u8* kmalloc(kheapinfo *heap,s32 size,u32 flags,const char* name) {
+  u8* puVar1;
+  int iVar2;
+  char* format;
+  size_t __n;
+  u8* puVar3;
+  uint uVar4;
+  
+  __n = (size_t)size;
+  uVar4 = flags & 0xfff;
+  if (heap == (kheapinfo *)0x0) {
+    Msg(6,"--------------------> kmalloc: alloc %s mem %s #x%x (a:%d  %d bytes)\n",0x25c618,name,0,
+        uVar4,__n);
+    heap = &kglobalheapinfo;
   }
-
-  uint32_t memstart;
-
-  if (!(flags & KMALLOC_TOP)) {
-    // allocate from bottom
-    if (alignment_flag == KMALLOC_ALIGN_64)
-      memstart = (0xffffffc0 & (heap->current.offset + 0x40 - 1));
-    else if (alignment_flag == KMALLOC_ALIGN_256)
-      memstart = (0xffffff00 & (heap->current.offset + 0x100 - 1));
-    else  // includes 0x10!
-      memstart = (0xfffffff0 & (heap->current.offset + 0x10 - 1));
-
-    if (size == 0) {
-      Msg(6, "[WARNING] kmalloc : size 0 allocation from bottom.\n");
-      return Ptr<u8>(memstart);
+  if ((flags & 0x2000) == 0) {
+    puVar1 = heap->current;
+    if (uVar4 == 0x40) {
+      puVar3 = puVar1 + 0x3f;
+      uVar4 = 0xffffffc0;
     }
-
-    uint32_t memend = memstart + size;
-
-    if (heap->top.offset < memend) {
-      kheapstatus(heap);
-      Msg(6, "kmalloc: !alloc mem %s (%d bytes) heap %x\n", name, size, heap.offset);
-      return Ptr<u8>(0);
-    }
-
-    heap->current.offset = memend;
-    if (flags & KMALLOC_MEMSET)
-      std::memset(Ptr<u8>(memstart).c(), 0, (size_t)size);
-    return Ptr<u8>(memstart);
-  } else {
-    // allocate from top
-    if (alignment_flag == 0) {
-      alignment_flag = KMALLOC_ALIGN_16;
-    }
-
-    memstart = (heap->top.offset - size) & (-alignment_flag);
-
-    if (size == 0) {
-      Msg(6, "[WARNING] kmalloc : size 0 allocation from top\n");
-      return Ptr<u8>(memstart);
-    }
-
-    if (heap->current.offset >= memstart) {
-      Msg(6, "kmalloc: !alloc mem from top %s (%d bytes) heap %x\n", name, size, heap.offset);
-      kheapstatus(heap);
-      return Ptr<u8>(0);
-    }
-
-    heap->top.offset = memstart;
-
-    if (flags & KMALLOC_MEMSET)
-      std::memset(Ptr<u8>(memstart).c(), 0, (size_t)size);
-
-    // this logging was added in Jak 3, but we port it back to all games:
-    if ((heap == kglobalheap) && (kheaplogging != 0)) {
-      if (strcmp(name, "string") == 0) {
-        MemItemsCount[STRING]++;
-        MemItemsSize[STRING] += size;
-      } else if (strcmp(name, "type") == 0) {
-        MemItemsCount[TYPE]++;
-        MemItemsSize[TYPE] += size;
+    else {
+      puVar3 = puVar1 + 0xff;
+      if (uVar4 == 0x100) {
+        uVar4 = 0xffffff00;
+      }
+      else {
+        puVar3 = puVar1 + 0xf;
+        uVar4 = 0xfffffff0;
       }
     }
-    return Ptr<u8>(memstart);
+    puVar3 = (u8 *)((uint)puVar3 & uVar4);
+    if (__n == 0) {
+      return puVar3;
+    }
+    if (heap->top <= puVar3 + size) {
+      format = "kmalloc: !alloc mem %s (%d bytes) heap %x\n";
+      goto LAB_0025b9c4;
+    }
+    heap->current = puVar3 + size;
   }
+  else {
+    if (uVar4 == 0) {
+      uVar4 = 0x10;
+    }
+    puVar3 = (u8 *)((int)heap->top - size & -uVar4);
+    if (__n == 0) {
+      return puVar3;
+    }
+    if (puVar3 <= heap->current) {
+      format = "kmalloc: !alloc mem from top %s (%d bytes) heap %x\n";
+LAB_0025b9c4:
+      Msg(6,format,name,__n,heap);
+      kheapstatus(heap);
+      return (u8 *)0x0;
+    }
+    heap->top = puVar3;
+  }
+  if ((flags & 0x1000) != 0) {
+    memset(puVar3,0,__n);
+  }
+  if ((heap == &kglobalheapinfo) && ((char)kheaplogging != '\0')) {
+    iVar2 = strcmp(name,"string");
+    if (iVar2 == 0) {
+      MemItemsCount[0] = MemItemsCount[0] + 1;
+      MemItemsSize[0] = MemItemsSize[0] + size;
+    }
+    else {
+      iVar2 = strcmp(name,"type");
+      if (iVar2 == 0) {
+        MemItemsCount[1] = MemItemsCount[1] + 1;
+        MemItemsSize[1] = MemItemsSize[1] + size;
+      }
+    }
+  }
+  return puVar3;
 }
 
 /*!
@@ -209,7 +210,6 @@ Ptr<u8> kmalloc(Ptr<kheapinfo> heap, s32 size, u32 flags, char const* name) {
  * Programmers wishing to free memory must do it themselves.
  * DONE, PRINT ADDED
  */
-void kfree(Ptr<u8> a) {
-  (void)a;
-  Msg(6, "[ERROR] kmalloc: kfree called\n");
+void kfree(u8* a) {
+  return;
 }

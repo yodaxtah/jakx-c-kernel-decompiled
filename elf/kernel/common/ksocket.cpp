@@ -12,37 +12,30 @@
  * DONE, removed call to FlushCache(0);
  */
 u32 ReceiveToBuffer(char* buff) {
-  (void)buff;
-
-  // if we received less than the size of the message header, we either got nothing, or there was an
-  // error
-  if (protoBlock.last_receive_size < (int)sizeof(ListenerMessageHeader)) {
-    return -1;
-  }
-
-  // FlushCache(0);
-  ListenerMessageHeader* gbuff = protoBlock.receive_buffer;
-  u32 msg_size = gbuff->msg_size;
-
-  // check it's our protocol
-  if (gbuff->deci2_header.proto == DECI2_PROTOCOL) {
-    // null terminate
-    ((u8*)gbuff)[sizeof(ListenerMessageHeader) + msg_size] = '\0';
-    // copy stuff to block
-    protoBlock.msg_kind = u32(gbuff->msg_kind);
-    protoBlock.msg_id = gbuff->msg_id;
-    // and mark message as received!
+  void* pvVar1;
+  u32 uVar2;
+  
+  uVar2 = 0xffffffff;
+  if (0x17 < protoBlock.last_receive_size) {
+    FlushCache(0);
+    pvVar1 = protoBlock.receive_buffer;
+    uVar2 = *(u32 *)((int)protoBlock.receive_buffer + 0xc);
+    if (*(short *)((int)protoBlock.receive_buffer + 4) == -0x1fbe) {
+      *(undefined *)((int)protoBlock.receive_buffer + uVar2 + 0x18) = 0;
+      protoBlock.msg_id = *(undefined8 *)((int)pvVar1 + 0x10);
+      protoBlock.field57_0x48 = (uint)*(ushort *)((int)pvVar1 + 8);
+    }
+    else {
+      MsgErr("dkernel: got a bad packet to goal proto (goal #x%x bytes %d %d %d %d %d)\n",
+             protoBlock.receive_buffer,protoBlock.last_receive_size,
+             (ulong)*(ushort *)((int)protoBlock.receive_buffer + 8),
+             (ulong)*(ushort *)((int)protoBlock.receive_buffer + 10),
+             *(undefined8 *)((int)protoBlock.receive_buffer + 0x10),uVar2);
+      uVar2 = 0xffffffff;
+    }
     protoBlock.last_receive_size = -1;
-  } else {
-    // not our protocol, something has gone wrong.
-    MsgErr("dkernel: got a bad packet to goal proto (goal #x%lx bytes %d %d %d %ld %d)\n",
-           (int64_t)protoBlock.receive_buffer, protoBlock.last_receive_size,
-           u32(protoBlock.receive_buffer->msg_kind), protoBlock.receive_buffer->u6,
-           protoBlock.receive_buffer->msg_id, msg_size);
-    protoBlock.last_receive_size = -1;
-    return -1;
   }
-  return msg_size;
+  return uVar2;
 }
 
 /*!
@@ -50,8 +43,11 @@ u32 ReceiveToBuffer(char* buff) {
  * The message type is OUTPUT
  * DONE, EXACT
  */
-s32 SendFromBuffer(char* buff, s32 size) {
-  return SendFromBufferD(u16(ListenerMessageKind::MSG_OUTPUT), 0, buff, size);
+s32 SendFromBuffer(char* buff,s32 size) {
+  s32 sVar1;
+  
+  sVar1 = SendFromBufferD(1,0,buff,size);
+  return sVar1;
 }
 
 /*!
@@ -59,17 +55,24 @@ s32 SendFromBuffer(char* buff, s32 size) {
  * Must be called before attempting to use the socket connection.
  * DONE, EXACT
  */
-void InitListenerConnect() {
-  if (MasterDebug) {
-    kstrcpy(AckBufArea + sizeof(ListenerMessageHeader), "ack");
+char* InitListenerConnect() {
+  char* in_v0_lo;
+  char* pcVar1;
+  
+  if (MasterDebug != 0) {
+    pcVar1 = strcpy(&AckBufArea,"ack\n");
+    return pcVar1;
   }
+  return in_v0_lo;
 }
 
 /*!
  * Does nothing.
  * DONE, EXACT
  */
-void InitCheckListener() {}
+void InitCheckListener() {
+  return;
+}
 
 /*!
  * Doesn't actually wait for a message, just checks if there's currently a message.
@@ -79,18 +82,22 @@ void InitCheckListener() {}
  * Updates MessCount to be equal to the size of the new message
  * DONE, EXACT
  */
-Ptr<char> WaitForMessageAndAck() {
-  if (!MasterDebug) {
+char* WaitForMessageAndAck() {
+  u8* puVar1;
+  
+  if (MasterDebug == 0) {
     MessCount = -1;
-  } else {
-    MessCount = ReceiveToBuffer((char*)MessBufArea.c() + sizeof(ListenerMessageHeader));
   }
-
+  else {
+    MessCount = ReceiveToBuffer((char *)(MessBufArea + 0x18));
+  }
   if (MessCount < 0) {
-    return Ptr<char>(0);
+    puVar1 = (u8 *)0x0;
   }
-
-  return MessBufArea.cast<char>() + sizeof(ListenerMessageHeader);
+  else {
+    puVar1 = MessBufArea + 0x18;
+  }
+  return (char *)puVar1;
 }
 
 /*!
@@ -98,5 +105,6 @@ Ptr<char> WaitForMessageAndAck() {
  * DONE, EXACT
  */
 void CloseListener() {
-  Msg(6, "dconnect: closed socket at kernel side\n");
+  Msg(6,"dconnect: closed socket at kernel side\n");
+  return;
 }

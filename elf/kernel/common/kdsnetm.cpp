@@ -23,29 +23,34 @@ void kdsnetm_init_globals_common() {
  * Register GOAL DECI2 Protocol Driver with DECI2 service
  * DONE, EXACT
  */
-void InitGoalProto() {
-  protoBlock.socket = ee::sceDeci2Open(DECI2_PROTOCOL, &protoBlock, GoalProtoHandler);
+void InitGoalProto()
+{
+  protoBlock.socket = sceDeci2Open(0xe042,&protoBlock,GoalProtoHandler);
   if (protoBlock.socket < 0) {
     MsgErr("gproto: open proto error\n");
-  } else {
-    protoBlock.send_buffer = nullptr;
-    protoBlock.receive_buffer = MessBufArea.cast<ListenerMessageHeader>().c();
-    protoBlock.send_status = -1;
-    protoBlock.last_receive_size = -1;
-    protoBlock.receive_progress = 0;
-    protoBlock.deci2count.offset = 0;
-    Msg(6, "gproto: proto open at socket %d\n", protoBlock.socket);
+    return;
   }
+  protoBlock.send_status = -1;
+  protoBlock.last_receive_size = -1;
+  protoBlock.deci2count = 0;
+  protoBlock.receive_progress = 0;
+  protoBlock.send_buffer = (int *)0x0;
+  protoBlock.receive_buffer = MessBufArea;
+  Msg(6,"gproto: proto open at socket %d\n",protoBlock.socket);
+  return;
 }
 
 /*!
  * Close the DECI2 Protocol Driver
  * DONE, EXACT
  */
-void ShutdownGoalProto() {
-  if (protoBlock.socket > 0) {
-    ee::sceDeci2Close(protoBlock.socket);
+void ShutdownGoalProto()
+{
+  if (0 < protoBlock.socket) {
+    sceDeci2Close(protoBlock.socket);
+    return;
   }
+  return;
 }
 
 /*!
@@ -53,98 +58,73 @@ void ShutdownGoalProto() {
  * Called by the DECI2 Protocol driver
  * DONE, added print statements on errors for debugging, EI and SYNC at the end were removed
  */
-void GoalProtoHandler(int event, int param, void* opt) {
-  // verify we got the correct opt pointer.  It's not clear why the opt pointer is used
-  // like this?
-  GoalProtoBlock* pb = (GoalProtoBlock*)opt;
-  if (&protoBlock != pb) {
-    Msg(6, "gproto: BAD OPT POINTER PASSED IN!!!!\n");  // this print statement is in the game.
-    pb = &protoBlock;
+void GoalProtoHandler(int event,int param,GoalProtoBlock *opt) {
+  s32 sVar1;
+  int iVar2;
+  
+  if (opt != &protoBlock) {
+    opt = &protoBlock;
+    Msg(6,"gproto: BAD OPT POINTER PASSED IN!!!!\n");
   }
-
-  // increment deci2count, if it's set up
-  if (pb->deci2count.offset) {
-    *pb->deci2count = *pb->deci2count + 1;
+  iVar2 = opt->deci2count;
+  if (iVar2 != 0) {
+    *(int *)(iVar2 + -1) = *(int *)(iVar2 + -1) + 1;
   }
-
-  // remember what event this is
-  pb->most_recent_event = event;
-  pb->most_recent_param = param;
-
-  switch (event) {
-    // get some data - param is the size
-    case DECI2_READ:
-      // sanity check the size
-      if (pb->receive_progress + param <= (int)DEBUG_MESSAGE_BUFFER_SIZE) {
-        // actually get data from DECI2
-        s32 received =
-            ee::sceDeci2ExRecv(pb->socket, ((u8*)pb->receive_buffer) + pb->receive_progress, param);
-
-        if (received < 0) {
-          // receive failure
-          pb->last_receive_size = -1;
-          protoBlock.receive_progress = 0;  // why use protoBlock instead of pb here?
-          printf("gproto: read error with sceDeci2ExRecv\n");
-        } else {
-          pb->receive_progress += received;
+  opt->some_event = event;
+  opt->some_param = param;
+  if (false) {
+switchD_00266c5c_caseD_6:
+    opt->last_receive_size = -1;
+  }
+  else {
+    switch(event) {
+    case 1:
+      if ((opt->receive_progress + param < 0x80001) &&
+         (sVar1 = sceDeci2ExRecv(opt->socket,
+                                 (void *)((int)opt->receive_buffer + opt->receive_progress),
+                                 (u16)param), -1 < sVar1)) {
+        opt->receive_progress = opt->receive_progress + sVar1;
+      }
+      else {
+        opt->last_receive_size = -1;
+        protoBlock.receive_progress = 0;
+      }
+      break;
+    case 2:
+      opt->last_receive_size = opt->receive_progress;
+      opt->receive_progress = 0;
+      break;
+    case 3:
+      sVar1 = sceDeci2ExSend(opt->socket,opt->send_ptr,(u16)opt->send_remaining);
+      if (sVar1 < 0) {
+        opt->send_status = sVar1;
+      }
+      else {
+        opt->send_ptr = (void *)((int)opt->send_ptr + sVar1);
+        opt->send_remaining = opt->send_remaining - sVar1;
+      }
+      break;
+    case 4:
+      if (opt->send_remaining < 1) {
+        opt->send_status = 0;
+      }
+      else {
+        iVar2 = opt->send_remaining;
+        if (iVar2 < 0) {
+          iVar2 = -iVar2;
         }
-      } else {
-        // size was too large
-        pb->last_receive_size = -1;
-        protoBlock.receive_progress = 0;  // why use protoBlock here?
-        printf("gproto: read error, message too large!\n");
+        opt->send_status = -iVar2;
       }
       break;
-
-      // read is finished!
-    case DECI2_READDONE:
-      // set last_receive_size to indicate that there is a pending message in the buffer.
-      pb->last_receive_size = pb->receive_progress;
-      pb->receive_progress = 0;
+    case 5:
       break;
-
-      // send some data
-    case DECI2_WRITE: {
-      // note that we should not attempt to send more than 0xffff bytes at a time, or this will be
-      // wrong.  This is correctly checked for prints, but not for outputs.
-      ASSERT(pb->send_remaining < 0xffff);
-      // why and it with 0xffff?  Seems like saturation would be better.  Either way some data
-      // will be lost, so I guess it doesn't matter.
-      s32 sent = ee::sceDeci2ExSend(pb->socket, (void*)pb->send_ptr, pb->send_remaining & 0xffff);
-      if (sent < 0) {
-        // if we got an error, put it in send status, signaling a send error (negative)
-        pb->send_status = sent;
-      } else {
-        // otherwise don't touch send status, leave it positive to indicate we're still sending
-        pb->send_ptr += sent;
-        pb->send_remaining -= sent;
-      }
-    } break;
-
-      // done sending!
-    case DECI2_WRITEDONE:
-      if (pb->send_remaining <= 0) {
-        // if we've send everything we want, set status to zero to indicate success
-        pb->send_status = 0;
-      } else {
-        // otherwise, set send status to a negative number (the negative absolute value of
-        // remaining)
-        s32 a = pb->send_remaining;
-        if (a < 0) {
-          a = -a;
-        }
-        pb->send_status = -a;
-      }
-      break;
-
-    case DECI2_CHSTATUS:
-      break;
-
-      // other events are undefined, so we just error.
     default:
-      pb->last_receive_size = -1;
-      break;
+      goto switchD_00266c5c_caseD_6;
+    }
   }
+  SYNC(0);
+  EI();
+  return;
 }
 
 /*!
@@ -153,55 +133,48 @@ void GoalProtoHandler(int event, int param, void* opt) {
  * DONE, original version used an uncached address and had a FlushCache call, which were both
  * removed
  */
-s32 SendFromBufferD(s32 msg_kind, u64 msg_id, char* data, s32 size) {
-  // wait for send to finish or error first...
-  while (protoBlock.send_status > 0) {
-    // on actual PS2, the kernel will run this in another thread.
-    ee::LIBRARY_sceDeci2_run_sends();
-  }
-
-  // retry at most 10 times until we complete without an error.
-  for (s32 i = 0; i < 10; i++) {
-    // or'd with 0x20000000 to get noncache version
-    ListenerMessageHeader* header = (ListenerMessageHeader*)(data - sizeof(ListenerMessageHeader));
-    protoBlock.send_remaining = size + sizeof(ListenerMessageHeader);
-    protoBlock.send_buffer = header;
-    protoBlock.send_ptr = (u8*)header;
-
-    protoBlock.send_status = size + sizeof(ListenerMessageHeader);
-    // FlushCache(0);
-
-    // set DECI2 message header
-    header->deci2_header.len = protoBlock.send_remaining;
-    header->deci2_header.rsvd = 0;
-    header->deci2_header.proto = DECI2_PROTOCOL;
-    header->deci2_header.src = 'E';  // from EE
-    header->deci2_header.dst = 'H';  // to HOST
-
-    // set GOAL message header
-    header->msg_kind = (ListenerMessageKind)msg_kind;
-    header->u6 = 0;
-    header->msg_size = size;
-    header->msg_id = msg_id;
-
-    // start send!
-    auto rv = ee::sceDeci2ReqSend(protoBlock.socket, header->deci2_header.dst);
-    if (rv < 0) {
-      printf("1sceDeci2ReqSend fail, reason code = %08x\n", rv);
-      return 0xfffffffa;
+s32 SendFromBufferD(s32 msg_kind,u64 msg_id,char* data,s32 size) {
+  bool bVar1;
+  s32 sVar2;
+  long lVar3;
+  int* piVar4;
+  int iVar5;
+  
+  iVar5 = 0;
+  do {
+  } while (0 < protoBlock.send_status);
+  while( true ) {
+    piVar4 = (int *)((uint)(data + -0x18) | 0x20000000);
+    protoBlock.send_remaining = size + 0x18;
+    protoBlock.send_buffer = piVar4;
+    protoBlock.send_ptr = piVar4;
+    protoBlock.send_status = size + 0x18;
+    FlushCache(0);
+    sVar2 = protoBlock.send_remaining;
+    *(undefined2 *)((int)piVar4 + 2) = 0;
+    *(undefined *)((int)piVar4 + 6) = 0x45;
+    piVar4[3] = size;
+    *(short *)piVar4 = (short)sVar2;
+    *(undefined *)((int)piVar4 + 7) = 0x48;
+    *(undefined2 *)((int)piVar4 + 10) = 0;
+    sVar2 = protoBlock.socket;
+    *(undefined2 *)(piVar4 + 1) = 0xe042;
+    *(u64 *)(piVar4 + 4) = msg_id;
+    *(short *)(piVar4 + 2) = (short)msg_kind;
+    lVar3 = sceDeci2ReqSend(sVar2,0x48);
+    if (lVar3 < 0) {
+      printf("1sceDeci2ReqSend fail, reason code = %08x\n",lVar3);
+      return -6;
     }
-
-    // wait for send to complete or error.
-    while (protoBlock.send_status > 0) {
-      ee::LIBRARY_sceDeci2_run_sends();
-    }
-
-    // if send completes, exit.  Otherwise if there's an error, just try again.
-    if (protoBlock.send_status == 0) {
-      break;
+    do {
+    } while (0 < protoBlock.send_status);
+    if (-1 < protoBlock.send_status) break;
+    bVar1 = 9 < iVar5;
+    iVar5 = iVar5 + 1;
+    if (bVar1) {
+      return 0;
     }
   }
-
   return 0;
 }
 
@@ -209,6 +182,7 @@ s32 SendFromBufferD(s32 msg_kind, u64 msg_id, char* data, s32 size) {
  * Print GOAL Protocol status
  */
 void GoalProtoStatus() {
-  Msg(6, "gproto: got %d %d\n", protoBlock.most_recent_event, protoBlock.most_recent_param);
-  Msg(6, "gproto: %d %d\n", protoBlock.last_receive_size, protoBlock.send_remaining);
+  Msg(6,"gproto: got %d %d\n",protoBlock.some_event,protoBlock.some_param);
+  Msg(6,"gproto: %d %d\n",protoBlock.last_receive_size,protoBlock.send_remaining);
+  return;
 }

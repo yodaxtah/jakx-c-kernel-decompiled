@@ -23,51 +23,44 @@ void klisten_init_globals() {
  * Changed slightly, it will also print to stdout if there's no compiler connected.
  */
 void ClearPending() {
-  if (!MasterDebug || !ListenerStatus) {
-    // if we aren't debugging or connected print the print buffer to stdout.
-    if (PrintPending.offset != 0) {
-      auto size = strlen(PrintBufArea.cast<char>().c() + sizeof(ListenerMessageHeader));
-      if (size > 0) {
-        lg::print("{}", PrintBufArea.cast<char>().c() + sizeof(ListenerMessageHeader));
+  char* data;
+  size_t sVar1;
+  int size;
+  size_t sVar2;
+  
+  if (MasterDebug == 0) {
+    if (PrintPending != (char *)0x0) {
+      sVar1 = strlen(PrintBufArea + 0x18);
+      if (0 < (long)sVar1) {
+        printf("%s",PrintBufArea + 0x18);
       }
+LAB_00270558:
       clear_print();
-    }
-  } else {
-    if (ListenerStatus) {
-      if (OutputPending.offset != 0) {
-        // note - same 64 kB patch as prints done here
-        char* msg = OutputBufArea.cast<char>().c() + sizeof(ListenerMessageHeader);
-        auto size = strlen(msg);
-        while (size > 0) {
-          // sends larger than 64 kB are broken by the GoalProtoBuffer thing, so they are split
-          auto send_size = size;
-          if (send_size > 64000) {
-            send_size = 64000;
-          }
-          SendFromBuffer(msg, send_size);
-          size -= send_size;
-          msg += send_size;
-        }
-        clear_output();
-      }
-
-      if (PrintPending.offset != 0) {
-        char* msg = PrintBufArea.cast<char>().c() + sizeof(ListenerMessageHeader);
-        auto size = strlen(msg);
-        while (size > 0) {
-          // sends larger than 64 kB are broken by the GoalProtoBuffer thing, so they are split
-          auto send_size = size;
-          if (send_size > 64000) {
-            send_size = 64000;
-          }
-          SendFromBufferD(2, 0, msg, send_size);
-          size -= send_size;
-          msg += send_size;
-        }
-        clear_print();
-      }
+      return;
     }
   }
+  else if (ListenerStatus != 0) {
+    if (OutputPending != 0) {
+      sVar1 = strlen((char *)(OutputBufArea + 0x18));
+      SendFromBuffer((char *)(OutputBufArea + 0x18),(s32)sVar1);
+      clear_output();
+    }
+    if (PrintPending != (char *)0x0) {
+      sVar1 = strlen(PrintBufArea + 0x18);
+      data = PrintBufArea + 0x18;
+      for (; 0 < (long)sVar1; sVar1 = (size_t)((int)sVar1 - size)) {
+        sVar2 = 64000;
+        if ((long)sVar1 < 64000) {
+          sVar2 = sVar1;
+        }
+        size = (int)sVar2;
+        SendFromBufferD(2,0,data,size);
+        data = data + size;
+      }
+      goto LAB_00270558;
+    }
+  }
+  return;
 }
 
 /*!
@@ -79,9 +72,9 @@ void ClearPending() {
  * Note: jak2 sent 0 length acks.
  */
 void SendAck() {
-  if (MasterDebug) {
-    SendFromBufferD(u16(ListenerMessageKind::MSG_ACK), protoBlock.msg_id,
-                    AckBufArea + sizeof(ListenerMessageHeader),
-                    strlen(AckBufArea + sizeof(ListenerMessageHeader)));
+  if (MasterDebug != 0) {
+    SendFromBufferD(0,protoBlock.msg_id,&AckBufArea,0);
+    return;
   }
+  return;
 }

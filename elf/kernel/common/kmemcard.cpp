@@ -473,71 +473,14 @@ void pc_game_load_synch() {
  *  - every now and then, recheck cards.
  */
 void MC_run() {
-  // if we have an in-progress operation, it will have set a callback.
-  if (callback) {
-    s32 sony_cmd, sony_status;
-    // check the status
-    s32 status = sceMcSync(1, &sony_cmd, &sony_status);
-    McCallbackFunc callback_for_sync = callback;
-    if (status == sceMcExecRun) {
-      // busy, return.
-      return;
-    }
-
-    if (status == sceMcExecFinish) {
-      // sony function is done. do the callback.
-      callback = nullptr;
-      (*callback_for_sync)(sony_status);
-    } else {
-      // sony function is done, but failed.
-      callback = nullptr;
-      (*callback_for_sync)(0);
-    }
-
-    if (callback) {
-      // if we got another callback, it means there's another op started by the prev callback.
-      // and this case, we want to wait for that operation to finish.
-      return;
-    }
-  }
-
-  // if we got here, there is no in-progress sony function. So start the next one, if we should
-  if (op.operation == MemoryCardOperationKind::FORMAT) {
-    // format memory card. Not used in PC port, so lets move on.
-    return;
-  } else if (op.operation == MemoryCardOperationKind::UNFORMAT) {
-    // unformat memory card.
-    return;
-  } else if (op.operation == MemoryCardOperationKind::CREATE_FILE) {
-    // create the game file.
-    // there's no cards, keep in mind.
-    return;
-  } else if (op.operation == MemoryCardOperationKind::SAVE) {
-    // write game save.
-    // there's no cards, keep in mind.
-    pc_game_save_synch();
-    // allow some number of errors.
-    op.retry_count--;
-    if (op.retry_count == 0) {
-      op.operation = MemoryCardOperationKind::NO_OP;
-      op.result = McStatusCode::INTERNAL_ERROR;
-    }
-  } else if (op.operation == MemoryCardOperationKind::LOAD) {
-    // load game save.
-    // potato.
-    if (!file_is_present(op.param2)) {
-      // tried to load, but there's no save data in the file.
-      op.operation = MemoryCardOperationKind::NO_OP;
-      op.result = McStatusCode::NO_MEMORY;
-    } else {
-      pc_game_load_synch();
-      op.retry_count--;
-      if (op.retry_count == 0) {
-        op.operation = MemoryCardOperationKind::NO_OP;
-        op.result = McStatusCode::INTERNAL_ERROR;
-      }
-    }
-  }
+  s32 sema_id;
+  
+  sema_id = DAT_002d3908_mc_sema_id;
+  WaitSema(DAT_002d3908_mc_sema_id);
+  FUN_002730e4();
+  FUN_002732e4();
+  SignalSema(sema_id);
+  return;
 }
 
 /////////////////////////
@@ -550,64 +493,103 @@ void MC_run() {
  * Set the language or something.
  * Why is this a memory card func?
  */
-void MC_set_language(s32 l) {
-  printf("Language set to %d\n", l);
+int MC_set_language(s32 l) {
+  s32 sema_id;
+  int iVar1;
+  
+  sema_id = DAT_002d3908_mc_sema_id;
+  WaitSema(DAT_002d3908_mc_sema_id);
   language = l;
+  iVar1 = SignalSema(sema_id);
+  return iVar1;
 }
 
 /*!
  * Set the current memory card operation to FORMAT the given card.
  * Doesn't do anything in the port because we don't use memory cards.
  */
-u64 MC_format(s32 /*card_idx*/) {
-  return u64(McStatusCode::OK);
-  // u64 can_add = op.operation == MemoryCardOperationKind::NO_OP;
-  // mc_print("requested format");
-  // if (can_add) {
-  //  mc_print("setting op to format");
-  //  op.operation = MemoryCardOperationKind::FORMAT;
-  //  op.result = McStatusCode::BUSY;
-  //  op.retry_count = 100;
-  //  op.param = card_idx;
-  //}
-  // return can_add;
+u64 MC_format(s32 card_idx) {
+  s32 sema_id;
+  u64 uVar1;
+  
+  sema_id = DAT_002d3908_mc_sema_id;
+  WaitSema(DAT_002d3908_mc_sema_id);
+  if ((op.operation == 0) && (op.unknown_field_W < 1)) {
+    op.result = 0;
+    op.operation = 1;
+    op.param2 = 0;
+    op.retry_count = 100;
+    op.data_ptr = (u8 *)0x0;
+    op.data_ptr2 = (u8 *)0x0;
+    op.unknown_field_W = 0;
+    op.param = card_idx;
+    SignalSema(sema_id);
+    uVar1 = 1;
+  }
+  else {
+    SignalSema(sema_id);
+    uVar1 = 0;
+  }
+  return uVar1;
 }
+
 
 /*!
  * Set the current memory card operation to UNFORMAT the given card.
  * You get the idea.
  */
-u64 MC_unformat(s32 /*card_idx*/) {
-  return u64(McStatusCode::OK);
-  // u64 can_add = op.operation == MemoryCardOperationKind::NO_OP;
-  // mc_print("requested unformat");
-  // if (can_add) {
-  //  mc_print("setting op to unformat");
-  //  op.operation = MemoryCardOperationKind::UNFORMAT;
-  //  op.result = McStatusCode::BUSY;
-  //  op.retry_count = 100;
-  //  op.param = card_idx;
-  //}
-  // return can_add;
+u64 MC_unformat(s32 card_idx) {
+  s32 sema_id;
+  u64 uVar1;
+  
+  sema_id = DAT_002d3908_mc_sema_id;
+  WaitSema(DAT_002d3908_mc_sema_id);
+  if ((op.operation == 0) && (op.unknown_field_W < 1)) {
+    op.result = 0;
+    op.operation = 2;
+    op.param2 = 0;
+    op.retry_count = 100;
+    op.data_ptr = (u8 *)0x0;
+    op.data_ptr2 = (u8 *)0x0;
+    op.unknown_field_W = 0;
+    op.param = card_idx;
+    SignalSema(sema_id);
+    uVar1 = 1;
+  }
+  else {
+    SignalSema(sema_id);
+    uVar1 = 0;
+  }
+  return uVar1;
 }
 
 /*!
  * Set the current memory card operation to create the save file.
  * The data I believe is just an empty buffer used as temporary storage.
  */
-u64 MC_createfile(s32 /*param*/, Ptr<u8> /*data*/) {
-  return u64(McStatusCode::OK);
-  // u64 can_add = op.operation == MemoryCardOperationKind::NO_OP;
-  // mc_print("requested createfile");
-  // if (can_add) {
-  //  mc_print("setting op to create file");
-  //  op.operation = MemoryCardOperationKind::CREATE_FILE;
-  //  op.result = McStatusCode::BUSY;
-  //  op.retry_count = 100;
-  //  op.param = param;
-  //  op.data_ptr = data;
-  //}
-  // return can_add;
+u64 MC_createfile(s32 param,u8* data) {
+  s32 sema_id;
+  u64 uVar1;
+  
+  sema_id = DAT_002d3908_mc_sema_id;
+  WaitSema(DAT_002d3908_mc_sema_id);
+  if ((op.operation == 0) && (op.unknown_field_W < 1)) {
+    op.result = 0;
+    op.operation = 3;
+    op.param2 = 0;
+    op.retry_count = 100;
+    op.data_ptr2 = (u8 *)0x0;
+    op.unknown_field_W = 0;
+    op.param = param;
+    op.data_ptr = data;
+    SignalSema(sema_id);
+    uVar1 = 1;
+  }
+  else {
+    SignalSema(sema_id);
+    uVar1 = 0;
+  }
+  return uVar1;
 }
 
 /*!
@@ -615,113 +597,264 @@ u64 MC_createfile(s32 /*param*/, Ptr<u8> /*data*/) {
  * The "summary data" is data that will be used when previewing save files (number of orbs etc)
  * TODO put synchronous call here
  */
-u64 MC_save(s32 card_idx, s32 file_idx, Ptr<u8> save_data, Ptr<u8> save_summary_data) {
-  mc_print("requested save");
-  u64 can_add = op.operation == MemoryCardOperationKind::NO_OP;
-  if (can_add) {
-    mc_print("setting op to save");
-    op.operation = MemoryCardOperationKind::SAVE;
-    op.result = McStatusCode::BUSY;
+u64 MC_save(s32 card_idx,s32 file_idx,u8* save_data,u8* save_summary_data) {
+  s32 sema_id;
+  u64 uVar1;
+  
+  sema_id = DAT_002d3908_mc_sema_id;
+  WaitSema(DAT_002d3908_mc_sema_id);
+  if ((op.operation == 0) && (op.unknown_field_W < 1)) {
+    op.result = 0;
+    op.operation = 4;
     op.retry_count = 100;
+    op.unknown_field_W = 0;
     op.param = card_idx;
     op.param2 = file_idx;
     op.data_ptr = save_data;
     op.data_ptr2 = save_summary_data;
+    SignalSema(sema_id);
+    uVar1 = 1;
   }
-  return can_add;
+  else {
+    SignalSema(sema_id);
+    uVar1 = 0;
+  }
+  return uVar1;
 }
+
+undefined4 mc_save_common_S(uint32_t param_1,u8* param_2) {
+  s32 sema_id;
+  undefined4 uVar1;
+  
+  sema_id = DAT_002d3908_mc_sema_id;
+  WaitSema(DAT_002d3908_mc_sema_id);
+  if ((op.operation == 0) && (op.unknown_field_W < 1)) {
+    op.result = 0;
+    op.operation = 5;
+    op.param2 = 0;
+    op.retry_count = 100;
+    op.data_ptr2 = (u8 *)0x0;
+    op.unknown_field_W = 0;
+    op.param = param_1;
+    op.data_ptr = param_2;
+    SignalSema(sema_id);
+    uVar1 = 1;
+  }
+  else {
+    SignalSema(sema_id);
+    uVar1 = 0;
+  }
+  return uVar1;
+}
+
+undefined4 mc_save_patch_S(uint32_t param_1,u8* param_2) {
+  s32 sema_id;
+  undefined4 uVar1;
+  
+  sema_id = DAT_002d3908_mc_sema_id;
+  WaitSema(DAT_002d3908_mc_sema_id);
+  if ((op.operation == 0) && (op.unknown_field_W < 1)) {
+    op.result = 0;
+    op.operation = 6;
+    op.param2 = 0;
+    op.retry_count = 100;
+    op.data_ptr2 = (u8 *)0x0;
+    op.unknown_field_W = 0;
+    op.param = param_1;
+    op.data_ptr = param_2;
+    SignalSema(sema_id);
+    uVar1 = 1;
+  }
+  else {
+    SignalSema(sema_id);
+    uVar1 = 0;
+  }
+  return uVar1;
+}
+
+undefined4 mc_save_ghost_S(uint32_t param_1,uint32_t param_2,u8* param_3) {
+  s32 sema_id;
+  undefined4 uVar1;
+  
+  sema_id = DAT_002d3908_mc_sema_id;
+  WaitSema(DAT_002d3908_mc_sema_id);
+  if ((op.operation == 0) && (op.unknown_field_W < 1)) {
+    op.result = 0;
+    op.operation = 7;
+    op.retry_count = 100;
+    op.data_ptr2 = (u8 *)0x0;
+    op.unknown_field_W = 0;
+    op.param = param_1;
+    op.param2 = param_2;
+    op.data_ptr = param_3;
+    SignalSema(sema_id);
+    uVar1 = 1;
+  }
+  else {
+    SignalSema(sema_id);
+    uVar1 = 0;
+  }
+  return uVar1;
+}
+
 
 /*!
  * Set the current operation to LOAD.
  * TODO put synchronous call here
  */
-u64 MC_load(s32 card_idx, s32 file_idx, Ptr<u8> data) {
-  mc_print("requested load");
-  u64 can_add = op.operation == MemoryCardOperationKind::NO_OP;
-  if (can_add) {
-    mc_print("setting op to load");
-    op.operation = MemoryCardOperationKind::LOAD;
-    op.result = McStatusCode::BUSY;
+u64 MC_load(s32 card_idx,s32 file_idx,u8* data) {
+  s32 sema_id;
+  u64 uVar1;
+  
+  sema_id = DAT_002d3908_mc_sema_id;
+  WaitSema(DAT_002d3908_mc_sema_id);
+  if ((op.operation == 0) && (op.unknown_field_W < 1)) {
+    op.result = 0;
+    op.operation = 8;
     op.retry_count = 100;
+    op.data_ptr2 = (u8 *)0x0;
+    op.unknown_field_W = 0;
     op.param = card_idx;
     op.param2 = file_idx;
     op.data_ptr = data;
+    SignalSema(sema_id);
+    uVar1 = 1;
   }
-  return can_add;
+  else {
+    SignalSema(sema_id);
+    uVar1 = 0;
+  }
+  return uVar1;
+}
+
+undefined4 mc_load_common_S(uint32_t param_1,u8* param_2) {
+  s32 sema_id;
+  undefined4 uVar1;
+  
+  sema_id = DAT_002d3908_mc_sema_id;
+  WaitSema(DAT_002d3908_mc_sema_id);
+  if ((op.operation == 0) && (op.unknown_field_W < 1)) {
+    op.result = 0;
+    op.operation = 9;
+    op.param2 = 0;
+    op.retry_count = 100;
+    op.data_ptr2 = (u8 *)0x0;
+    op.unknown_field_W = 0;
+    op.param = param_1;
+    op.data_ptr = param_2;
+    SignalSema(sema_id);
+    uVar1 = 1;
+  }
+  else {
+    SignalSema(sema_id);
+    uVar1 = 0;
+  }
+  return uVar1;
+}
+
+undefined4 mc_load_patch_S(uint32_t param_1,u8* param_2) {
+  s32 sema_id;
+  undefined4 uVar1;
+  
+  sema_id = DAT_002d3908_mc_sema_id;
+  WaitSema(DAT_002d3908_mc_sema_id);
+  if ((op.operation == 0) && (op.unknown_field_W < 1)) {
+    op.result = 0;
+    op.operation = 10;
+    op.param2 = 0;
+    op.retry_count = 100;
+    op.data_ptr2 = (u8 *)0x0;
+    op.unknown_field_W = 0;
+    op.param = param_1;
+    op.data_ptr = param_2;
+    SignalSema(sema_id);
+    uVar1 = 1;
+  }
+  else {
+    SignalSema(sema_id);
+    uVar1 = 0;
+  }
+  return uVar1;
+}
+
+undefined4 mc_load_ghost_S(uint32_t param_1,uint32_t param_2,u8* param_3) {
+  s32 sema_id;
+  undefined4 uVar1;
+  
+  sema_id = DAT_002d3908_mc_sema_id;
+  WaitSema(DAT_002d3908_mc_sema_id);
+  if ((op.operation == 0) && (op.unknown_field_W < 1)) {
+    op.result = 0;
+    op.operation = 0xb;
+    op.retry_count = 100;
+    op.data_ptr2 = (u8 *)0x0;
+    op.unknown_field_W = 0;
+    op.param = param_1;
+    op.param2 = param_2;
+    op.data_ptr = param_3;
+    SignalSema(sema_id);
+    uVar1 = 1;
+  }
+  else {
+    SignalSema(sema_id);
+    uVar1 = 0;
+  }
+  return uVar1;
 }
 
 /*!
  * Some sort of test function for memory card stuff.
  * This is exported as a GOAL function, but nothing calls it.
  */
-void MC_makefile(s32 port, s32 size) {
-  sceMcMkdir(port, 0, "/BASCUS-00000XXXXXXXX");
-  // wait for operation to complete
-  s32 cmd, result, fd;
-  sceMcSync(0, &cmd, &result);
-
-  if (result == sceMcResSucceed || result == sceMcResNoEntry) {
-    // it worked, or the folder already exists...
-
-    // open file
-    sceMcOpen(port, 0, "/BASCUS-00000XXXXXXXX/BASCUS-00000XXXXXXXX", SCE_CREAT | SCE_WRONLY);
-    sceMcSync(0, &cmd, &fd);
-
-    if (result < 0) {
-      printf("Can't open file on memcard [%d]\n", result);
-    } else {
-      // write some random crap into the memory card.
-      sceMcWrite(fd, Ptr<u8>(0x1000000).c(), size);
-      sceMcSync(0, &cmd, &result);
-      if (result != size) {
-        printf("Only written %d bytes\n", result);
-      }
-      sceMcClose(fd);
-      sceMcSync(0, &cmd, &result);
-    }
-  } else {
-    printf("Can\'t create garbage folder [%d]\n", result);
-  }
+void MC_makefile(s32 port,s32 size) {
+  return;
 }
 
-/*!
- * Get the result of the currently executing (or most recently executed) command
- */
 u32 MC_check_result() {
-  return (u32)op.result;
+  s32 sema_id;
+  u32 uVar1;
+  
+  sema_id = DAT_002d3908_mc_sema_id;
+  WaitSema(DAT_002d3908_mc_sema_id);
+  uVar1 = op.result;
+  SignalSema(sema_id);
+  return uVar1;
 }
+
 
 /*!
  * Update the info for the given slot.
  * You can call this at any time.
  * The slot includes the four save slots (8 banks), and a few other files.
  */
-void MC_get_status(s32 /*slot*/, Ptr<mc_slot_info> info) {
-  // slot is ignored, so you'll get the same thing regardless of what slot you pick
-
-  info->handle = 0;
-  info->known = 0;
-  info->formatted = 0;
-  info->initted = 0;
-  for (s32 i = 0; i < 4; i++) {
-    info->files[i].present = 0;
+void MC_get_status(s32 slot,mc_slot_info *info) {
+  s32 sema_id;
+  
+  sema_id = DAT_002d3908_mc_sema_id;
+  WaitSema(DAT_002d3908_mc_sema_id);
+  if (((uint)slot < 2) && (info != (mc_slot_info *)0x0)) {
+    FUN_00271098(&DAT_00283740 + slot * 0x8c0,info);
   }
-  info->last_file = 0xffffffff;
-  info->mem_required = SAVE_SIZE[g_game_version];
-  info->mem_actual = 0;
+  SignalSema(sema_id);
+  return;
+}
 
-  pc_update_card();
-  info->known = 1;
-  info->handle = PC_MEM_CARD_HANDLE;
-  info->formatted = 1;
-  info->mem_actual = SAVE_SIZE[g_game_version];  // idk TODO does this matter?
-  info->initted = 1;
-  // copy over the preview data.
-  for (s32 file = 0; file < 4; file++) {
-    info->files[file].present = mc_files[file].present;
-    for (s32 i = 0; i < 64; i++) {  // actually a loop over u32's
-      info->files[file].data[i] = mc_files[file].data[i];
+uint mc_get_secrets_S() {
+  uint uVar1;
+  uint uVar2;
+  int iVar3;
+  int iVar4;
+  
+  uVar1 = 0;
+  iVar3 = 0;
+  do {
+    uVar2 = 0;
+    iVar4 = iVar3 + 1;
+    if ((&DAT_00283864)[iVar3 * 0x230] == 3) {
+      uVar2 = (&DAT_00283fe0)[iVar3 * 0x230];
     }
-  }
-  info->last_file = mc_last_file;
+    uVar1 = uVar1 | uVar2;
+    iVar3 = iVar4;
+  } while (iVar4 < 2);
+  return uVar1;
 }
