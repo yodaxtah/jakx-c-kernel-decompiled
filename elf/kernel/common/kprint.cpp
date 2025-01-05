@@ -113,7 +113,7 @@ void reset_output() {
 
 /*!
  * Buffer message to compiler indicating some object file has been unloaded.
- * DONE, EXACT
+ * TBD, EXACT
  */
 void output_unload(const char* name) {
   char* __s;
@@ -150,7 +150,7 @@ void output_segment_load(const char* name,void* link_block,u32 flags) {
  * Print to the GOAL print buffer from C
  * seeks PrintPending to begining of what was just printed.
  * This is a different behavior from all the other prints!
- * DONE, EXACT
+ * TBD, EXACT
  */
 void cprintf(const char* format,...) {
   char* str;
@@ -188,7 +188,7 @@ void cprintf(const char* format,...) {
 /*!
  * Print directly to the C stdout
  * The "k" parameter is ignored, so this is just like printf
- * DONE, changed vprintf to lg::printstd
+ * TBD, changed vprintf to lg::printstd
  */
 void Msg(s32 k,const char* format,...) {
   undefined8 in_a2;
@@ -217,7 +217,7 @@ void Msg(s32 k,const char* format,...) {
 /*!
  * Print directly to the C stdout
  * This is idential to Msg
- * DONE, changed vprintf to lg::printstd
+ * TBD, changed vprintf to lg::printstd
  */
 void MsgWarn(const char* format,...) {
   undefined8 in_a1;
@@ -249,7 +249,7 @@ void MsgWarn(const char* format,...) {
 /*!
  * Print directly to the C stdout
  * This is idential to Msg
- * DONE, changed vprintf to lg::printstd
+ * TBD, changed vprintf to lg::printstd
  */
 void MsgErr(const char* format,...) {
   undefined8 in_a1;
@@ -280,7 +280,7 @@ void MsgErr(const char* format,...) {
 
 /*!
  * Reverse string in place.
- * DONE, EXACT
+ * TBD, EXACT
  */
 void reverse(char* str) {
   char cVar1;
@@ -374,7 +374,7 @@ char* round(float x,s32* param_2,char* start,char* sEnd,char padchar,s32 *param_
  * Without rounding the printing is a little bit off but you don't notice unless you look too
  * closely.
  *
- * DONE, added some sanity checks and removed support for "rounding" as round isn't implemented and
+ * TBD, added some sanity checks and removed support for "rounding" as round isn't implemented and
  * rounding is never used in the game.
  *
  * Not checked closely in jak 2.
@@ -483,7 +483,7 @@ LAB_002676b0:
  * @param precision
  * @param flags
  *
- * DONE
+ * TBD
  * Not checked super closely in jak 2.
  */
 void ftoa(char* out_str,float x,s32 desired_len,char pad_char,s32 precision,u32 flags) {

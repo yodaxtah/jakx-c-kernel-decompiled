@@ -21,7 +21,7 @@ void kdsnetm_init_globals_common() {
 
 /*!
  * Register GOAL DECI2 Protocol Driver with DECI2 service
- * DONE, EXACT
+ * TBD, EXACT
  */
 void InitGoalProto()
 {
@@ -42,7 +42,7 @@ void InitGoalProto()
 
 /*!
  * Close the DECI2 Protocol Driver
- * DONE, EXACT
+ * TBD, EXACT
  */
 void ShutdownGoalProto()
 {
@@ -56,7 +56,7 @@ void ShutdownGoalProto()
 /*!
  * Handle a DECI2 Protocol Event for the GOAL Proto.
  * Called by the DECI2 Protocol driver
- * DONE, added print statements on errors for debugging, EI and SYNC at the end were removed
+ * TBD, added print statements on errors for debugging, EI and SYNC at the end were removed
  */
 void GoalProtoHandler(int event,int param,GoalProtoBlock *opt) {
   s32 sVar1;
@@ -130,7 +130,7 @@ switchD_00266c5c_caseD_6:
 /*!
  * Low level DECI2 send
  * Will block until send is complete.
- * DONE, original version used an uncached address and had a FlushCache call, which were both
+ * TBD, original version used an uncached address and had a FlushCache call, which were both
  * removed
  */
 s32 SendFromBufferD(s32 msg_kind,u64 msg_id,char* data,s32 size) {

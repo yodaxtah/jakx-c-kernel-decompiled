@@ -30,7 +30,7 @@ void kdgo_init_globals() {
  * @param buffer2 : the other of the two file loading buffers
  * @param currentHeap : the current heap (for loading directly into the heap).
  *
- * DONE,
+ * TBD,
  * MODIFIED : Added print statement to indicate when DGO load starts.
  */
 void BeginLoadingDGO(const_char *name,u8 *buffer1,u8 *buffer2,u8 *currentHeap) {
@@ -57,7 +57,7 @@ void BeginLoadingDGO(const_char *name,u8 *buffer1,u8 *buffer2,u8 *currentHeap) {
  * Get the next object in the DGO.  Will block until something is loaded.
  * @param lastObjectFlag: will get set to 1 if this is the last object.
  *
- * DONE,
+ * TBD,
  * MODIFIED : added exception if the sLastMessage isn't set (game just returns null as buffer)
  */
 u8 * GetNextDGO(u32 *lastObjectFlag) {

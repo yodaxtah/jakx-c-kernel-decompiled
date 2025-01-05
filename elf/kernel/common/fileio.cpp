@@ -22,7 +22,7 @@ void fileio_init_globals() {
 /*!
  * Return pointer to null terminator of string.
  * const is for losers.
- * DONE, EXACT
+ * TBD, EXACT
  */
 char* strend(char* str) {
   for (; *str != '\0'; str = str + 1) {
@@ -72,7 +72,7 @@ u32 ReadHufWord(u8** loc_ptr) {
 /*!
  * Copy a string from src to dst. The null terminator is copied too.
  * This is identical to normal strcpy.
- * DONE, EXACT
+ * TBD, EXACT
  */
 void kstrcpy(char* dst, const char* src) {
   char cVar1;
@@ -90,7 +90,7 @@ void kstrcpy(char* dst, const char* src) {
 /*!
  * Copy a string from src to dst, making all letters upper case.
  * The null terminator is copied too.
- * DONE, EXACT
+ * TBD, EXACT
  */
 void kstrcpyup(char* dst,const char* src) {
   char cVar1;
@@ -111,8 +111,8 @@ void kstrcpyup(char* dst,const char* src) {
 
 /*!
  * Concatenate two strings.  Src is added to dest.
- * The new string is null terminated.  No bounds checking is done.
- * DONE, EXACT
+ * The new string is null terminated.  No bounds checking is TBD.
+ * TBD, EXACT
  */
 void kstrcat(char* dest,const char* src) {
   char cVar1;
@@ -137,7 +137,7 @@ void kstrcat(char* dest,const char* src) {
  * The maximum length should be larger than the length of the original string.
  * The resulting string will be truncated when it reaches the given length.
  * The null terminator is added, but doesn't count toward the length.
- * DONE, EXACT
+ * TBD, EXACT
  */
 void kstrncat(char* dest,const char* src,s32 count) {
   int iVar1;
@@ -163,7 +163,7 @@ void kstrncat(char* dest,const char* src,s32 count) {
 
 /*!
  * Insert the pad char at the beginning of a string, count times.
- * DONE, EXACT
+ * TBD, EXACT
  */
 char* kstrinsert(char* str,char pad,s32 count) {
   int iVar1;
@@ -200,7 +200,7 @@ char* kstrinsert(char* str,char pad,s32 count) {
  *   a/b/c.e will return c.e
  *   a\b\c.e will return c.e
  *   asdf.asdf will return asdf.asdf
- *   DONE, EXACT
+ *   TBD, EXACT
  */
 char* basename_goal(char* s) {
   char* pcVar1;
@@ -226,7 +226,7 @@ char* basename_goal(char* s) {
 /*!
  * Does the file exist?  No.  It doesn't.
  * @return 0 always, even if the file exists.
- * DONE, EXACT, UNUSED
+ * TBD, EXACT, UNUSED
  */
 u32 FileExists(const char* name) {
   return 0;
@@ -235,7 +235,7 @@ u32 FileExists(const char* name) {
 /*!
  * Does nothing. Likely is supposed to delete a file.
  * @param name
- * DONE, EXACT, UNUSED
+ * TBD, EXACT, UNUSED
  */
 void FileDelete(const char* name) {
   return;
@@ -245,7 +245,7 @@ void FileDelete(const char* name) {
  * Does nothing. Likely is supposed to copy a file.
  * @param a
  * @param b
- * DONE, EXACT, UNUSED
+ * TBD, EXACT, UNUSED
  */
 void FileCopy(const char* a,const char* b) {
   return;
@@ -253,7 +253,7 @@ void FileCopy(const char* a,const char* b) {
 
 /*!
  * Determine the file length in bytes.
- * DONE, EXACT
+ * TBD, EXACT
  */
 s32 FileLength(char* filename) {
   s32 sVar1;
@@ -279,7 +279,7 @@ s32 FileLength(char* filename) {
  * @param malloc_flags : flags for the kmalloc
  * @param size_out : file size is written here, if it's not null
  * @return pointer to file data
- * DONE, EXACT
+ * TBD, EXACT
  */
 u8* FileLoad(char* name,kheapinfo *heap,u8* memory,u32 malloc_flags,s32* size_out) {
   s32 sVar1;
@@ -328,7 +328,7 @@ u8* FileLoad(char* name,kheapinfo *heap,u8* memory,u32 malloc_flags,s32* size_ou
 
 /*!
  * Write a file.
- * DONE, EXACT
+ * TBD, EXACT
  */
 s32 FileSave(char* name,u8* data,s32 size) {
   s32 sVar1;

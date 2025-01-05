@@ -37,7 +37,7 @@ void kmalloc_init_globals_common() {
  * In the game, this wraps PS2's libc's malloc/calloc.
  * These don't work with GOAL's custom memory management, and this function
  * is unused.
- * DONE, malloc/calloc calls commented out because memory allocated with calloc/malloc
+ * TBD, malloc/calloc calls commented out because memory allocated with calloc/malloc
  * cannot trivially be accessed from within GOAL.
  */
 Ptr<u8> ksmalloc(Ptr<kheapinfo> heap, s32 size, u32 flags, char const* name) {
@@ -66,7 +66,7 @@ Ptr<u8> ksmalloc(Ptr<kheapinfo> heap, s32 size, u32 flags, char const* name) {
 /*!
  * Print the status of a kheap.  This prints to stdout on the runtime,
  * which will not be sent to the Listener.
- * DONE, EXACT
+ * TBD, EXACT
  */
 Ptr<kheapinfo> kheapstatus(Ptr<kheapinfo> heap) {
   Msg(6,
@@ -99,7 +99,7 @@ Ptr<kheapinfo> kheapstatus(Ptr<kheapinfo> heap) {
 
 /*!
  * Initialize a kheapinfo structure, and clear the kheap's memory to 0.
- * DONE, EXACT
+ * TBD, EXACT
  */
 Ptr<kheapinfo> kinitheap(Ptr<kheapinfo> heap, Ptr<u8> mem, s32 size) {
   heap->base = mem;
@@ -112,7 +112,7 @@ Ptr<kheapinfo> kinitheap(Ptr<kheapinfo> heap, Ptr<u8> mem, s32 size) {
 
 /*!
  * Return how much of the bottom (non-temp) allocator is used.
- * DONE, EXACT
+ * TBD, EXACT
  */
 u32 kheapused(Ptr<kheapinfo> heap) {
   return heap->current - heap->base;
@@ -125,7 +125,7 @@ u32 kheapused(Ptr<kheapinfo> heap) {
  * @param flags   : flags for alignment, top/bottom allocation, set to zero
  * @param name    : name of allocation (printed if things go wrong)
  * @return        : memory.  0 if we run out of room
- * DONE, PRINT ADDED
+ * TBD, PRINT ADDED
  */
 u8* kmalloc(kheapinfo *heap,s32 size,u32 flags,const char* name) {
   u8* puVar1;
@@ -208,7 +208,7 @@ LAB_0025b9c4:
 /*!
  * GOAL does not support automatic freeing of memory. This function does nothing.
  * Programmers wishing to free memory must do it themselves.
- * DONE, PRINT ADDED
+ * TBD, PRINT ADDED
  */
 void kfree(u8* a) {
   return;

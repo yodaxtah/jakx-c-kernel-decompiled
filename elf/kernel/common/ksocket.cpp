@@ -9,7 +9,7 @@
  * Return the size of the message in bytes (not including DECI or GOAL headers)
  * Return -1 on error.
  * The buffer parameter is unused.
- * DONE, removed call to FlushCache(0);
+ * TBD, removed call to FlushCache(0);
  */
 u32 ReceiveToBuffer(char* buff) {
   void* pvVar1;
@@ -41,7 +41,7 @@ u32 ReceiveToBuffer(char* buff) {
 /*!
  * Do a DECI2 send and block until it is complete.
  * The message type is OUTPUT
- * DONE, EXACT
+ * TBD, EXACT
  */
 s32 SendFromBuffer(char* buff,s32 size) {
   s32 sVar1;
@@ -53,7 +53,7 @@ s32 SendFromBuffer(char* buff,s32 size) {
 /*!
  * Just prepare the Ack buffer, doesn't actually connect.
  * Must be called before attempting to use the socket connection.
- * DONE, EXACT
+ * TBD, EXACT
  */
 char* InitListenerConnect() {
   char* in_v0_lo;
@@ -68,7 +68,7 @@ char* InitListenerConnect() {
 
 /*!
  * Does nothing.
- * DONE, EXACT
+ * TBD, EXACT
  */
 void InitCheckListener() {
   return;
@@ -80,7 +80,7 @@ void InitCheckListener() {
  * More accurate name would be "CheckForMessage"
  * Returns pointer to the message.
  * Updates MessCount to be equal to the size of the new message
- * DONE, EXACT
+ * TBD, EXACT
  */
 char* WaitForMessageAndAck() {
   u8* puVar1;
@@ -102,7 +102,7 @@ char* WaitForMessageAndAck() {
 
 /*!
  * Doesn't close anything, just print a closed message.
- * DONE, EXACT
+ * TBD, EXACT
  */
 void CloseListener() {
   Msg(6,"dconnect: closed socket at kernel side\n");

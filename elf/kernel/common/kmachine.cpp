@@ -56,7 +56,7 @@ void kmachine_init_globals_common() {
 
 /*!
  * Initialize the CD Drive
- * DONE, EXACT
+ * TBD, EXACT
  */
 void InitCD() {
   s32 sVar1;

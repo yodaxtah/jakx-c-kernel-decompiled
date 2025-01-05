@@ -38,7 +38,7 @@ using namespace ee;
 /*!
  * Initialize global variables based on command line parameters. Not called in retail versions,
  * but it is present in the ELF.
- * DONE
+ * TBD
  * Modified to use std::string, and removed call to fflush.
  */
 void InitParms(int argc,const_char **argv) {
