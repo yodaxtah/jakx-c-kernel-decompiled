@@ -40,27 +40,30 @@ void kmalloc_init_globals_common() {
  * TBD, malloc/calloc calls commented out because memory allocated with calloc/malloc
  * cannot trivially be accessed from within GOAL.
  */
-Ptr<u8> ksmalloc(Ptr<kheapinfo> heap, s32 size, u32 flags, char const* name) {
-  (void)heap;
-  (void)size;
-  (void)name;
-  printf("[ERROR] ksmalloc : cannot be used!\n");
-  u32 align = flags & 0xfff;
-  Ptr<u8> mem;
-
-  if ((flags & KMALLOC_MEMSET) == 0) {
-    // mem = malloc(size + align);
-  } else {
-    // mem = calloc(1, size + align);
+u8 * ksmalloc(kheapinfo *heap,s32 size,u32 flags,char *name) {
+  u8 *puVar1;
+  u8 *puVar2;
+  uint uVar3;
+  
+  uVar3 = flags & 0xfff;
+  if ((flags & 0x1000) == 0) {
+    puVar1 = (u8 *)malloc((long)(int)(size + uVar3));
   }
-
-  if (align == KMALLOC_ALIGN_64) {
-    mem.offset = (mem.offset + 0x3f) & 0xffffffc0;
-  } else if (align == KMALLOC_ALIGN_256) {
-    mem.offset = (mem.offset + 0xff) & 0xffffff00;
+  else {
+    puVar1 = (u8 *)calloc(1,(long)(int)(size + uVar3));
   }
-
-  return mem;
+  puVar2 = puVar1 + 0x3f;
+  if (uVar3 == 0x40) {
+    uVar3 = 0xffffffc0;
+  }
+  else {
+    puVar2 = puVar1 + 0xff;
+    if (uVar3 != 0x100) {
+      return puVar1;
+    }
+    uVar3 = 0xffffff00;
+  }
+  return (u8 *)((uint)puVar2 & uVar3);
 }
 
 /*!
@@ -68,32 +71,27 @@ Ptr<u8> ksmalloc(Ptr<kheapinfo> heap, s32 size, u32 flags, char const* name) {
  * which will not be sent to the Listener.
  * TBD, EXACT
  */
-Ptr<kheapinfo> kheapstatus(Ptr<kheapinfo> heap) {
-  Msg(6,
-      "[%8x] kheap\n"
-      "\tbase: #x%x\n"
-      "\ttop-base: #x%x\n"
-      "\tcur: #x%x\n"
-      "\ttop: #x%x\n",
-      heap.offset, heap->base.offset, heap->top_base.offset, heap->current.offset,
-      heap->top.offset);
-  // note: max symbols here is game-version dependent
-  Msg(6,
-      "\t used bot: %d of %d bytes\n"
-      "\t used top: %d of %d bytes\n"
-      "\t symbols: %d of %d\n",
-      heap->current - heap->base, heap->top_base - heap->base, heap->top_base - heap->top,
-      heap->top_base - heap->base, NumSymbols, max_symbols(g_game_version));
+kheapinfo * kheapstatus(kheapinfo *heap)
 
-  if (heap == kglobalheap) {
-    Msg(6, "\t %d bytes before stack\n", GLOBAL_HEAP_END - heap->current.offset);
+{
+  int iVar1;
+  int iVar2;
+  
+  Msg(6,"[%8x] kheap\n\tbase: #x%x\n\ttop-base: #x%x\n\tcur: #x%x\n\ttop: #x%x\n",heap,
+      heap->base,heap->top_base,heap->current,heap->top);
+  iVar1 = (int)heap->top_base - (int)heap->base;
+  Msg(6,"\t used bot: %d of %d bytes\n\t used top: %d of %d bytes\n\t symbols: %d of %d\n",
+      (int)heap->current - (int)heap->base,iVar1,(int)heap->top_base - (int)heap->top,
+      iVar1,NumSymbols,0x4000);
+  if (heap == &kglobalheapinfo) {
+    Msg(6,"\t %d bytes before stack\n",0x1ffc000);
   }
-
-  for (int i = 0; i < NUM_CATEGORIES; i++) {
-    printf("  %d: %d %d\n", i, MemItemsCount[i], MemItemsSize[i]);
-  }
-
-  // might not have returned heap in jak 1
+  iVar1 = 0;
+  do {
+    iVar2 = iVar1 + 1;
+    printf("   %d: %d %d\n",iVar1,MemItemsCount[iVar1],MemItemsSize[iVar1]);
+    iVar1 = iVar2;
+  } while (iVar2 < 2);
   return heap;
 }
 
@@ -101,12 +99,12 @@ Ptr<kheapinfo> kheapstatus(Ptr<kheapinfo> heap) {
  * Initialize a kheapinfo structure, and clear the kheap's memory to 0.
  * TBD, EXACT
  */
-Ptr<kheapinfo> kinitheap(Ptr<kheapinfo> heap, Ptr<u8> mem, s32 size) {
+kheapinfo* kinitheap(kheapinfo* heap, u8* mem, s32 size) {
+  heap->top_base = mem + size;
   heap->base = mem;
   heap->current = mem;
   heap->top = mem + size;
-  heap->top_base = heap->top;
-  std::memset(mem.c(), 0, size);
+  memset(mem,0,(long)size);
   return heap;
 }
 
@@ -114,8 +112,8 @@ Ptr<kheapinfo> kinitheap(Ptr<kheapinfo> heap, Ptr<u8> mem, s32 size) {
  * Return how much of the bottom (non-temp) allocator is used.
  * TBD, EXACT
  */
-u32 kheapused(Ptr<kheapinfo> heap) {
-  return heap->current - heap->base;
+u32 kheapused(kheapinfo *heap) {
+  return (int)heap->current - (int)heap->base;
 }
 
 /*!
