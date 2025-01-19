@@ -11,26 +11,25 @@
  * The buffer parameter is unused.
  * TBD, removed call to FlushCache(0);
  */
-u32 ReceiveToBuffer(char* buff) {
-  void* pvVar1;
+u32 ReceiveToBuffer(char *buff) {
+  ListenerMessageHeader *pLVar1;
   u32 uVar2;
   
   uVar2 = 0xffffffff;
   if (0x17 < protoBlock.last_receive_size) {
     FlushCache(0);
-    pvVar1 = protoBlock.receive_buffer;
-    uVar2 = *(u32 *)((int)protoBlock.receive_buffer + 0xc);
-    if (*(short *)((int)protoBlock.receive_buffer + 4) == -0x1fbe) {
-      *(undefined *)((int)protoBlock.receive_buffer + uVar2 + 0x18) = 0;
-      protoBlock.msg_id = *(undefined8 *)((int)pvVar1 + 0x10);
-      protoBlock.field57_0x48 = (uint)*(ushort *)((int)pvVar1 + 8);
+    pLVar1 = protoBlock.receive_buffer;
+    uVar2 = (protoBlock.receive_buffer)->msg_size;
+    if (((protoBlock.receive_buffer)->deci2_header).proto == 0xe042) {
+      *(undefined *)((int)&protoBlock.receive_buffer[1].deci2_header.len + uVar2) = 0;
+      protoBlock.msg_id = pLVar1->msg_id;
+      protoBlock.field57_0x48 = (uint)(ushort)pLVar1->msg_kind;
     }
     else {
       MsgErr("dkernel: got a bad packet to goal proto (goal #x%x bytes %d %d %d %d %d)\n",
              protoBlock.receive_buffer,protoBlock.last_receive_size,
-             (ulong)*(ushort *)((int)protoBlock.receive_buffer + 8),
-             (ulong)*(ushort *)((int)protoBlock.receive_buffer + 10),
-             *(undefined8 *)((int)protoBlock.receive_buffer + 0x10),uVar2);
+             (ulong)(ushort)(protoBlock.receive_buffer)->msg_kind,
+             (ulong)(protoBlock.receive_buffer)->u6,(protoBlock.receive_buffer)->msg_id,uVar2);
       uVar2 = 0xffffffff;
     }
     protoBlock.last_receive_size = -1;
