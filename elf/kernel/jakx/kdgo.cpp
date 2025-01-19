@@ -34,22 +34,22 @@ void kdgo_init_globals() {
  * MODIFIED : Added print statement to indicate when DGO load starts.
  */
 void BeginLoadingDGO(const_char *name,u8 *buffer1,u8 *buffer2,u8 *currentHeap) {
-  int iVar1;
-  undefined *sendBuff;
+  RPC_Dgo_Cmd *mess;
+  uint msgID;
   
-  iVar1 = sMsgNum * 0x40;
-  sendBuff = &sMsg + iVar1;
+  msgID = sMsgNum;
+  mess = sMsg + sMsgNum;
   sMsgNum = sMsgNum ^ 1;
   RpcSync(4);
-  *(undefined2 *)(&DAT_002d3082 + iVar1) = 0x29a;
-  *(int *)(&DAT_002d30a0 + iVar1) = cgo_id;
-  *(u8 **)(&DAT_002d3084 + iVar1) = buffer1;
-  *(u8 **)(&DAT_002d3088 + iVar1) = buffer2;
+  sMsg[msgID].result = 0x29a;
+  sMsg[msgID].cgo_id = cgo_id;
+  sMsg[msgID].buffer1 = (uint32_t)buffer1;
+  sMsg[msgID].buffer2 = (uint32_t)buffer2;
   cgo_id = cgo_id + 1;
-  *(u8 **)(&DAT_002d308c + iVar1) = currentHeap;
-  strcpy((char *)(iVar1 + 0x2d3090),name);
-  RpcCallProxy(4,0,true,sendBuff,0x40,sendBuff,0x40);
-  sLastMsg = sendBuff;
+  sMsg[msgID].buffer_heap_top = (uint32_t)currentHeap;
+  strcpy(sMsg[msgID].name,name);
+  RpcCallNoCallback(4,0,true,mess,0x40,mess,0x40);
+  sLastMsg = mess;
   return;
 }
 
@@ -66,17 +66,17 @@ u8 * GetNextDGO(u32 *lastObjectFlag) {
   *lastObjectFlag = 1;
   puVar1 = (u8 *)0x0;
   RpcSync(4);
-  if (sLastMsg != 0) {
-    if (*(short *)(sLastMsg + 2) == 2) {
-      puVar1 = *(u8 **)(sLastMsg + 4);
+  if (sLastMsg != (RPC_Dgo_Cmd *)0x0) {
+    if (sLastMsg->result == 2) {
+      puVar1 = (u8 *)sLastMsg->buffer1;
     }
-    else if (*(short *)(sLastMsg + 2) == 0) {
-      puVar1 = *(u8 **)(sLastMsg + 4);
+    else if (sLastMsg->result == 0) {
+      puVar1 = (u8 *)sLastMsg->buffer1;
     }
-    if (*(short *)(sLastMsg + 2) == 2) {
+    if (sLastMsg->result == 2) {
       *lastObjectFlag = 0;
     }
-    sLastMsg = 0;
+    sLastMsg = (RPC_Dgo_Cmd *)0x0;
   }
   return puVar1;
 }
@@ -91,20 +91,20 @@ u8 * GetNextDGO(u32 *lastObjectFlag) {
  * Unlike jak 1, we update buffer1 and buffer2 here for borrow heap loads.
  */
 void ContinueLoadingDGO(u8 *heapPtr) {
-  undefined4 in_a1_lo;
-  undefined4 in_a2_lo;
-  int iVar1;
-  undefined *sendBuff;
+  RPC_Dgo_Cmd *sendBuff_00;
+  uint msgID;
+  RPC_Dgo_Cmd *sendBuff;
   
-  iVar1 = sMsgNum * 0x40;
+  msgID = sMsgNum;
+  sendBuff_00 = sMsg + sMsgNum;
+  sendBuff = sMsg + sMsgNum;
   sMsgNum = sMsgNum ^ 1;
-  sendBuff = &sMsg + iVar1;
-  *(undefined4 *)(&DAT_002d308c + iVar1) = in_a2_lo;
-  *(undefined2 *)(&DAT_002d3082 + iVar1) = 0x29a;
-  *(u8 **)(&DAT_002d3084 + iVar1) = heapPtr;
-  *(undefined4 *)(&DAT_002d3088 + iVar1) = in_a1_lo;
-  RpcCallProxy(4,1,true,sendBuff,0x40,sendBuff,0x40);
-  sLastMsg = sendBuff;
+  sendBuff->buffer_heap_top = (uint32_t)heapPtr;
+  sMsg[msgID].result = 0x29a;
+  sMsg[msgID].buffer1 = (int)(char)b1;
+  sMsg[msgID].buffer2 = (uint32_t)b2;
+  RpcCallNoCallback(4,1,true,sendBuff_00,0x40,sendBuff_00,0x40);
+  sLastMsg = sendBuff_00;
   return;
 }
 
@@ -125,10 +125,11 @@ void load_and_link_dgo(u64 name_gstr,u64 heap_info,u64 flag,u64 buffer_size)
  * This does not use the mutli-threaded linker and will block until the entire file is done.e
  */
 void load_and_link_dgo_from_c(const_char *name,kheapinfo *heap,u32 linkFlag,s32 bufferSize, bool jump_from_c_to_goal) {
+  bool bVar1;
   u8 *buffer2;
   u8 *buffer1;
-  int32_t *piVar1;
-  size_t sVar2;
+  int32_t *piVar2;
+  size_t sVar3;
   undefined in_t1_lo;
   char acStack_b4 [4];
   char acStack_b0 [8];
@@ -137,7 +138,7 @@ void load_and_link_dgo_from_c(const_char *name,kheapinfo *heap,u32 linkFlag,s32 
   u32 local_50;
   u32 local_4c;
   u8 *local_48;
-  undefined4 local_44;
+  int local_44;
   
   local_48 = heap->top;
   local_4c = linkFlag;
@@ -145,41 +146,42 @@ void load_and_link_dgo_from_c(const_char *name,kheapinfo *heap,u32 linkFlag,s32 
   buffer1 = kmalloc(heap,bufferSize,0x2040,"dgo-buffer-2");
   local_50 = 0;
   kstrcpyup(acStack_b0,name);
-  sVar2 = strlen(acStack_b0);
-  if (acStack_b4[(int)sVar2] != '.') {
+  sVar3 = strlen(acStack_b0);
+  if (acStack_b4[(int)sVar3] != '.') {
     local_a8 = 0;
     strcat(acStack_b0,".CGO");
   }
-  local_44 = setStallMsg_G(0);
+  bVar1 = setStallMsg_GW(false);
+  local_44 = (int)bVar1;
   if (POWERING_OFF_W == false) {
     BeginLoadingDGO(acStack_b0,buffer1,buffer2,(u8 *)((uint)(heap->current + 0x3f) & 0xffffffc0));
     while( true ) {
       do {
         if ((local_50 != 0) || (POWERING_OFF_W != false)) goto LAB_00270d58;
-        piVar1 = (int32_t *)GetNextDGO(&local_50);
-      } while (piVar1 == (int32_t *)0x0);
+        piVar2 = (int32_t *)GetNextDGO(&local_50);
+      } while (piVar2 == (int32_t *)0x0);
       if (local_50 != 0) {
         heap->top = local_48;
       }
-      FUN_0027cc90_patch(piVar1,bufferSize);
-      strcpy(acStack_90,(char *)(piVar1 + 1));
-      link_and_exec((uint8_t *)(piVar1 + 0x10),acStack_90,*piVar1,heap,local_4c,(bool)in_t1_lo);
+      FUN_0027cc90_patch(piVar2,bufferSize);
+      strcpy(acStack_90,(char *)(piVar2 + 1));
+      link_and_exec((uint8_t *)(piVar2 + 0x10),acStack_90,*piVar2,heap,local_4c,(bool)in_t1_lo);
       if (local_50 != 0) break;
       if (POWERING_OFF_W == false) {
-        ContinueLoadingDGO(buffer1);
+        ContinueLoadingDGO((u8)buffer1,buffer2,(u8 *)((uint)(heap->current + 0x3f) & 0xffffffc0));
       }
     }
   }
 LAB_00270d58:
   if (POWERING_OFF_W == false) {
-    setStallMsg_G(local_44);
+    setStallMsg_GW(SUB41(local_44,0));
     return;
   }
   KernelShutdown(3);
   ShutdownMachine(3);
   Msg(6,"load_and_link_dgo_from_c: cannot continue; load aborted\n");
   do {
-                    // WARNING: Do nothing block with infinite loop
+                    /* WARNING: Do nothing block with infinite loop */
   } while( true );
 }
 
