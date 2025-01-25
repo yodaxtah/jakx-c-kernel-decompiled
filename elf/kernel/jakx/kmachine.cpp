@@ -41,15 +41,11 @@ using namespace ee;
  * TBD
  * Modified to use std::string, and removed call to fflush.
  */
-void InitParms(int argc,const_char **argv) {
-  int iVar1;
-  size_t sVar2;
-  char *__src;
-  
+void InitParms(int argc, const char** argv) {  
   if (argc != 0) {
+    char *__src;
     do {
-      iVar1 = strcmp(*argv,"-cd");
-      if (iVar1 == 0) {
+      if (strcmp(*argv,"-cd") == 0) {
         Msg(6,"dkernel: cd mode\n");
         reboot_G_isodrv_G_overlord_S = 0;
 LAB_00268668:
@@ -58,16 +54,12 @@ LAB_00268668:
         isodrv_G_reboot_G = 0;
 LAB_00268670:
         argc = argc + -1;
-      }
-      else {
-        iVar1 = strcmp(*argv,"-cd-local-overlord");
-        if (iVar1 == 0) {
+      } else {
+        if (strcmp(*argv,"-cd-local-overlord") == 0) {
           Msg(6,"dkernel: cd local-overlord mode\n");
           reboot_G_isodrv_G_overlord_S = 1;
           goto LAB_00268668;
-        }
-        iVar1 = strcmp(*argv,"-cddata");
-        if (iVar1 == 0) {
+        } else if (strcmp(*argv,"-cddata") == 0) {
           Msg(6,"dkernel: cddata mode\n");
           fs_S_FS_INITIALIZED_W = (char **)0x0;
 LAB_00268710:
@@ -75,137 +67,106 @@ LAB_00268710:
           modsrc_S = 1;
           reboot_G_isodrv_G_overlord_S = 1;
           goto LAB_00268670;
-        }
-        iVar1 = strcmp(*argv,"-demo");
-        if (iVar1 != 0) {
-          iVar1 = strcmp(*argv,"-kiosk");
-          if (iVar1 == 0) {
+        } else if (strcmp(*argv,"-demo") != 0) {
+          if (strcmp(*argv,"-kiosk") == 0) {
             Msg(6,"dkernel: kiosk mode\n");
             __src = "kiosk";
             goto LAB_00268760;
-          }
-          iVar1 = strcmp(*argv,"-beta");
-          if (iVar1 == 0) {
+          } else if (strcmp(*argv,"-beta") == 0) {
             Msg(6,"dkernel: beta mode\n");
             __src = "beta";
             goto LAB_00268760;
-          }
-          iVar1 = strcmp(*argv,"-preview");
-          if (iVar1 == 0) {
+          } else if (strcmp(*argv,"-preview") == 0) {
             Msg(6,"dkernel: preview mode\n");
             __src = "preview";
             goto LAB_00268760;
-          }
-          iVar1 = strcmp(*argv,"-fakeiso");
-          if (iVar1 == 0) {
+          } else if (strcmp(*argv,"-fakeiso") == 0) {
             Msg(6,"dkernel: fakeiso mode\n");
             fs_S_FS_INITIALIZED_W = (char **)0x1;
             goto LAB_00268710;
-          }
-          iVar1 = strcmp(*argv,"-boot");
-          if (iVar1 != 0) {
-            iVar1 = strcmp(*argv,"-debug-boot");
-            if (iVar1 == 0) {
+          } else if (strcmp(*argv,"-boot") != 0) {
+            if (strcmp(*argv,"-debug-boot") == 0) {
               Msg(6,"dkernel: debug-boot mode\n");
               DebugSegment = 1;
               MasterDebug = 0;
               DiskBoot = 1;
               goto LAB_00268670;
-            }
-            iVar1 = strcmp(*argv,"-debug");
-            if (iVar1 == 0) {
+            } else if (strcmp(*argv,"-debug") == 0) {
               Msg(6,"dkernel: debug mode\n");
               MasterDebug = 1;
               DebugSegment = 1;
               goto LAB_00268670;
-            }
-            iVar1 = strcmp(*argv,"-debug-mem");
-            if (iVar1 == 0) {
+            } else if (strcmp(*argv,"-debug-mem") == 0) {
               Msg(6,"dkernel: debug-mem mode\n");
               MasterDebug = 1;
               goto LAB_00268884;
-            }
-            iVar1 = strcmp(*argv,"-overlord");
-            if (iVar1 == 0) {
+            } else if (strcmp(*argv,"-overlord") == 0) {
               Msg(6,"dkernel: overlord 1 mode\n");
               _USE_OVERLORD2 = 0;
               goto LAB_00268670;
-            }
-            iVar1 = strcmp(*argv,"-overlord2");
-            if (iVar1 == 0) {
+            } else if (strcmp(*argv,"-overlord2") == 0) {
               Msg(6,"dkernel: overlord 2 mode\n");
               _USE_OVERLORD2 = 1;
               goto LAB_00268670;
-            }
-            iVar1 = strcmp(*argv,"-debug-symbols");
-            if (iVar1 == 0) {
+            } else if (strcmp(*argv,"-debug-symbols") == 0) {
               Msg(6,"dkernel: debug-symbols on\n");
               DebugSymbols = 1;
               goto LAB_00268670;
-            }
-            iVar1 = strcmp(*argv,"-no-debug-symbols");
-            if (iVar1 == 0) {
+            } else if (strcmp(*argv,"-no-debug-symbols") == 0) {
               Msg(6,"dkernel: debug-symbols off\n");
               DebugSymbols = 0;
               goto LAB_00268670;
-            }
-            iVar1 = strcmp(*argv,"-level");
-            if ((iVar1 == 0) && (1 < argc)) {
+            } else if ((strcmp(*argv,"-level") == 0) && (1 < argc)) {
               argc = argc + -2;
               Msg(6,"dkernel: level %s %s\n",argv[1],argv[2]);
               strcpy(DebugBootLevel,argv[1]);
-              iVar1 = atoi(argv[2]);
+              DebugBootLevelID = DecodeSymbolId(atoi(argv[2])) + 1;
               argv = argv + 2;
-              iVar1 = DecodeSymbolId(iVar1);
-              DebugBootLevelID = iVar1 + 1;
               goto LAB_00268670;
-            }
-            iVar1 = strcmp(*argv,"-user");
-            if ((iVar1 == 0) && (1 < argc)) {
+            } else if ((strcmp(*argv,"-user") == 0) && (1 < argc)) {
               Msg(6,"dkernel: user %s\n",argv[1]);
               strcpy(DebugBootUser,argv[1]);
 LAB_00268ac4:
               argc = argc + -1;
               argv = argv + 1;
               goto LAB_00268670;
-            }
-            iVar1 = strcmp(*argv,"-art");
-            if (iVar1 == 0) {
+            } else if (strcmp(*argv,"-art") == 0) {
               if (1 < argc) {
                 Msg(6,"dkernel: art-group %s\n",argv[1]);
-                sVar2 = strlen(argv[1]);
-                if (sVar2 != 0) {
+                if (strlen(argv[1]) != 0) {
                   strcpy(DebugBootArtGroup,argv[1]);
                   strcpy(DebugBootMessage,"art-group");
                 }
                 goto LAB_00268ac4;
+              } else {
+                argc = argc + -1;
+                goto LAB_00268674;
               }
+            } else {
               argc = argc + -1;
+              goto LAB_00268674;
             }
-            else {
-              argc = argc + -1;
-            }
-            goto LAB_00268674;
-          }
-          Msg(6,"dkernel: boot mode\n");
-          DiskBoot = 1;
-          MasterDebug = 0;
+          } else {
+            Msg(6,"dkernel: boot mode\n");
+            DiskBoot = 1;
+            MasterDebug = 0;
 LAB_00268884:
-          DebugSegment = 0;
-          goto LAB_00268670;
+            DebugSegment = 0;
+            goto LAB_00268670;
+          }
+        } else {
+          Msg(6,"dkernel: demo mode\n");
+          __src = "demo";
+  LAB_00268760:
+          argc = argc + -1;
+          strcpy(DebugBootMessage,__src);
         }
-        Msg(6,"dkernel: demo mode\n");
-        __src = "demo";
-LAB_00268760:
-        argc = argc + -1;
-        strcpy(DebugBootMessage,__src);
       }
 LAB_00268674:
       argv = argv + 1;
     } while (argc != 0);
   }
   fflush(*(FILE **)(_impure_ptr + 8));
-  return;
 }
 
 /*!
