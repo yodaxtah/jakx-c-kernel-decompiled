@@ -43,120 +43,98 @@ using namespace ee;
  */
 void InitParms(int argc, const char** argv) {  
   if (argc != 0) {
-    char *__src;
     do {
-      if (strcmp(*argv,"-cd") == 0) {
+      const char* arg = argv[0];
+      if (strcmp(arg, "-cd") == 0) {
         Msg(6,"dkernel: cd mode\n");
         reboot_G_isodrv_G_overlord_S = 0;
         modsrc_S = 0;
         fs_S_FS_INITIALIZED_W = (char **)0x0;
         isodrv_G_reboot_G = 0;
-        argc = argc + -1;
-      } else if (strcmp(*argv,"-cd-local-overlord") == 0) {
+      } else if (strcmp(arg, "-cd-local-overlord") == 0) {
         Msg(6,"dkernel: cd local-overlord mode\n");
         reboot_G_isodrv_G_overlord_S = 1;
         modsrc_S = 0;
         fs_S_FS_INITIALIZED_W = (char **)0x0;
         isodrv_G_reboot_G = 0;
-        argc = argc + -1;
-      } else if (strcmp(*argv,"-cddata") == 0) {
+      } else if (strcmp(arg, "-cddata") == 0) {
         Msg(6,"dkernel: cddata mode\n");
         fs_S_FS_INITIALIZED_W = (char **)0x0;
         isodrv_G_reboot_G = 1;
         modsrc_S = 1;
         reboot_G_isodrv_G_overlord_S = 1;
-        argc = argc + -1;
-      } else if (strcmp(*argv,"-demo") == 0) {
+      } else if (strcmp(arg, "-demo") == 0) {
         Msg(6,"dkernel: demo mode\n");
         strcpy(DebugBootMessage, "demo");
-        argc = argc + -1;
-      } else if (strcmp(*argv,"-kiosk") == 0) {
+      } else if (strcmp(arg, "-kiosk") == 0) {
         Msg(6,"dkernel: kiosk mode\n");
         strcpy(DebugBootMessage, "kiosk");
-        argc = argc + -1;
-      } else if (strcmp(*argv,"-beta") == 0) {
+      } else if (strcmp(arg, "-beta") == 0) {
         Msg(6,"dkernel: beta mode\n");
         strcpy(DebugBootMessage, "beta");
-        argc = argc + -1;
-      } else if (strcmp(*argv,"-preview") == 0) {
+      } else if (strcmp(arg, "-preview") == 0) {
         Msg(6,"dkernel: preview mode\n");
         strcpy(DebugBootMessage, "preview");
-        argc = argc + -1;
-      } else if (strcmp(*argv,"-fakeiso") == 0) {
+      } else if (strcmp(arg, "-fakeiso") == 0) {
         Msg(6,"dkernel: fakeiso mode\n");
         fs_S_FS_INITIALIZED_W = (char **)0x1;
         isodrv_G_reboot_G = 1;
         modsrc_S = 1;
         reboot_G_isodrv_G_overlord_S = 1;
-        argc = argc + -1;
-      } else if (strcmp(*argv,"-boot") == 0) {
+      } else if (strcmp(arg, "-boot") == 0) {
         Msg(6,"dkernel: boot mode\n");
         DiskBoot = 1;
         MasterDebug = 0;
         DebugSegment = 0;
-        argc = argc + -1;
       } else if (strcmp(*argv,"-debug-boot") == 0) {
         Msg(6,"dkernel: debug-boot mode\n");
         DebugSegment = 1;
         MasterDebug = 0;
         DiskBoot = 1;
-        argc = argc + -1;
-      } else if (strcmp(*argv,"-debug") == 0) {
+      } else if (strcmp(arg, "-debug") == 0) {
         Msg(6,"dkernel: debug mode\n");
         MasterDebug = 1;
         DebugSegment = 1;
-        argc = argc + -1;
-      } else if (strcmp(*argv,"-debug-mem") == 0) {
+      } else if (strcmp(arg, "-debug-mem") == 0) {
         Msg(6,"dkernel: debug-mem mode\n");
         MasterDebug = 1;
         DebugSegment = 0;
-        argc = argc + -1;
-      } else if (strcmp(*argv,"-overlord") == 0) {
+      } else if (strcmp(arg, "-overlord") == 0) {
         Msg(6,"dkernel: overlord 1 mode\n");
         _USE_OVERLORD2 = 0;
-        argc = argc + -1;
-      } else if (strcmp(*argv,"-overlord2") == 0) {
+      } else if (strcmp(arg, "-overlord2") == 0) {
         Msg(6,"dkernel: overlord 2 mode\n");
         _USE_OVERLORD2 = 1;
-        argc = argc + -1;
-      } else if (strcmp(*argv,"-debug-symbols") == 0) {
+      } else if (strcmp(arg, "-debug-symbols") == 0) {
         Msg(6,"dkernel: debug-symbols on\n");
         DebugSymbols = 1;
-        argc = argc + -1;
-      } else if (strcmp(*argv,"-no-debug-symbols") == 0) {
+      } else if (strcmp(arg, "-no-debug-symbols") == 0) {
         Msg(6,"dkernel: debug-symbols off\n");
         DebugSymbols = 0;
-        argc = argc + -1;
-      } else if ((strcmp(*argv,"-level") == 0) && (1 < argc)) {
-        argc = argc + -2;
+      } else if ((strcmp(arg, "-level") == 0) && (1 < argc)) {
         Msg(6,"dkernel: level %s %s\n",argv[1],argv[2]);
         strcpy(DebugBootLevel,argv[1]);
         DebugBootLevelID = DecodeSymbolId(atoi(argv[2])) + 1;
-        argv = argv + 2;
-        argc = argc + -1;
-      } else if ((strcmp(*argv,"-user") == 0) && (1 < argc)) {
+        argc -= 2;
+        argv += 2;
+      } else if ((strcmp(arg, "-user") == 0) && (1 < argc)) {
         Msg(6,"dkernel: user %s\n",argv[1]);
         strcpy(DebugBootUser,argv[1]);
-        argc = argc + -1;
-        argv = argv + 1;
-        argc = argc + -1;
-      } else if (strcmp(*argv,"-art") == 0) {
+        argc--;
+        argv++;
+      } else if (strcmp(arg, "-art") == 0) {
         if (1 < argc) {
           Msg(6,"dkernel: art-group %s\n",argv[1]);
           if (strlen(argv[1]) != 0) {
             strcpy(DebugBootArtGroup,argv[1]);
             strcpy(DebugBootMessage,"art-group");
           }
-          argc = argc + -1;
-          argv = argv + 1;
-          argc = argc + -1;
-        } else {
-          argc = argc + -1;
+          argc--;
+          argv++;
         }
-      } else {
-        argc = argc + -1;
       }
-      argv = argv + 1;
+      argc--;
+      argv++;
     } while (argc != 0);
   }
   fflush(*(FILE **)(_impure_ptr + 8));
