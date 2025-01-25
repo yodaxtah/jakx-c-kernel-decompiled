@@ -38,104 +38,139 @@ using namespace ee;
 /*!
  * Initialize global variables based on command line parameters. Not called in retail versions,
  * but it is present in the ELF.
- * TBD
+ * DONE
  * Modified to use std::string, and removed call to fflush.
  */
 void InitParms(int argc, const char** argv) {  
   if (argc != 0) {
-    do {
-      const char* arg = argv[0];
+    for (int i = 1; i < argc; i++) {
+      const char* arg = argv[i];
+
       if (strcmp(arg, "-cd") == 0) {
-        Msg(6,"dkernel: cd mode\n");
+        Msg(6, "dkernel: cd mode\n");
         reboot_G_isodrv_G_overlord_S = 0;
         modsrc_S = 0;
         fs_S_FS_INITIALIZED_W = (char **)0x0;
         isodrv_G_reboot_G = 0;
-      } else if (strcmp(arg, "-cd-local-overlord") == 0) {
-        Msg(6,"dkernel: cd local-overlord mode\n");
+      }
+      
+      else if (strcmp(arg, "-cd-local-overlord") == 0) {
+        Msg(6, "dkernel: cd local-overlord mode\n");
         reboot_G_isodrv_G_overlord_S = 1;
         modsrc_S = 0;
         fs_S_FS_INITIALIZED_W = (char **)0x0;
         isodrv_G_reboot_G = 0;
-      } else if (strcmp(arg, "-cddata") == 0) {
-        Msg(6,"dkernel: cddata mode\n");
+      }
+      
+      else if (strcmp(arg, "-cddata") == 0) {
+        Msg(6, "dkernel: cddata mode\n");
         fs_S_FS_INITIALIZED_W = (char **)0x0;
         isodrv_G_reboot_G = 1;
         modsrc_S = 1;
         reboot_G_isodrv_G_overlord_S = 1;
-      } else if (strcmp(arg, "-demo") == 0) {
-        Msg(6,"dkernel: demo mode\n");
+      }
+      
+      else if (strcmp(arg, "-demo") == 0) {
+        Msg(6, "dkernel: demo mode\n");
         strcpy(DebugBootMessage, "demo");
-      } else if (strcmp(arg, "-kiosk") == 0) {
-        Msg(6,"dkernel: kiosk mode\n");
+      }
+      
+      else if (strcmp(arg, "-kiosk") == 0) {
+        Msg(6, "dkernel: kiosk mode\n");
         strcpy(DebugBootMessage, "kiosk");
-      } else if (strcmp(arg, "-beta") == 0) {
-        Msg(6,"dkernel: beta mode\n");
+      }
+
+      else if (strcmp(arg, "-beta") == 0) {
+        Msg(6, "dkernel: beta mode\n");
         strcpy(DebugBootMessage, "beta");
-      } else if (strcmp(arg, "-preview") == 0) {
-        Msg(6,"dkernel: preview mode\n");
+      }
+      
+      else if (strcmp(arg, "-preview") == 0) {
+        Msg(6, "dkernel: preview mode\n");
         strcpy(DebugBootMessage, "preview");
-      } else if (strcmp(arg, "-fakeiso") == 0) {
-        Msg(6,"dkernel: fakeiso mode\n");
+      }
+
+      else if (strcmp(arg, "-fakeiso") == 0) {
+        Msg(6, "dkernel: fakeiso mode\n");
         fs_S_FS_INITIALIZED_W = (char **)0x1;
         isodrv_G_reboot_G = 1;
         modsrc_S = 1;
         reboot_G_isodrv_G_overlord_S = 1;
-      } else if (strcmp(arg, "-boot") == 0) {
-        Msg(6,"dkernel: boot mode\n");
-        DiskBoot = 1;
-        MasterDebug = 0;
-        DebugSegment = 0;
-      } else if (strcmp(*argv,"-debug-boot") == 0) {
-        Msg(6,"dkernel: debug-boot mode\n");
-        DebugSegment = 1;
+      }
+      
+      else if (strcmp(arg, "-boot") == 0) {
+        Msg(6, "dkernel: boot mode\n");
         MasterDebug = 0;
         DiskBoot = 1;
-      } else if (strcmp(arg, "-debug") == 0) {
-        Msg(6,"dkernel: debug mode\n");
+        DebugSegment = 0;
+      }
+      
+      else if (strcmp(arg, "-debug-boot") == 0) {
+        Msg(6, "dkernel: debug-boot mode\n");
+        MasterDebug = 0;
+        DebugSegment = 1;
+        DiskBoot = 1;
+      }
+      
+      else if (strcmp(arg, "-debug") == 0) {
+        Msg(6, "dkernel: debug mode\n");
         MasterDebug = 1;
         DebugSegment = 1;
-      } else if (strcmp(arg, "-debug-mem") == 0) {
-        Msg(6,"dkernel: debug-mem mode\n");
+      }
+      
+      else if (strcmp(arg, "-debug-mem") == 0) {
+        Msg(6, "dkernel: debug-mem mode\n");
         MasterDebug = 1;
         DebugSegment = 0;
-      } else if (strcmp(arg, "-overlord") == 0) {
-        Msg(6,"dkernel: overlord 1 mode\n");
+      }
+      
+      else if (strcmp(arg, "-overlord") == 0) {
+        Msg(6, "dkernel: overlord 1 mode\n");
         _USE_OVERLORD2 = 0;
-      } else if (strcmp(arg, "-overlord2") == 0) {
-        Msg(6,"dkernel: overlord 2 mode\n");
+      }
+      
+      else if (strcmp(arg, "-overlord2") == 0) {
+        Msg(6, "dkernel: overlord 2 mode\n");
         _USE_OVERLORD2 = 1;
-      } else if (strcmp(arg, "-debug-symbols") == 0) {
-        Msg(6,"dkernel: debug-symbols on\n");
+      }
+      
+      else if (strcmp(arg, "-debug-symbols") == 0) {
+        Msg(6, "dkernel: debug-symbols on\n");
         DebugSymbols = 1;
-      } else if (strcmp(arg, "-no-debug-symbols") == 0) {
-        Msg(6,"dkernel: debug-symbols off\n");
+      }
+      
+      else if (strcmp(arg, "-no-debug-symbols") == 0) {
+        Msg(6, "dkernel: debug-symbols off\n");
         DebugSymbols = 0;
-      } else if ((strcmp(arg, "-level") == 0) && (1 < argc)) {
-        Msg(6,"dkernel: level %s %s\n",argv[1],argv[2]);
-        strcpy(DebugBootLevel,argv[1]);
+      }
+      
+      else if ((strcmp(arg, "-level") == 0) && (1 < argc)) {
+        std::string levelName = argv[++i];
+        std::string symbolId = argv[++i];
+        Msg(6, "dkernel: level %s %s\n", levelName.c_str(), symbolId.c_str());
+        strcpy(DebugBootLevel, levelName.c_str());
         DebugBootLevelID = DecodeSymbolId(atoi(argv[2])) + 1;
-        argc -= 2;
-        argv += 2;
-      } else if ((strcmp(arg, "-user") == 0) && (1 < argc)) {
-        Msg(6,"dkernel: user %s\n",argv[1]);
-        strcpy(DebugBootUser,argv[1]);
-        argc--;
-        argv++;
-      } else if (strcmp(arg, "-art") == 0) {
+      }
+      
+      else if ((strcmp(arg, "-user") == 0) && (1 < argc)) {
+        i++;
+        std::string userName = argv[i];
+        Msg(6, "dkernel: user %s\n", userName.c_str());
+        strcpy(DebugBootUser, userName.c_str());
+      }
+      
+      else if (strcmp(arg, "-art") == 0) {
         if (1 < argc) {
-          Msg(6,"dkernel: art-group %s\n",argv[1]);
-          if (strlen(argv[1]) != 0) {
-            strcpy(DebugBootArtGroup,argv[1]);
-            strcpy(DebugBootMessage,"art-group");
+          i++;
+          std::string artGroupName = argv[i];
+          Msg(6, "dkernel: art-group %s\n", artGroupName);
+          if (strlen(artGroupName) != 0) {
+            strcpy(DebugBootArtGroup, artGroupName);
+            strcpy(DebugBootMessage, "art-group");
           }
-          argc--;
-          argv++;
         }
       }
-      argc--;
-      argv++;
-    } while (argc != 0);
+    }
   }
   fflush(*(FILE **)(_impure_ptr + 8));
 }
@@ -178,7 +213,7 @@ s32 InitIOP() {
   else {
     cd_S_INITIALIZE_CD_W = 1;
   }
-  Msg(6,"dkernel: boot:%d dbg:%d mem:%d syms:%d fs:%d mod:%d ovl:%d ioprp:%d cd:%d dnas:%d\n",
+  Msg(6, "dkernel: boot:%d dbg:%d mem:%d syms:%d fs:%d mod:%d ovl:%d ioprp:%d cd:%d dnas:%d\n",
       DiskBoot,MasterDebug,DebugSegment,DebugSymbols,fs_S_FS_INITIALIZED_W,modsrc_S,
       reboot_G_isodrv_G_overlord_S,isodrv_G_reboot_G,(uint)cd_S_INITIALIZE_CD_W,
       dnas_S_DNAS_INITIALIZED_W);
@@ -374,7 +409,7 @@ switchD_00269d84_caseD_5:
       if (iVar2 == 1) {
         FUN_00279c54();
         CatalogOverlayModules_S();
-        Msg(6,"InitIOP OK\n");
+        Msg(6, "InitIOP OK\n");
         FUN_0027c2a4_usb();
         return 0;
       }
@@ -500,7 +535,7 @@ int InitMachine() {
     if (MasterDebug != 0) {
       InitGoalProto();
     }
-    Msg(6,"kernel: InitRPC\n");
+    Msg(6, "kernel: InitRPC\n");
     sVar3 = InitRPC();
     if (sVar3 == 0) {
       reset_output();
@@ -509,11 +544,11 @@ int InitMachine() {
       if ((uVar4 & 0xfff00000) == 0xfff00000) {
         return uVar4;
       }
-      Msg(6,"kernel: InitListenerConnect\n");
+      Msg(6, "kernel: InitListenerConnect\n");
       InitListenerConnect();
-      Msg(6,"kernel: InitCheckListener\n");
+      Msg(6, "kernel: InitCheckListener\n");
       InitCheckListener();
-      Msg(6,"kernel: machine started\n");
+      Msg(6, "kernel: machine started\n");
       return 0;
     }
     format = "dkernel: fatal error; InitRPC() failed\n";
@@ -548,7 +583,7 @@ int ShutdownMachine(int reasonIndex) {
   else {
     pcVar2 = "*invalid*";
   }
-  Msg(6,"kernel: machine shutdown (reason=%d, %s)\n",reasonIndex,pcVar2);
+  Msg(6, "kernel: machine shutdown (reason=%d, %s)\n",reasonIndex,pcVar2);
   CloseListener();
   ShutdownGoalProto();
   StopIOP_G();
