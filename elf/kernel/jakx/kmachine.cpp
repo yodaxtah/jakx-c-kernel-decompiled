@@ -691,29 +691,30 @@ u32 MouseGetData(u32 mouse) {
  * and anything else for write only.
  */
 u64 kopen(u64 fs,u64 name,u64 mode) {
+  FileStream *puVar2;
   s32 sVar1;
-  undefined4 *puVar2;
+  u32 uVar2;
   char *__format;
   int iVar3;
   int iVar4;
   int unaff_s7_lo;
   const_char acStack_a0 [128];
   
-  puVar2 = (undefined4 *)fs;
-  iVar4 = (int)name;
-  puVar2[2] = iVar4;
-  iVar3 = iVar4 + 5;
-  *puVar2 = 0;
-  puVar2[1] = (int)mode;
-  if (*(char *)(iVar4 + 4) == '/') {
+  puVar2 = (FileStream *)fs;
+  uVar2 = (u32)name;
+  puVar2->name = uVar2;
+  iVar3 = uVar2 + 5;
+  puVar2->flags = 0;
+  puVar2->mode = (u32)mode;
+  if (*(char *)(uVar2 + 4) == '/') {
     __format = "%s";
   }
   else {
     __format = "host:%s";
-    iVar3 = iVar4 + 4;
+    iVar3 = uVar2 + 4;
   }
   sprintf(acStack_a0,__format,iVar3);
-  iVar4 = (int)mode - unaff_s7_lo;
+  iVar4 = (u32)mode - unaff_s7_lo;
   iVar3 = strcmp((char *)(*(int *)(iVar4 + SymbolString) + 4),"read");
   sVar1 = 1;
   if (iVar3 != 0) {
@@ -724,7 +725,7 @@ u64 kopen(u64 fs,u64 name,u64 mode) {
     }
   }
   sVar1 = sceOpen(acStack_a0,sVar1);
-  puVar2[3] = sVar1;
+  puVar2->file = sVar1;
   return fs;
 }
 
