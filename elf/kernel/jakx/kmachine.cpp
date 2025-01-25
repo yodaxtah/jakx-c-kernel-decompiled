@@ -227,7 +227,9 @@ s32 InitIOP() {
     if (0x45 < sVar4) {
       iVar2 = 0x45;
       pcVar7 = "dkernel: error; invalid ioprp path; %d chars max\n";
-      goto LAB_002697f0;
+      MsgErr(pcVar7, iVar2);
+      FUN_0027c2a4_usb();
+      return -1;
     }
     printf("dkernel: Rebooting IOP using \"%s\"...",acStack_5b0);
     iVar2 = SifIopReboot(acStack_5b0);
@@ -260,7 +262,10 @@ s32 InitIOP() {
   else {
     DumpIOPMemStats_Q("Initial IOP mem stats");
     lVar6 = InitUnderlord_S();
-    if (lVar6 < 0) goto LAB_002697f8;
+    if (lVar6 < 0) {
+      FUN_0027c2a4_usb();
+      return -1;
+    }
     lVar6 = FUN_0027483c_implicit_dkernel(0x282fd8);
     if (lVar6 == 0) {
       DAT_00282fe6 = 0;
@@ -303,13 +308,14 @@ s32 InitIOP() {
     if (RUN_AS_DEMO_W != '\0') {
       iVar2 = strcmp(DebugBootMessage,"demo");
       if (iVar2 == 0) {
-LAB_002699e0:
         masterConfig.aspect = 1;
       }
       else {
         iVar2 = strcmp(DebugBootMessage,"demo-shared");
         masterConfig.aspect = 0;
-        if (iVar2 == 0) goto LAB_002699e0;
+        if (iVar2 == 0) {
+          masterConfig.aspect = 1;
+        }
       }
       local_13b = 0;
       local_13a = 0;
@@ -326,7 +332,10 @@ LAB_002699e0:
     }
     local_2c[0] = 1;
     lVar6 = loadIOPModuleAndStuff_W("dev9.irx",0,(char *)0x0,(long)(int)local_2c,(long)modsrc_S);
-    if (lVar6 < 0) goto LAB_002697f8;
+    if (lVar6 < 0) {
+      FUN_0027c2a4_usb();
+      return -1;
+    }
     DEV9_PRESENT_W = local_2c[0] != 1;
     if (DEV9_PRESENT_W) {
       pcVar7 = "";
@@ -342,14 +351,20 @@ LAB_002699e0:
          (lVar6 = loadIOPModuleAndStuff_W("sio2d.irx",0,(char *)0x0,0,(long)modsrc_S), lVar6 < 0))
         || (lVar6 = loadIOPModuleAndStuff_W("dbcman.irx",0,(char *)0x0,0,(long)modsrc_S), lVar6 < 0)
         ) || (lVar6 = loadIOPModuleAndStuff_W("mc2_d.irx",0,(char *)0x0,0,(long)modsrc_S), lVar6 < 0
-             )) goto LAB_002697f8;
+             )) {
+      FUN_0027c2a4_usb();
+      return -1;
+    }
     lVar6 = loadIOPModuleAndStuff_W("ds2o_d.irx",0,(char *)0x0,0,(long)modsrc_S);
     if (((lVar6 < 0) ||
         (lVar6 = loadIOPModuleAndStuff_W("ds2o_d.irx",0,(char *)0x0,0,(long)modsrc_S), lVar6 < 0))
        || ((lVar6 = loadIOPModuleAndStuff_W("libsd.irx",0,(char *)0x0,0,(long)modsrc_S), lVar6 < 0
            || ((lVar6 = loadIOPModuleAndStuff_W("usbd.irx",0x2b,"hub=1",0,(long)modsrc_S), lVar6 < 0
                || (lVar6 = loadIOPModuleAndStuff_W("usbkeybd.irx",0,(char *)0x0,0,(long)modsrc_S),
-                  lVar6 < 0)))))) goto LAB_002697f8;
+                  lVar6 < 0)))))) {           
+      FUN_0027c2a4_usb();
+      return -1;
+    }
     if (_USE_OVERLORD2 == 0) {
       pcVar7 = "989nostr.irx";
     }
@@ -358,19 +373,20 @@ LAB_002699e0:
     }
     lVar6 = loadIOPModuleAndStuff_W(pcVar7,9,"do_rpc=0",0,(long)modsrc_S);
     if ((lVar6 < 0) ||
-       (lVar6 = loadIOPModuleAndStuff_W("lgaud.irx",0x2f,"thpri=53",0,(long)modsrc_S), lVar6 < 0))
-    goto LAB_002697f8;
+       (lVar6 = loadIOPModuleAndStuff_W("lgaud.irx",0x2f,"thpri=53",0,(long)modsrc_S), lVar6 < 0)) {
+      FUN_0027c2a4_usb();
+      return -1;
+    }
     strcpy(&cStack_130,*(char **)((int)fs_S_FS_INITIALIZED_W * 4 + 0x283410));
     sVar4 = strlen(&cStack_130);
     pcVar7 = acStack_12f + (int)sVar4;
     iVar2 = strncmp(DebugBootMessage,"demo",4);
     if (iVar2 == 0) {
       strcpy(pcVar7,"SCREEN1.DEE");
-switchD_00269d84_caseD_5:
       pcVar8 = "SCREEN1.EUR";
     }
     else {
-      if (false) goto switchD_00269d84_caseD_5;
+      // if (false) goto switchD_00269d84_caseD_5;
       switch(masterConfig.language) {
       case 1:
         pcVar8 = "SCREEN1.FRE";
@@ -385,7 +401,7 @@ switchD_00269d84_caseD_5:
         pcVar8 = "SCREEN1.ITA";
         break;
       default:
-        goto switchD_00269d84_caseD_5;
+        pcVar8 = "SCREEN1.EUR"
       case 9:
         pcVar8 = "SCREEN1.POR";
       }
@@ -401,7 +417,10 @@ switchD_00269d84_caseD_5:
     lVar6 = loadIOPModuleAndStuff_W
                       (pcVar8,(long)(int)(pcVar7 + (((int)sVar4 + 1) - (int)&cStack_130)),
                        &cStack_130,0,(long)reboot_G_isodrv_G_overlord_S);
-    if (lVar6 < 0) goto LAB_002697f8;
+    if (lVar6 < 0) {
+      FUN_0027c2a4_usb();
+      return -1;
+    }
     IOP_RUNNING_W = 1;
     iVar2 = sceDbcInit_G();
     if (iVar2 == 1) {
@@ -419,9 +438,7 @@ switchD_00269d84_caseD_5:
       pcVar7 = "dkernel: error; DBC driver init failed %d\n";
     }
   }
-LAB_002697f0:
   MsgErr(pcVar7,iVar2);
-LAB_002697f8:
   FUN_0027c2a4_usb();
   return -1;
 }
