@@ -67,7 +67,14 @@ LAB_00268710:
           modsrc_S = 1;
           reboot_G_isodrv_G_overlord_S = 1;
           goto LAB_00268670;
-        } else if (strcmp(*argv,"-demo") != 0) {
+        } else if (strcmp(*argv,"-demo") == 0) {
+          Msg(6,"dkernel: demo mode\n");
+          __src = "demo";
+LAB_00268760:
+          argc = argc + -1;
+          strcpy(DebugBootMessage,__src);
+          goto LAB_00268674;
+        } else {
           if (strcmp(*argv,"-kiosk") == 0) {
             Msg(6,"dkernel: kiosk mode\n");
             __src = "kiosk";
@@ -84,7 +91,14 @@ LAB_00268710:
             Msg(6,"dkernel: fakeiso mode\n");
             fs_S_FS_INITIALIZED_W = (char **)0x1;
             goto LAB_00268710;
-          } else if (strcmp(*argv,"-boot") != 0) {
+          } else if (strcmp(*argv,"-boot") == 0) {
+            Msg(6,"dkernel: boot mode\n");
+            DiskBoot = 1;
+            MasterDebug = 0;
+LAB_00268884:
+            DebugSegment = 0;
+            goto LAB_00268670;
+          } else {
             if (strcmp(*argv,"-debug-boot") == 0) {
               Msg(6,"dkernel: debug-boot mode\n");
               DebugSegment = 1;
@@ -146,20 +160,7 @@ LAB_00268ac4:
               argc = argc + -1;
               goto LAB_00268674;
             }
-          } else {
-            Msg(6,"dkernel: boot mode\n");
-            DiskBoot = 1;
-            MasterDebug = 0;
-LAB_00268884:
-            DebugSegment = 0;
-            goto LAB_00268670;
           }
-        } else {
-          Msg(6,"dkernel: demo mode\n");
-          __src = "demo";
-  LAB_00268760:
-          argc = argc + -1;
-          strcpy(DebugBootMessage,__src);
         }
       }
 LAB_00268674:
