@@ -1683,61 +1683,77 @@ u64 pack_type_flag(u64 methods, u64 heap_base, u64 size) {
 }  // namespace
 
 int InitHeapAndSymbol() {
-  int iVar1;
-  int iVar2;
-  uint uVar3;
-  u8 *puVar4;
-  u8 *puVar5;
-  u32 uVar6;
-  Function *pFVar7;
-  Function *pFVar8;
-  Function *pFVar9;
-  Function *pFVar10;
-  u32 *puVar11;
-  int iVar12;
-  undefined uVar13;
-  undefined uVar14;
+  uint uVar1;
+  u8 *symbol_table;
+  u8 *SymbolString_;
+  u32 uVar2;
+  Function *new_illegal_func;
+  Function *delete_illegal_func;
+  Function *print_object_func;
+  Function *inspect_object_func;
+  u32 *puVar3;
+  int iVar4;
+  u64 uVar5;
+  undefined uVar6;
+  undefined uVar7;
   u8 *value;
+  Type *iVar1;
+  Type *iVar16;
+  Type *iVar17;
+  Type *iVar18;
+  Type *iVar10;
+  Type *iVar19;
+  Type *iVar20;
+  Type *iVar10_00;
+  Type *iVar10_01;
+  Type *iVar10_02;
+  Type *iVar10_03;
+  Type *iVar12;
+  Type *iVar11;
+  Type *iVar13;
+  Type *iVar14;
+  Type *iVar15;
   
-  puVar4 = kmalloc((kheapinfo *)&DAT_0025bb70,0x10000,0x1000,"symbol-table");
-  puVar5 = kmalloc((kheapinfo *)&DAT_0025bb70,0x10000,0x1000,"string-table");
-  SymbolTable2 = puVar4 + 5;
-  SymbolString = puVar5 + 0x8000;
-  LastSymbol = puVar4 + 0xff00;
-  value = puVar4 + 0x8001;
+  symbol_table = kmalloc(&kglobalheapinfo,0x10000,0x1000,"symbol-table");
+  SymbolString_ = kmalloc(&kglobalheapinfo,0x10000,0x1000,"string-table");
+  SymbolTable2 = symbol_table + 5;
+  SymbolString = SymbolString_ + 0x8000;
+  LastSymbol = symbol_table + 0xff00;
+  value = symbol_table + 0x8001;
   NumSymbols = 0;
-  uVar14 = 0x20;
+  uVar7 = 0x20;
   reset_output();
-  *(u8 **)(puVar4 + 0x7ff8) = puVar4 + 0x7ffa;
-  *(undefined **)(puVar4 + 0x80a0) = &DAT_0025bb70;
-  *(u8 **)(puVar4 + 0x7ffc) = puVar4 + 0x7ffa;
-  UnknownName = make_string_from_c("*unknown-symbol-name*");
-  alloc_and_init_type(puVar4 + 0x8019,9,true);
-  alloc_and_init_type(puVar4 + 0x8015,9,true);
-  alloc_and_init_type(puVar4 + 0x8011,9,true);
-  alloc_and_init_type(puVar4 + 0x8009,9,true);
+  *(u8 **)(symbol_table + 0x7ff8) = symbol_table + 0x7ffa;
+  *(kheapinfo **)(symbol_table + 0x80a0) = &kglobalheapinfo;
+  *(u8 **)(symbol_table + 0x7ffc) = symbol_table + 0x7ffa;
+  uVar5 = make_string_from_c("*unknown-symbol-name*");
+  UnknownName = (undefined4)uVar5;
+  alloc_and_init_type(symbol_table + 0x8019,9,true);
+  alloc_and_init_type(symbol_table + 0x8015,9,true);
+  alloc_and_init_type(symbol_table + 0x8011,9,true);
+  alloc_and_init_type(symbol_table + 0x8009,9,true);
   set_fixed_symbol(FIX_SYM_FALSE,"#f",(u32)value);
-  set_fixed_symbol(FIX_SYM_TRUE,"#t",(u32)(puVar4 + 0x8005));
-  uVar6 = make_nothing_func();
-  set_fixed_symbol(FIX_SYM_NOTHING_FUNC,"nothing",uVar6);
-  uVar6 = make_zero_func();
-  uVar13 = 0x60;
-  set_fixed_symbol(FIX_SYM_ZERO_FUNC,"zero-func",uVar6);
-  pFVar7 = make_function_from_c(asize_of_basic,(bool)uVar13);
-  uVar13 = uVar14;
-  set_fixed_symbol(FIX_SYM_ASIZE_OF_BASIC_FUNC,"asize-of-basic-func",(u32)pFVar7);
-  pFVar7 = make_function_from_c(copy_basic,(bool)uVar13);
-  set_fixed_symbol(FIX_SYM_COPY_BASIC_FUNC,"asize-of-basic-func",(u32)pFVar7);
-  pFVar7 = make_function_from_c(delete_basic,(bool)uVar14);
-  set_fixed_symbol(FIX_SYM_DELETE_BASIC,"delete-basic",(u32)pFVar7);
-  set_fixed_symbol(FIX_SYM_GLOBAL_HEAP,"global",(u32)&DAT_0025bb70);
+  set_fixed_symbol(FIX_SYM_TRUE,"#t",(u32)(symbol_table + 0x8005));
+  uVar2 = make_nothing_func();
+  set_fixed_symbol(FIX_SYM_NOTHING_FUNC,"nothing",uVar2);
+  uVar2 = make_zero_func();
+  uVar6 = 0x60;
+  set_fixed_symbol(FIX_SYM_ZERO_FUNC,"zero-func",uVar2);
+  new_illegal_func = make_function_from_c(asize_of_basic,(bool)uVar6);
+  uVar6 = uVar7;
+  set_fixed_symbol(FIX_SYM_ASIZE_OF_BASIC_FUNC,"asize-of-basic-func",(u32)new_illegal_func);
+  new_illegal_func = make_function_from_c(copy_basic,(bool)uVar6);
+  set_fixed_symbol(FIX_SYM_COPY_BASIC_FUNC,"asize-of-basic-func",(u32)new_illegal_func);
+  new_illegal_func = make_function_from_c(delete_basic,(bool)uVar7);
+  set_fixed_symbol(FIX_SYM_DELETE_BASIC,"delete-basic",(u32)new_illegal_func);
+  set_fixed_symbol(FIX_SYM_GLOBAL_HEAP,"global",(u32)&kglobalheapinfo);
   set_fixed_symbol(FIX_SYM_DEBUG,"debug",(u32)kdebugheap);
-  set_fixed_symbol(FIX_SYM_STATIC,"static",(u32)(puVar4 + 0x809d));
-  set_fixed_symbol(FIX_SYM_LOADING_LEVEL,"loading-level",(u32)&DAT_0025bb70);
-  set_fixed_symbol(FIX_SYM_LOADING_PACKAGE,"loading-package",(u32)&DAT_0025bb70);
-  set_fixed_symbol(FIX_SYM_PROCESS_LEVEL_HEAP,"process-level-heap",(u32)&DAT_0025bb70);
-  set_fixed_symbol(FIX_SYM_STACK,"stack",(u32)(puVar4 + 0x80b5));
-  set_fixed_symbol(FIX_SYM_SCRATCH,"scratch",(u32)(puVar4 + 0x80b9));
+  set_fixed_symbol(FIX_SYM_STATIC,"static",(u32)(symbol_table + 0x809d));
+  set_fixed_symbol(FIX_SYM_LOADING_LEVEL,"loading-level",(u32)&kglobalheapinfo);
+  set_fixed_symbol(FIX_SYM_LOADING_PACKAGE,"loading-package",(u32)&kglobalheapinfo);
+  set_fixed_symbol(FIX_SYM_PROCESS_LEVEL_HEAP,"process-level-heap",(u32)&kglobalheapinfo);
+  set_fixed_symbol(FIX_SYM_STACK,"stack",(u32)(symbol_table + 0x80b5));
+  set_fixed_symbol(FIX_SYM_SCRATCH,"scratch",(u32)(symbol_table + 0x80b9));
   set_fixed_symbol(FIX_SYM_SCRATCH_TOP,"*scratch-top*",0x70000000);
   set_fixed_symbol(FIX_SYM_LEVEL,"level",0);
   set_fixed_symbol(FIX_SYM_ART_GROUP,"art-group",0);
@@ -1745,8 +1761,8 @@ int InitHeapAndSymbol() {
   set_fixed_symbol(FIX_SYM_TEXTURE_PAGE,"texture-page",0);
   set_fixed_symbol(FIX_SYM_SOUND,"sound",0);
   set_fixed_symbol(FIX_SYM_DGO,"dgo",0);
-  set_fixed_symbol(FIX_SYM_TOP_LEVEL,"top-level",*(u32 *)(puVar4 + 0x8094));
-  set_fixed_symbol(FIX_SYM_QUOTE,"quote",(u32)(puVar4 + 0x80e9));
+  set_fixed_symbol(FIX_SYM_TOP_LEVEL,"top-level",*(u32 *)(symbol_table + 0x8094));
+  set_fixed_symbol(FIX_SYM_QUOTE,"quote",(u32)(symbol_table + 0x80e9));
   set_fixed_symbol(FIX_SYM_LISTENER_LINK_BLOCK,"*listener-link-block*",0);
   set_fixed_symbol(FIX_SYM_LISTENER_FUNCTION,"*listener-function*",0);
   set_fixed_symbol(FIX_SYM_STACK_TOP,"*stack-top*",0);
@@ -1855,149 +1871,151 @@ int InitHeapAndSymbol() {
   set_fixed_symbol(FIX_SYM_ULTIMATE_MEMCPY,"ultimate-memcpy",0);
   set_fixed_symbol(FIX_SYM_PLAY,"play",0);
   set_fixed_symbol(FIX_SYM_SYMBOL_STRING,"*symbol-string*",(u32)SymbolString);
-  set_fixed_symbol(FIX_SYM_KERNEL_SYMBOL_WARNINGS,"*kernel-symbol-warnings*",(u32)(puVar4 + 0x8005))
-  ;
-  uVar13 = 0x48;
+  set_fixed_symbol(FIX_SYM_KERNEL_SYMBOL_WARNINGS,"*kernel-symbol-warnings*",
+                   (u32)(symbol_table + 0x8005));
+  uVar6 = 0x48;
   set_fixed_symbol(FIX_SYM_NETWORK_BOOTSTRAP,"network-bootstrap",0);
-  pFVar7 = make_function_from_c(new_illegal,(bool)uVar13);
-  pFVar8 = make_function_from_c(delete_illegal,(bool)uVar13);
-  pFVar9 = make_function_from_c(print_object,(bool)uVar13);
-  pFVar10 = make_function_from_c(inspect_object,(bool)uVar13);
-  uVar13 = 0x60;
-  set_fixed_type(FIX_SYM_OBJECT_TYPE,"object",(Symbol4 *)(puVar4 + 0x801d),0x900000004,(u32)pFVar9,
-                 (u32)pFVar10);
-  iVar12 = *(int *)(puVar4 + 0x801c);
-  iVar1 = *(int *)(puVar4 + 0x801c);
-  *(undefined4 *)(iVar12 + 0x10) = *(undefined4 *)(puVar4 + 0x8094);
-  iVar2 = *(int *)(puVar4 + 0x801c);
-  *(Function **)(iVar1 + 0x14) = pFVar8;
-  *(undefined4 *)(iVar12 + 0x24) = *(undefined4 *)(puVar4 + 0x80c0);
-  pFVar9 = make_function_from_c(copy_fixed,(bool)uVar13);
-  *(Function **)(iVar2 + 0x28) = pFVar9;
-  pFVar9 = make_function_from_c(print_structure,(bool)uVar13);
-  pFVar10 = make_function_from_c(inspect_structure,(bool)uVar13);
-  uVar13 = 0x68;
-  set_fixed_type(FIX_SYM_STRUCTURE,"structure",(Symbol4 *)(puVar4 + 0x801d),0x900000004,(u32)pFVar9,
-                 (u32)pFVar10);
-  iVar12 = *(int *)(puVar4 + 0x806c);
-  pFVar9 = make_function_from_c(new_structure,(bool)uVar13);
-  *(Function **)(iVar12 + 0x10) = pFVar9;
-  iVar12 = *(int *)(puVar4 + 0x806c);
-  pFVar9 = make_function_from_c(delete_structure,(bool)uVar13);
-  *(Function **)(iVar12 + 0x14) = pFVar9;
-  pFVar9 = make_function_from_c(print_basic,(bool)uVar13);
-  pFVar10 = make_function_from_c(inspect_basic,(bool)uVar13);
-  uVar13 = 0x78;
-  set_fixed_type(FIX_SYM_BASIC,"basic",(Symbol4 *)(puVar4 + 0x806d),0x900000004,(u32)pFVar9,
-                 (u32)pFVar10);
-  iVar12 = *(int *)(puVar4 + 0x800c);
-  pFVar9 = make_function_from_c(new_basic,(bool)uVar13);
-  iVar1 = *(int *)(puVar4 + 0x800c);
-  *(Function **)(iVar12 + 0x10) = pFVar9;
-  iVar12 = *(int *)(puVar4 + 0x800c);
-  *(undefined4 *)(iVar1 + 0x14) = *(undefined4 *)(puVar4 + 0x8098);
-  *(undefined4 *)(iVar12 + 0x24) = *(undefined4 *)(puVar4 + 0x80c4);
-  *(undefined4 *)(iVar1 + 0x28) = *(undefined4 *)(puVar4 + 0x80c8);
-  pFVar9 = make_function_from_c(print_symbol,(bool)uVar13);
-  pFVar10 = make_function_from_c(inspect_symbol,(bool)uVar13);
-  uVar13 = 0x80;
-  set_fixed_type(FIX_SYM_SYMBOL_TYPE,"symbol",(Symbol4 *)(puVar4 + 0x801d),0x900000004,(u32)pFVar9,
-                 (u32)pFVar10);
-  iVar12 = *(int *)(puVar4 + 0x8014);
-  *(Function **)(*(int *)(puVar4 + 0x8014) + 0x10) = pFVar7;
-  *(Function **)(iVar12 + 0x14) = pFVar8;
-  pFVar9 = make_function_from_c(print_type,(bool)uVar13);
-  pFVar10 = make_function_from_c(inspect_type,(bool)uVar13);
-  uVar13 = 0x88;
-  set_fixed_type(FIX_SYM_TYPE_TYPE,"type",(Symbol4 *)(puVar4 + 0x800d),0x900000038,(u32)pFVar9,
-                 (u32)pFVar10);
-  iVar12 = *(int *)(puVar4 + 0x8018);
-  pFVar9 = make_function_from_c(new_type,(bool)uVar13);
-  iVar1 = *(int *)(puVar4 + 0x8018);
-  *(Function **)(iVar12 + 0x10) = pFVar9;
-  *(Function **)(iVar1 + 0x14) = pFVar8;
-  pFVar9 = make_function_from_c(print_string,(bool)uVar13);
-  pFVar10 = make_function_from_c(inspect_string,(bool)uVar13);
-  uVar13 = 0x90;
-  set_fixed_type(FIX_SYM_STRING_TYPE,"string",(Symbol4 *)(puVar4 + 0x800d),0x900000008,(u32)pFVar9,
-                 (u32)pFVar10);
-  pFVar9 = make_function_from_c(print_function,(bool)uVar13);
-  uVar13 = 0x98;
-  set_fixed_type(FIX_SYM_FUNCTION_TYPE,"function",(Symbol4 *)(puVar4 + 0x800d),0x900000004,
-                 (u32)pFVar9,0);
-  iVar12 = *(int *)(puVar4 + 0x8008);
-  *(Function **)(*(int *)(puVar4 + 0x8008) + 0x10) = pFVar7;
-  *(Function **)(iVar12 + 0x14) = pFVar8;
-  pFVar9 = make_function_from_c(print_vu_function,(bool)uVar13);
-  pFVar10 = make_function_from_c(inspect_vu_function,(bool)uVar13);
-  uVar13 = 0xa8;
-  set_fixed_type(FIX_SYM_VU_FUNCTION,"vu-function",(Symbol4 *)(puVar4 + 0x806d),0x900000010,
-                 (u32)pFVar9,(u32)pFVar10);
-  *(Function **)(*(int *)(puVar4 + 0x8080) + 0x14) = pFVar8;
-  pFVar9 = make_function_from_c(inspect_link_block,(bool)uVar13);
-  uVar13 = 0xb8;
-  set_fixed_type(FIX_SYM_LINK_BLOCK,"link-block",(Symbol4 *)(puVar4 + 0x800d),0x90000000c,0,
-                 (u32)pFVar9);
-  iVar12 = *(int *)(puVar4 + 0x8020);
-  *(Function **)(*(int *)(puVar4 + 0x8020) + 0x10) = pFVar7;
-  *(Function **)(iVar12 + 0x14) = pFVar8;
-  pFVar8 = make_function_from_c(kheapstatus,(bool)uVar13);
-  set_fixed_type(FIX_SYM_HEAP,"kheap",(Symbol4 *)(puVar4 + 0x806d),0x900000010,0,(u32)pFVar8);
-  uVar13 = 0xd0;
-  set_fixed_type(FIX_SYM_ARRAY,"array",(Symbol4 *)(puVar4 + 0x800d),0x900000010,0,0);
-  pFVar8 = make_function_from_c(print_pair,(bool)uVar13);
-  pFVar9 = make_function_from_c(inspect_pair,(bool)uVar13);
-  uVar13 = 0xd8;
-  set_fixed_type(FIX_SYM_PAIR_TYPE,"pair",(Symbol4 *)(puVar4 + 0x801d),0x900000008,(u32)pFVar8,
-                 (u32)pFVar9);
-  iVar12 = *(int *)(puVar4 + 0x8070);
-  pFVar8 = make_function_from_c(new_pair,(bool)uVar13);
-  *(Function **)(iVar12 + 0x10) = pFVar8;
-  iVar12 = *(int *)(puVar4 + 0x8070);
-  pFVar8 = make_function_from_c(delete_pair,(bool)uVar13);
-  *(Function **)(iVar12 + 0x14) = pFVar8;
-  set_fixed_type(FIX_SYM_PROCESS_TREE,"process-tree",(Symbol4 *)(puVar4 + 0x800d),0xf0000002c,0,0);
-  set_fixed_type(FIX_SYM_PROCESS_TYPE,"process",(Symbol4 *)(puVar4 + 0x8061),0xf00000090,0,0);
-  set_fixed_type(FIX_SYM_THREAD,"thread",(Symbol4 *)(puVar4 + 0x800d),0xc00000028,0,0);
-  set_fixed_type(FIX_SYM_CONNECTABLE,"connectable",(Symbol4 *)(puVar4 + 0x806d),0x900000010,0,0);
-  set_fixed_type(FIX_SYM_STACK_FRAME,"stack-frame",(Symbol4 *)(puVar4 + 0x800d),0x90000000c,0,0);
-  set_fixed_type(FIX_SYM_FILE_STREAM,"file-stream",(Symbol4 *)(puVar4 + 0x800d),0x900000014,0,0);
-  uVar13 = 0x30;
-  set_fixed_type(FIX_SYM_POINTER,"pointer",(Symbol4 *)(puVar4 + 0x801d),0x900000004,0,0);
-  *(Function **)(*(int *)(puVar4 + 0x8074) + 0x10) = pFVar7;
-  pFVar8 = make_function_from_c(print_integer,(bool)uVar13);
-  pFVar9 = make_function_from_c(inspect_integer,(bool)uVar13);
-  uVar13 = 0x38;
-  set_fixed_type(FIX_SYM_NUMBER,"number",(Symbol4 *)(puVar4 + 0x801d),0x900000008,(u32)pFVar8,
-                 (u32)pFVar9);
-  *(Function **)(*(int *)(puVar4 + 0x8078) + 0x10) = pFVar7;
-  pFVar7 = make_function_from_c(print_float,(bool)uVar13);
-  pFVar8 = make_function_from_c(inspect_float,(bool)uVar13);
-  set_fixed_type(FIX_SYM_FLOAT,"float",(Symbol4 *)(puVar4 + 0x8079),0x900000004,(u32)pFVar7,
-                 (u32)pFVar8);
-  uVar13 = 0x48;
-  set_fixed_type(FIX_SYM_INTEGER,"integer",(Symbol4 *)(puVar4 + 0x8079),0x900000008,0,0);
-  pFVar7 = make_function_from_c(print_binteger,(bool)uVar13);
-  pFVar8 = make_function_from_c(inspect_binteger,(bool)uVar13);
-  set_fixed_type(FIX_SYM_BINTEGER,"binteger",(Symbol4 *)(puVar4 + 0x8025),0x900000008,(u32)pFVar7,
-                 (u32)pFVar8);
-  set_fixed_type(FIX_SYM_SINTEGER,"sinteger",(Symbol4 *)(puVar4 + 0x8025),0x900000008,0,0);
-  set_fixed_type(FIX_SYM_INT8,"int8",(Symbol4 *)(puVar4 + 0x8029),0x900000001,0,0);
-  set_fixed_type(FIX_SYM_INT16,"int16",(Symbol4 *)(puVar4 + 0x8029),0x900000002,0,0);
-  set_fixed_type(FIX_SYM_INT32,"int32",(Symbol4 *)(puVar4 + 0x8029),0x900000004,0,0);
-  set_fixed_type(FIX_SYM_INT64,"int64",(Symbol4 *)(puVar4 + 0x8029),0x900000008,0,0);
-  set_fixed_type(FIX_SYM_INT128,"int128",(Symbol4 *)(puVar4 + 0x8029),0x900000010,0,0);
-  set_fixed_type(FIX_SYM_UINTEGER,"uinteger",(Symbol4 *)(puVar4 + 0x8025),0x900000008,0,0);
-  set_fixed_type(FIX_SYM_UINT8,"uint8",(Symbol4 *)(puVar4 + 0x802d),0x900000001,0,0);
-  set_fixed_type(FIX_SYM_UINT16,"uint16",(Symbol4 *)(puVar4 + 0x802d),0x900000002,0,0);
-  set_fixed_type(FIX_SYM_UINT32,"uint32",(Symbol4 *)(puVar4 + 0x802d),0x900000004,0,0);
-  set_fixed_type(FIX_SYM_UINT64,"uint64",(Symbol4 *)(puVar4 + 0x802d),0x900000008,0,0);
-  uVar14 = 0;
-  uVar13 = 200;
-  set_fixed_type(FIX_SYM_UINT128,"uint128",(Symbol4 *)(puVar4 + 0x802d),0x900000010,0,0);
-  iVar12 = *(int *)(puVar4 + 0x801c);
-  pFVar7 = make_function_from_c(alloc_heap_object,(bool)uVar13);
-  *(Function **)(iVar12 + 0x10) = pFVar7;
+  new_illegal_func = make_function_from_c(new_illegal,(bool)uVar6);
+  delete_illegal_func = make_function_from_c(delete_illegal,(bool)uVar6);
+  print_object_func = make_function_from_c(print_object,(bool)uVar6);
+  inspect_object_func = make_function_from_c(inspect_object,(bool)uVar6);
+  uVar6 = 0x60;
+  set_fixed_type(FIX_SYM_OBJECT_TYPE,"object",(u32 *)(symbol_table + 0x801d),0x900000004,
+                 (u32)print_object_func,(u32)inspect_object_func);
+  iVar12 = *(Type **)(symbol_table + 0x801c);
+  iVar11 = *(Type **)(symbol_table + 0x801c);
+  iVar12->new_method = *(Function **)(symbol_table + 0x8094);
+  iVar15 = *(Type **)(symbol_table + 0x801c);
+  iVar11->delete_method = delete_illegal_func;
+  iVar12->asize_of_method = *(Function **)(symbol_table + 0x80c0);
+  print_object_func = make_function_from_c(copy_fixed,(bool)uVar6);
+  iVar15->copy_method = print_object_func;
+  print_object_func = make_function_from_c(print_structure,(bool)uVar6);
+  inspect_object_func = make_function_from_c(inspect_structure,(bool)uVar6);
+  uVar6 = 0x68;
+  set_fixed_type(FIX_SYM_STRUCTURE,"structure",(u32 *)(symbol_table + 0x801d),0x900000004,
+                 (u32)print_object_func,(u32)inspect_object_func);
+  iVar14 = *(Type **)(symbol_table + 0x806c);
+  print_object_func = make_function_from_c(new_structure,(bool)uVar6);
+  iVar14->new_method = print_object_func;
+  iVar13 = *(Type **)(symbol_table + 0x806c);
+  print_object_func = make_function_from_c(delete_structure,(bool)uVar6);
+  iVar13->delete_method = print_object_func;
+  print_object_func = make_function_from_c(print_basic,(bool)uVar6);
+  inspect_object_func = make_function_from_c(inspect_basic,(bool)uVar6);
+  uVar6 = 0x78;
+  set_fixed_type(FIX_SYM_BASIC,"basic",(u32 *)(symbol_table + 0x806d),0x900000004,
+                 (u32)print_object_func,(u32)inspect_object_func);
+  iVar17 = *(Type **)(symbol_table + 0x800c);
+  print_object_func = make_function_from_c(new_basic,(bool)uVar6);
+  iVar1 = *(Type **)(symbol_table + 0x800c);
+  iVar17->new_method = print_object_func;
+  iVar16 = *(Type **)(symbol_table + 0x800c);
+  iVar1->delete_method = *(Function **)(symbol_table + 0x8098);
+  iVar16->asize_of_method = *(Function **)(symbol_table + 0x80c4);
+  iVar1->copy_method = *(Function **)(symbol_table + 0x80c8);
+  print_object_func = make_function_from_c(print_symbol,(bool)uVar6);
+  inspect_object_func = make_function_from_c(inspect_symbol,(bool)uVar6);
+  uVar6 = 0x80;
+  set_fixed_type(FIX_SYM_SYMBOL_TYPE,"symbol",(u32 *)(symbol_table + 0x801d),0x900000004,
+                 (u32)print_object_func,(u32)inspect_object_func);
+  iVar19 = *(Type **)(symbol_table + 0x8014);
+  *(Function **)(*(int *)(symbol_table + 0x8014) + 0x10) = new_illegal_func;
+  iVar19->delete_method = delete_illegal_func;
+  print_object_func = make_function_from_c(print_type,(bool)uVar6);
+  inspect_object_func = make_function_from_c(inspect_type,(bool)uVar6);
+  uVar6 = 0x88;
+  set_fixed_type(FIX_SYM_TYPE_TYPE,"type",(u32 *)(symbol_table + 0x800d),0x900000038,
+                 (u32)print_object_func,(u32)inspect_object_func);
+  iVar18 = *(Type **)(symbol_table + 0x8018);
+  print_object_func = make_function_from_c(new_type,(bool)uVar6);
+  iVar10 = *(Type **)(symbol_table + 0x8018);
+  iVar18->new_method = print_object_func;
+  iVar10->delete_method = delete_illegal_func;
+  print_object_func = make_function_from_c(print_string,(bool)uVar6);
+  inspect_object_func = make_function_from_c(inspect_string,(bool)uVar6);
+  uVar6 = 0x90;
+  set_fixed_type(FIX_SYM_STRING_TYPE,"string",(u32 *)(symbol_table + 0x800d),0x900000008,
+                 (u32)print_object_func,(u32)inspect_object_func);
+  print_object_func = make_function_from_c(print_function,(bool)uVar6);
+  uVar6 = 0x98;
+  set_fixed_type(FIX_SYM_FUNCTION_TYPE,"function",(u32 *)(symbol_table + 0x800d),0x900000004,
+                 (u32)print_object_func,0);
+  iVar10_03 = *(Type **)(symbol_table + 0x8008);
+  *(Function **)(*(int *)(symbol_table + 0x8008) + 0x10) = new_illegal_func;
+  iVar10_03->delete_method = delete_illegal_func;
+  print_object_func = make_function_from_c(print_vu_function,(bool)uVar6);
+  inspect_object_func = make_function_from_c(inspect_vu_function,(bool)uVar6);
+  uVar6 = 0xa8;
+  set_fixed_type(FIX_SYM_VU_FUNCTION,"vu-function",(u32 *)(symbol_table + 0x806d),0x900000010,
+                 (u32)print_object_func,(u32)inspect_object_func);
+  *(Function **)(*(int *)(symbol_table + 0x8080) + 0x14) = delete_illegal_func;
+  print_object_func = make_function_from_c(inspect_link_block,(bool)uVar6);
+  uVar6 = 0xb8;
+  set_fixed_type(FIX_SYM_LINK_BLOCK,"link-block",(u32 *)(symbol_table + 0x800d),0x90000000c,0,
+                 (u32)print_object_func);
+  iVar20 = *(Type **)(symbol_table + 0x8020);
+  *(Function **)(*(int *)(symbol_table + 0x8020) + 0x10) = new_illegal_func;
+  iVar20->delete_method = delete_illegal_func;
+  delete_illegal_func = make_function_from_c(kheapstatus,(bool)uVar6);
+  set_fixed_type(FIX_SYM_HEAP,"kheap",(u32 *)(symbol_table + 0x806d),0x900000010,0,
+                 (u32)delete_illegal_func);
+  uVar6 = 0xd0;
+  set_fixed_type(FIX_SYM_ARRAY,"array",(u32 *)(symbol_table + 0x800d),0x900000010,0,0);
+  delete_illegal_func = make_function_from_c(print_pair,(bool)uVar6);
+  print_object_func = make_function_from_c(inspect_pair,(bool)uVar6);
+  uVar6 = 0xd8;
+  set_fixed_type(FIX_SYM_PAIR_TYPE,"pair",(u32 *)(symbol_table + 0x801d),0x900000008,
+                 (u32)delete_illegal_func,(u32)print_object_func);
+  iVar10_00 = *(Type **)(symbol_table + 0x8070);
+  delete_illegal_func = make_function_from_c(new_pair,(bool)uVar6);
+  iVar10_00->new_method = delete_illegal_func;
+  iVar10_01 = *(Type **)(symbol_table + 0x8070);
+  delete_illegal_func = make_function_from_c(delete_pair,(bool)uVar6);
+  iVar10_01->delete_method = delete_illegal_func;
+  set_fixed_type(FIX_SYM_PROCESS_TREE,"process-tree",(u32 *)(symbol_table + 0x800d),0xf0000002c,0,0)
+  ;
+  set_fixed_type(FIX_SYM_PROCESS_TYPE,"process",(u32 *)(symbol_table + 0x8061),0xf00000090,0,0);
+  set_fixed_type(FIX_SYM_THREAD,"thread",(u32 *)(symbol_table + 0x800d),0xc00000028,0,0);
+  set_fixed_type(FIX_SYM_CONNECTABLE,"connectable",(u32 *)(symbol_table + 0x806d),0x900000010,0,0);
+  set_fixed_type(FIX_SYM_STACK_FRAME,"stack-frame",(u32 *)(symbol_table + 0x800d),0x90000000c,0,0);
+  set_fixed_type(FIX_SYM_FILE_STREAM,"file-stream",(u32 *)(symbol_table + 0x800d),0x900000014,0,0);
+  uVar6 = 0x30;
+  set_fixed_type(FIX_SYM_POINTER,"pointer",(u32 *)(symbol_table + 0x801d),0x900000004,0,0);
+  *(Function **)(*(int *)(symbol_table + 0x8074) + 0x10) = new_illegal_func;
+  delete_illegal_func = make_function_from_c(print_integer,(bool)uVar6);
+  print_object_func = make_function_from_c(inspect_integer,(bool)uVar6);
+  uVar6 = 0x38;
+  set_fixed_type(FIX_SYM_NUMBER,"number",(u32 *)(symbol_table + 0x801d),0x900000008,
+                 (u32)delete_illegal_func,(u32)print_object_func);
+  *(Function **)(*(int *)(symbol_table + 0x8078) + 0x10) = new_illegal_func;
+  new_illegal_func = make_function_from_c(print_float,(bool)uVar6);
+  delete_illegal_func = make_function_from_c(inspect_float,(bool)uVar6);
+  set_fixed_type(FIX_SYM_FLOAT,"float",(u32 *)(symbol_table + 0x8079),0x900000004,
+                 (u32)new_illegal_func,(u32)delete_illegal_func);
+  uVar6 = 0x48;
+  set_fixed_type(FIX_SYM_INTEGER,"integer",(u32 *)(symbol_table + 0x8079),0x900000008,0,0);
+  new_illegal_func = make_function_from_c(print_binteger,(bool)uVar6);
+  delete_illegal_func = make_function_from_c(inspect_binteger,(bool)uVar6);
+  set_fixed_type(FIX_SYM_BINTEGER,"binteger",(u32 *)(symbol_table + 0x8025),0x900000008,
+                 (u32)new_illegal_func,(u32)delete_illegal_func);
+  set_fixed_type(FIX_SYM_SINTEGER,"sinteger",(u32 *)(symbol_table + 0x8025),0x900000008,0,0);
+  set_fixed_type(FIX_SYM_INT8,"int8",(u32 *)(symbol_table + 0x8029),0x900000001,0,0);
+  set_fixed_type(FIX_SYM_INT16,"int16",(u32 *)(symbol_table + 0x8029),0x900000002,0,0);
+  set_fixed_type(FIX_SYM_INT32,"int32",(u32 *)(symbol_table + 0x8029),0x900000004,0,0);
+  set_fixed_type(FIX_SYM_INT64,"int64",(u32 *)(symbol_table + 0x8029),0x900000008,0,0);
+  set_fixed_type(FIX_SYM_INT128,"int128",(u32 *)(symbol_table + 0x8029),0x900000010,0,0);
+  set_fixed_type(FIX_SYM_UINTEGER,"uinteger",(u32 *)(symbol_table + 0x8025),0x900000008,0,0);
+  set_fixed_type(FIX_SYM_UINT8,"uint8",(u32 *)(symbol_table + 0x802d),0x900000001,0,0);
+  set_fixed_type(FIX_SYM_UINT16,"uint16",(u32 *)(symbol_table + 0x802d),0x900000002,0,0);
+  set_fixed_type(FIX_SYM_UINT32,"uint32",(u32 *)(symbol_table + 0x802d),0x900000004,0,0);
+  set_fixed_type(FIX_SYM_UINT64,"uint64",(u32 *)(symbol_table + 0x802d),0x900000008,0,0);
+  uVar7 = 0;
+  uVar6 = 200;
+  set_fixed_type(FIX_SYM_UINT128,"uint128",(u32 *)(symbol_table + 0x802d),0x900000010,0,0);
+  iVar10_02 = *(Type **)(symbol_table + 0x801c);
+  new_illegal_func = make_function_from_c(alloc_heap_object,(bool)uVar6);
+  iVar10_02->new_method = new_illegal_func;
   make_function_symbol_from_c("string->symbol",intern);
   make_function_symbol_from_c("symbol->string",symbol_to_string_from_c);
   make_function_symbol_from_c("print",sprint);
@@ -2034,46 +2052,46 @@ int InitHeapAndSymbol() {
   make_function_symbol_from_c("mc-makefile",MC_makefile);
   make_function_symbol_from_c("kset-language",MC_set_language);
   make_function_symbol_from_c("network-bootstrap",network_bootstrapProxy);
-  puVar11 = intern_from_c(-1,0,"*debug-segment*");
-  puVar5 = puVar4 + 0x8005;
+  puVar3 = intern_from_c(-1,0,"*debug-segment*");
+  SymbolString_ = symbol_table + 0x8005;
   if (DebugSegment == 0) {
-    puVar5 = value;
+    SymbolString_ = value;
   }
-  *(u8 **)((int)puVar11 + -1) = puVar5;
-  puVar11 = intern_from_c(-1,0,"*enable-method-set*");
-  EnableMethodSet = (int *)((int)puVar11 + -1);
-  *(undefined4 *)((int)puVar11 + -1) = 0;
-  puVar11 = intern_from_c(-1,0,"*kernel-debug*");
-  DAT_002836f0 = (int)puVar11 + -1;
-  *(undefined4 *)((int)puVar11 + -1) = 0;
-  puVar11 = intern_from_c(-1,0,"*boot-video-mode*");
-  *(undefined4 *)((int)puVar11 + -1) = 1;
-  puVar11 = intern_from_c(-1,0,"*video-mode*");
-  *(undefined4 *)((int)puVar11 + -1) = 1;
+  *(u8 **)((int)puVar3 + -1) = SymbolString_;
+  puVar3 = intern_from_c(-1,0,"*enable-method-set*");
+  EnableMethodSet = (int *)((int)puVar3 + -1);
+  *(undefined4 *)((int)puVar3 + -1) = 0;
+  puVar3 = intern_from_c(-1,0,"*kernel-debug*");
+  DAT_002836f0 = (int)puVar3 + -1;
+  *(undefined4 *)((int)puVar3 + -1) = 0;
+  puVar3 = intern_from_c(-1,0,"*boot-video-mode*");
+  *(undefined4 *)((int)puVar3 + -1) = 1;
+  puVar3 = intern_from_c(-1,0,"*video-mode*");
+  *(undefined4 *)((int)puVar3 + -1) = 1;
   SqlResult = intern_from_c(-1,0,"*sql-result*");
   *(u8 **)((int)SqlResult + -1) = value;
   CollapseQuote = intern_from_c(-1,0,"*collapse-quote*");
-  *(u8 **)((int)CollapseQuote + -1) = puVar4 + 0x8005;
+  *(u8 **)((int)CollapseQuote + -1) = symbol_table + 0x8005;
   LevelTypeList = intern_from_c(-1,0,"*level-type-list*");
   *EnableMethodSet = *EnableMethodSet + 1;
-  load_and_link_dgo_from_c("kernel",(kheapinfo *)&DAT_0025bb70,0xd,0x400000,(bool)uVar14);
+  load_and_link_dgo_from_c("kernel",&kglobalheapinfo,0xd,0x400000,(bool)uVar7);
   *EnableMethodSet = *EnableMethodSet + -1;
-  puVar11 = intern_from_c(-1,0,"*kernel-version*");
-  uVar3 = *(uint *)((int)puVar11 + -1);
-  if ((uVar3 == 0) || (uVar3 >> 0x13 != 0x16)) {
+  puVar3 = intern_from_c(-1,0,"*kernel-version*");
+  uVar1 = *(uint *)((int)puVar3 + -1);
+  if ((uVar1 == 0) || (uVar1 >> 0x13 != 0x16)) {
     MsgErr("\n");
-    MsgErr("dkernel: compiled C kernel version is %d.%d but the goal kernel is %d.%d!\n\tfrom the goal> prompt (:mch) then mkee your kernel in linux.\n"
-           ,0x16,0,uVar3 >> 0x13,uVar3 >> 3 & 0xffff);
-    iVar12 = -1;
+    MsgErr("dkernel: compiled C kernel version is %d.%d but the goal kernel is %d.%d!\n\tfrom the go al> prompt (:mch) then mkee your kernel in linux.\n"
+           ,0x16,0,uVar1 >> 0x13,uVar1 >> 3 & 0xffff);
+    iVar4 = -1;
   }
   else {
     protoBlock.deci2count = (s32)intern_from_c(-1,0,"*deci-count*");
     InitListener();
     InitMachineScheme();
     kmemclose();
-    iVar12 = 0;
+    iVar4 = 0;
   }
-  return iVar12;
+  return iVar4;
 }
 
 u64 load(u32 file_name_in,u32 heap_in) {
