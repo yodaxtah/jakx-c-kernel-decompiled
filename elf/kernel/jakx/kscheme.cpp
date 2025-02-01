@@ -73,50 +73,43 @@ u64 new_illegal(u32 allocation,u32 type) {
   return CONCAT44(unaff_s7_hi,unaff_s7_lo);
 }
 
-u64 alloc_from_heap(u32 heapSymbol,u32 type,s32 size,u32 pp) {
-  u8 *puVar1;
-  u64 uVar2;
-  void *__s;
-  char *name;
-  int iVar3;
-  int iVar4;
+u64 alloc_from_heap(u32 heap_symbol, u32 type, s32 size, u32 pp) {
   int unaff_s6_lo;
   int unaff_s7_lo;
-  
-  uVar2 = (u64)(int)heapSymbol;
-  if (false) {
-    trap(7);
-  }
-  iVar4 = ((size + 0xf) / 0x10) * 0x10;
-  if ((((uVar2 == (long)(unaff_s7_lo + 0xa0)) || (uVar2 == (long)(unaff_s7_lo + 0xa4))) ||
-      (uVar2 == (long)(unaff_s7_lo + 0xa8))) || (uVar2 == (long)(unaff_s7_lo + 0xb0))) {
-    if (((type == 0) || (*(int *)type == 0)) ||
-       (iVar4 = *(int *)((*(int *)type - unaff_s7_lo) + SymbolString), name = (char *)(iVar4 + 4),
-       iVar4 == 0)) {
-      name = "global-object";
+  u64 heap_symbol_ = (u64)(int)heap_symbol_;
+  s32 aligned_size = ((size + 0xf) / 0x10) * 0x10;
+  if (heap_symbol_ == (long)(unaff_s7_lo + 0xa0) ||
+      heap_symbol_ == (long)(unaff_s7_lo + 0xa4) ||
+      heap_symbol_ == (long)(unaff_s7_lo + 0xa8) ||
+      heap_symbol_ == (long)(unaff_s7_lo + 0xb0)) {
+    char *name;
+    if (((type == 0) || (*(int *)type == 0)) || (aligned_size = *(int *)((*(int *)type - unaff_s7_lo) + SymbolString), name = (char *)(aligned_size + 4),
+       aligned_size == 0)) {
+      return (long)(int)kmalloc(*(kheapinfo **)(heap_symbol_ - 1), size, 0x1000, "global-object");
     }
-    puVar1 = kmalloc(*(kheapinfo **)(heapSymbol - 1),size,0x1000,name);
-    return (long)(int)puVar1;
-  }
-  if (uVar2 == (long)(unaff_s7_lo + 100)) {
-    uVar2 = (u64)*(int *)(unaff_s6_lo + 0x74);
-    iVar3 = *(int *)(unaff_s6_lo + 0x74) + iVar4;
-    if (*(int *)(unaff_s6_lo + 0x70) <= iVar3) {
+
+    return (long)(int)kmalloc(*(kheapinfo **)(heap_symbol - 1), size, 0x1000, name);
+  } else if (heap_symbol_ == (long)(unaff_s7_lo + 100)) {
+    u64 start = (u64)*(s32 *)(unaff_s6_lo + 0x74);
+    s32 allocEnd = *(s32 *)(unaff_s6_lo + 0x74) + aligned_size;
+    if (*(s32 *)(unaff_s6_lo + 0x70) > allocEnd) {
+      *(s32 *)(unaff_s6_lo + 0x74) = allocEnd;
+      memset((void *)start, 0, (long)aligned_size);
+      return start;
+    } else {
       MsgErr("kmalloc: !alloc mem in heap for #<process @ #x%x> (%d bytes / %d bytes free)\n");
       return 0;
     }
-    *(int *)(unaff_s6_lo + 0x74) = iVar3;
+  } else if (heap_symbol_ == (long)(unaff_s7_lo + 0xb8)) {
+    void *__s = *(void **)(unaff_s7_lo + 0xbb);
+    heap_symbol_ = (u64)(int)__s;
+    *(int *)(unaff_s7_lo + 0xbb) = *(int *)(unaff_s7_lo + 0xbb) + aligned_size;
+    memset(__s, 0, (long)aligned_size);
+    return heap_symbol_;
+  } else {
+    memset((void *)heap_symbol_, 0, (long)aligned_size);
+    return heap_symbol_;
   }
-  else if (uVar2 == (long)(unaff_s7_lo + 0xb8)) {
-    __s = *(void **)(unaff_s7_lo + 0xbb);
-    uVar2 = (u64)(int)__s;
-    *(int *)(unaff_s7_lo + 0xbb) = *(int *)(unaff_s7_lo + 0xbb) + iVar4;
-    goto LAB_0026b504;
-  }
-  __s = (void *)uVar2;
-LAB_0026b504:
-  memset(__s,0,(long)iVar4);
-  return uVar2;
 }
 
 /*!
