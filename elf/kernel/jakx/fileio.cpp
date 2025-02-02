@@ -160,10 +160,7 @@ char* MakeFileName(int type, const char* name, int new_string) {
           sprintf(buf, "%sfinal/texture-page%d/%s.go", prefix_G, (const char *)0x8);
         }
       } else if (type == 0x30) {
-        pcVar3 = "%sfinal/art-group%d/%s-ag.go";
-        name = (const char *)0x8;
-LAB_00259ec4:
-        sprintf(buf, pcVar3, prefix_G, name);
+        sprintf(buf, "%sfinal/art-group%d/%s-ag.go", prefix_G, (const char *)0x8);
       }
     }
   } else {
@@ -178,23 +175,20 @@ LAB_00259ec4:
             sprintf(buf, "%sfinal/dgo%d/%s.dgo", prefix_G, &DAT_00000001);
           } else if (type != 0x38) {
             if (type == 0x39) {
-              pcVar3 = "game/dgo%d/%s.cgo";
-              goto LAB_0025a024;
+              sprintf(buf, "game/dgo%d/%s.cgo", &DAT_00000001, name);
             }
           } else {
             sprintf(buf, "%sfinal/dgo%d/%s.cgo", prefix_G, &DAT_00000001);
           }
         } else {
-          pcVar3 = "game/dgo%d/%s.dgo";
-LAB_0025a024:
-          sprintf(buf, pcVar3, &DAT_00000001, name);
+          sprintf(buf, "game/dgo%d/%s.dgo", &DAT_00000001, name);
         }
       } else if (type != 0x33) {
-        pcVar3 = "%sfinal/dgo%d/%s.txt";
         if (type < 0x34) {
-          pcVar3 = "%sfinal/res%d/%s-tx.go";
+          sprintf(buf, "%sfinal/res%d/%s-tx.go", prefix_G, &DAT_00000001);
+        } else {
+          sprintf(buf, "%sfinal/dgo%d/%s.txt", prefix_G, &DAT_00000001);
         }
-        sprintf(buf, pcVar3, prefix_G, &DAT_00000001);
       } else {
         sprintf(buf, "%sfinal/level%d/%s-vs.bin", prefix_G, (const char *)0x25);
       }
