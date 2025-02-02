@@ -145,9 +145,7 @@ char* MakeFileName(int type, const char* name, int new_string) {
             if (type != 0x20) {
               goto LAB_00259d2c;
             } else {
-              pcVar3 = "%sfinal/%s.go";
-              pcVar2 = prefix_G;
-              goto LAB_00259e20;
+              sprintf(buf, "%sfinal/%s.go", prefix_G, name);
             }
           } else {
             sprintf(pcVar3,"host0:/usr/local/sce/iop/modules/%s.irx",name);
@@ -158,9 +156,7 @@ char* MakeFileName(int type, const char* name, int new_string) {
           goto LAB_00259d2c;
         }
       } else if (type == 0x26) {
-        pcVar3 = "%sfinal/%s-tg.go";
-        pcVar2 = prefix_G;
-        goto LAB_00259e20;
+        sprintf(buf, "%sfinal/%s-tg.go", prefix_G, name);
       } else if (type < 0x27) {
         if (type == 0x23) {
           sprintf(buf, "%sdb/artdata%d/%s-jg.go", prefix_G, (const char *)0x8);
@@ -193,14 +189,11 @@ LAB_00259ec4:
       sprintf(buf, "%sfinal/res%d/game-cnt.go", prefix_G, &DAT_00000001);
     } else if (type < 0x3b) {
       if (type == 0x35) {
-        pcVar3 = "%sfinal/level%d/%s";
+        sprintf(buf, "%sfinal/level%d/%s", prefix_G, (const char *)0x25);
       } else if (0x35 < type) {
         if (type != 0x37) {
           if (type < 0x37) {
-            pcVar3 = "%sfinal/dgo%d/%s.dgo";
-            // LAB_00259fd0:
-            name = &DAT_00000001;
-            goto LAB_00259ec4;
+            sprintf(buf, "%sfinal/dgo%d/%s.dgo", prefix_G, &DAT_00000001);
           } else if (type != 0x38) {
             if (type != 0x39) {
               goto LAB_00259d2c;
@@ -209,30 +202,23 @@ LAB_00259ec4:
               goto LAB_0025a024;
             }
           } else {
-            pcVar3 = "%sfinal/dgo%d/%s.cgo";
-            // LAB_00259fd0:
-            name = &DAT_00000001;
-            goto LAB_00259ec4;
+            sprintf(buf, "%sfinal/dgo%d/%s.cgo", prefix_G, &DAT_00000001);
           }
         } else {
           pcVar3 = "game/dgo%d/%s.dgo";
 LAB_0025a024:
-          pcVar2 = &DAT_00000001;
-          goto LAB_00259e20;
+          sprintf(buf, pcVar3, &DAT_00000001, name);
         }
       } else if (type != 0x33) {
         pcVar3 = "%sfinal/dgo%d/%s.txt";
         if (type < 0x34) {
           pcVar3 = "%sfinal/res%d/%s-tx.go";
         }
-        name = &DAT_00000001;
-        goto LAB_00259ec4;
+        sprintf(buf, pcVar3, prefix_G, &DAT_00000001);
       } else {
-        pcVar3 = "%sfinal/level%d/%s-vs.bin";
+        sprintf(buf, "%sfinal/level%d/%s-vs.bin", prefix_G, (const char *)0x25);
       }
-LAB_00259f30:
-      name = (const char *)0x25;
-      goto LAB_00259ec4;
+      // already integrated: sprintf(buf, pcVar3, prefix_G, (const char *)0x25);
     } else if (type != 0x3f) {
       if (type < 0x40) {
         if (type == 0x3c) {
@@ -243,8 +229,7 @@ LAB_00259f30:
           if (type != 0x3e) {
             goto LAB_00259d2c;
           } else {
-            pcVar3 = "%sfinal/vagwad/%s.%s";
-            goto LAB_00259ec4;
+            sprintf(buf, "%sfinal/vagwad/%s.%s", prefix_G, name);
           }
         } else {
           sprintf(buf, "%sfinal/music%d/%s.bnk", pcVar2, name);
@@ -253,26 +238,18 @@ LAB_00259f30:
         sprintf(buf, "%sdb/artdata%d/%s-cl.go", prefix_G, (const char *)0x8);
         goto LAB_00259d2c;
       } else if (type < 0x41) {
-        pcVar3 = "%sfinal/map%d/%s.go";
-        name = &DAT_00000001;
-        goto LAB_00259ec4;
+        sprintf(buf, "%sfinal/map%d/%s.go", prefix_G, &DAT_00000001);
       } else if (type != 0x42) {
         if (type != 0x301) {
           goto LAB_00259d2c;
         } else {
-          pcVar3 = "%sdb/config/refplant/%s";
-          pcVar2 = prefix_G;
-          goto LAB_00259e20;
+          sprintf(buf, "%sdb/config/refplant/%s", prefix_G, name);
         }
       } else {
-        pcVar3 = "%sfinal/flash%d/%s.go";
-        name = &DAT_00000001;
-        goto LAB_00259ec4;
+        sprintf(buf, "%sfinal/flash%d/%s.go", prefix_G, &DAT_00000001);
       }
     } else {
-      pcVar3 = "%sfinal/misc/%s";
-LAB_00259e20:
-      sprintf(buf, pcVar3, pcVar2, name);
+      sprintf(buf, "%sfinal/misc/%s", pcVar2, name);
     }
   }
 
