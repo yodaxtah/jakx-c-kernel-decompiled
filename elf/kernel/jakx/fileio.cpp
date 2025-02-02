@@ -113,81 +113,76 @@ char* MakeFileName(int type, const char* name, int new_string) {
 
   if (type == 0x31) {
     sprintf(buf, "%sfinal/level%d/%s-vs.go", prefix_G, (const char *)0x25);
-  } else if (type < 0x32) {
-    if (type == 0x21) {
-      sprintf(buf, "%sfinal/texture-page%d/%s.go", prefix_G, (const char *)0x8);
-    } else {
-      if (type == 4) {
-        sprintf(buffer_633,"pad:0");
-      } else if (type == 2) {
-        kstrcpy(buf,"kernel/KERNELTOLISTENER");
-      } else if (2 < type && type < 5) {
-        sprintf(buf,"game/obj/%s.o",name);
-      } else if (type == 1) {
-        kstrcpy(buf,"kernel/LISTENERTOKERNEL");
-      } else if (type == 6) {
-        kstrcpy(buf,"kernel/KERNELTOLISTENER_LOCK");
-      } else if (type == 0x20) {
-        sprintf(buf, "%sfinal/%s.go", prefix_G, name);
-      } else if (type == 8) {
-        sprintf(pcVar3,"host0:/usr/local/sce/iop/modules/%s.irx",name);
-      } else if (5 >= type && type < 0x22) {
-        kstrcpy(buf, "kernel/LISTENERTOKERNEL_LOCK");
-      } else if (type == 0x26) {
-        sprintf(buf, "%sfinal/%s-tg.go", prefix_G, name);
-      } else if (type == 0x23) {
-        sprintf(buf, "%sdb/artdata%d/%s-jg.go", prefix_G, (const char *)0x8);
-      } else if (type < 0x23) {
-        sprintf(buf, "%sdb/artdata%d/%s-ja.go", prefix_G, (const char *)0x8);
-      } else if (type == 0x24) {
-        sprintf(buf, "%sdb/artdata%d/%s-ma.go", prefix_G, (const char *)0x8);
-      } else if (type == 0x25) {
-        sprintf(buf, "%sdb/artdata%d/%s-mg.go", prefix_G, (const char *)0x8);
-      } else if (type < 0x28) {
-        sprintf(buf, "%sfinal/level%d/%s-bt.go", prefix_G, (const char *)0x25);
-      } else if (type < 0x2a) { {
-        sprintf(buf, "%sfinal/texture-page%d/%s.go", prefix_G, (const char *)0x8);
-      } else if (type == 0x30) {
-        sprintf(buf, "%sfinal/art-group%d/%s-ag.go", prefix_G, (const char *)0x8);
-      }
-    }
-  } else {
-    if (type == 0x3a) {
-      sprintf(buf, "%sfinal/res%d/game-cnt.go", prefix_G, &DAT_00000001);
-    } else if (type == 0x35) {
-      sprintf(buf, "%sfinal/level%d/%s", prefix_G, (const char *)0x25);
-    } else if (0x35 < type && type < 0x37) {
-      sprintf(buf, "%sfinal/dgo%d/%s.dgo", prefix_G, &DAT_00000001);
-    } else if (type == 0x39) {
-      sprintf(buf, "game/dgo%d/%s.cgo", &DAT_00000001, name);
-    } else if (type == 0x38) {
-      sprintf(buf, "%sfinal/dgo%d/%s.cgo", prefix_G, &DAT_00000001);
-    } else if (type == 0x37) {
-      sprintf(buf, "game/dgo%d/%s.dgo", &DAT_00000001, name);
-    } else if (type < 0x34 && type != 0x33) {
-      sprintf(buf, "%sfinal/res%d/%s-tx.go", prefix_G, &DAT_00000001);
-    } else if (type != 0x33) {
-      sprintf(buf, "%sfinal/dgo%d/%s.txt", prefix_G, &DAT_00000001);
-    } else if (type == 0x33) {
-      sprintf(buf, "%sfinal/level%d/%s-vs.bin", prefix_G, (const char *)0x25);
-    } else if (type == 0x3c) {
-      sprintf(buf, "%sfinal/sound%d/%s.bnk", pcVar2, name);
-    } else if (type < 0x3c) {
-      sprintf(buf, "%sfinal/res%d/%s.go", pcVar2, name);
-    } else if (type == 0x3e) {
-      sprintf(buf, "%sfinal/vagwad/%s.%s", prefix_G, name);
-    } else if (type == 0x3d) {
-      sprintf(buf, "%sfinal/music%d/%s.bnk", pcVar2, name);
-    } else if (type == 0x41) {
-      sprintf(buf, "%sdb/artdata%d/%s-cl.go", prefix_G, (const char *)0x8);
-    } else if (type < 0x41) {
-      sprintf(buf, "%sfinal/map%d/%s.go", prefix_G, &DAT_00000001);
-    } else if (type == 0x301) {
-      sprintf(buf, "%sdb/config/refplant/%s", prefix_G, name);
-    } else if (type == 0x42) {
-      sprintf(buf, "%sfinal/flash%d/%s.go", prefix_G, &DAT_00000001);
-    } else if (type == 0x3f) {
-      sprintf(buf, "%sfinal/misc/%s", pcVar2, name);
+  } else if (type == 0x21) {
+    sprintf(buf, "%sfinal/texture-page%d/%s.go", prefix_G, (const char *)0x8);
+  } else if (type == 4) {
+    sprintf(buffer_633,"pad:0");
+  } else if (type == 2) {
+    kstrcpy(buf,"kernel/KERNELTOLISTENER");
+  } else if (2 < type && type < 5) {
+    sprintf(buf,"game/obj/%s.o",name);
+  } else if (type == 1) {
+    kstrcpy(buf,"kernel/LISTENERTOKERNEL");
+  } else if (type == 6) {
+    kstrcpy(buf,"kernel/KERNELTOLISTENER_LOCK");
+  } else if (type == 0x20) {
+    sprintf(buf, "%sfinal/%s.go", prefix_G, name);
+  } else if (type == 8) {
+    sprintf(pcVar3,"host0:/usr/local/sce/iop/modules/%s.irx",name);
+  } else if (5 >= type && type < 0x22) {
+    kstrcpy(buf, "kernel/LISTENERTOKERNEL_LOCK");
+  } else if (type == 0x26) {
+    sprintf(buf, "%sfinal/%s-tg.go", prefix_G, name);
+  } else if (type == 0x23) {
+    sprintf(buf, "%sdb/artdata%d/%s-jg.go", prefix_G, (const char *)0x8);
+  } else if (type < 0x23) {
+    sprintf(buf, "%sdb/artdata%d/%s-ja.go", prefix_G, (const char *)0x8);
+  } else if (type == 0x24) {
+    sprintf(buf, "%sdb/artdata%d/%s-ma.go", prefix_G, (const char *)0x8);
+  } else if (type == 0x25) {
+    sprintf(buf, "%sdb/artdata%d/%s-mg.go", prefix_G, (const char *)0x8);
+  } else if (type < 0x28) {
+    sprintf(buf, "%sfinal/level%d/%s-bt.go", prefix_G, (const char *)0x25);
+  } else if (type < 0x2a) {
+    sprintf(buf, "%sfinal/texture-page%d/%s.go", prefix_G, (const char *)0x8);
+  } else if (type == 0x30) {
+    sprintf(buf, "%sfinal/art-group%d/%s-ag.go", prefix_G, (const char *)0x8);
+  } else if (type == 0x3a) {
+    sprintf(buf, "%sfinal/res%d/game-cnt.go", prefix_G, &DAT_00000001);
+  } else if (type == 0x35) {
+    sprintf(buf, "%sfinal/level%d/%s", prefix_G, (const char *)0x25);
+  } else if (0x35 < type && type < 0x37) {
+    sprintf(buf, "%sfinal/dgo%d/%s.dgo", prefix_G, &DAT_00000001);
+  } else if (type == 0x39) {
+    sprintf(buf, "game/dgo%d/%s.cgo", &DAT_00000001, name);
+  } else if (type == 0x38) {
+    sprintf(buf, "%sfinal/dgo%d/%s.cgo", prefix_G, &DAT_00000001);
+  } else if (type == 0x37) {
+    sprintf(buf, "game/dgo%d/%s.dgo", &DAT_00000001, name);
+  } else if (type < 0x34 && type != 0x33) {
+    sprintf(buf, "%sfinal/res%d/%s-tx.go", prefix_G, &DAT_00000001);
+  } else if (type != 0x33) {
+    sprintf(buf, "%sfinal/dgo%d/%s.txt", prefix_G, &DAT_00000001);
+  } else if (type == 0x33) {
+    sprintf(buf, "%sfinal/level%d/%s-vs.bin", prefix_G, (const char *)0x25);
+  } else if (type == 0x3c) {
+    sprintf(buf, "%sfinal/sound%d/%s.bnk", pcVar2, name);
+  } else if (type < 0x3c) {
+    sprintf(buf, "%sfinal/res%d/%s.go", pcVar2, name);
+  } else if (type == 0x3e) {
+    sprintf(buf, "%sfinal/vagwad/%s.%s", prefix_G, name);
+  } else if (type == 0x3d) {
+    sprintf(buf, "%sfinal/music%d/%s.bnk", pcVar2, name);
+  } else if (type == 0x41) {
+    sprintf(buf, "%sdb/artdata%d/%s-cl.go", prefix_G, (const char *)0x8);
+  } else if (type < 0x41) {
+    sprintf(buf, "%sfinal/map%d/%s.go", prefix_G, &DAT_00000001);
+  } else if (type == 0x301) {
+    sprintf(buf, "%sdb/config/refplant/%s", prefix_G, name);
+  } else if (type == 0x42) {
+    sprintf(buf, "%sfinal/flash%d/%s.go", prefix_G, &DAT_00000001);
+  } else if (type == 0x3f) {
+    sprintf(buf, "%sfinal/misc/%s", pcVar2, name);
     }
   }
 
