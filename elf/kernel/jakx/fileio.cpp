@@ -256,10 +256,8 @@ LAB_00259f30:
           pcVar3 = "%sfinal/music%d/%s.bnk";
         }
       } else if (type == 0x41) {
-        // pcVar3 = "%sdb/artdata%d/%s-cl.go";
-        // goto LAB_00259ebc;
-        // name = (const char *)0x8;
         sprintf(buf, "%sdb/artdata%d/%s-cl.go", prefix_G, (const char *)0x8);
+        goto LAB_00259d2c;
       } else if (type < 0x41) {
         pcVar3 = "%sfinal/map%d/%s.go";
         name = &DAT_00000001;
