@@ -112,9 +112,6 @@ char* MakeFileName(int type, const char* name, int new_string) {
   kstrcpy(prefix_G, FOLDER_PREFIX);
 
   if (type == 0x31) {
-    // pcVar3 = "%sfinal/level%d/%s-vs.go";
-    // name = (const char *)0x25;
-    // goto LAB_00259ec4;
     sprintf(buf, "%sfinal/level%d/%s-vs.go", prefix_G, (const char *)0x25);
   } else if (type < 0x32) {
     if (type == 0x21) {
@@ -123,37 +120,26 @@ char* MakeFileName(int type, const char* name, int new_string) {
       if (type < 0x22) {
         if (type == 4) {
           sprintf(buffer_633,"pad:0");
-          goto LAB_00259d2c;
         } else if (type < 5) {
           if (type == 2) {
             kstrcpy(buf,"kernel/KERNELTOLISTENER");
-            goto LAB_00259d2c;
           } else if (2 < type) {
             sprintf(buf,"game/obj/%s.o",name);
-            goto LAB_00259d2c;
-          } else if (type != 1) {
-            goto LAB_00259d2c;
-          } else {
+          } else if (type == 1) {
             kstrcpy(buf,"kernel/LISTENERTOKERNEL");
-            goto LAB_00259d2c;
           }
         } else if (type == 6) {
           kstrcpy(buf,"kernel/KERNELTOLISTENER_LOCK");
-          goto LAB_00259d2c;
         } else if (5 < type) {
           if (type != 8) {
-            if (type != 0x20) {
-              goto LAB_00259d2c;
-            } else {
+            if (type == 0x20) {
               sprintf(buf, "%sfinal/%s.go", prefix_G, name);
             }
           } else {
             sprintf(pcVar3,"host0:/usr/local/sce/iop/modules/%s.irx",name);
-            goto LAB_00259d2c;
           }
         } else {
           kstrcpy(buf, "kernel/LISTENERTOKERNEL_LOCK");
-          goto LAB_00259d2c;
         }
       } else if (type == 0x26) {
         sprintf(buf, "%sfinal/%s-tg.go", prefix_G, name);
@@ -164,9 +150,7 @@ char* MakeFileName(int type, const char* name, int new_string) {
           sprintf(buf, "%sdb/artdata%d/%s-ja.go", prefix_G, (const char *)0x8);
         } else if (type == 0x24) {
           sprintf(buf, "%sdb/artdata%d/%s-ma.go", prefix_G, (const char *)0x8);
-        } else if (type != 0x25) {
-          goto LAB_00259d2c;
-        } else {
+        } else if (type == 0x25) {
           sprintf(buf, "%sdb/artdata%d/%s-mg.go", prefix_G, (const char *)0x8);
         }
       } else if (type < 0x2a) {
@@ -175,9 +159,7 @@ char* MakeFileName(int type, const char* name, int new_string) {
         } else {
           sprintf(buf, "%sfinal/texture-page%d/%s.go", prefix_G, (const char *)0x8);
         }
-      } else if (type != 0x30) {
-        goto LAB_00259d2c;
-      } else {
+      } else if (type == 0x30) {
         pcVar3 = "%sfinal/art-group%d/%s-ag.go";
         name = (const char *)0x8;
 LAB_00259ec4:
@@ -195,9 +177,7 @@ LAB_00259ec4:
           if (type < 0x37) {
             sprintf(buf, "%sfinal/dgo%d/%s.dgo", prefix_G, &DAT_00000001);
           } else if (type != 0x38) {
-            if (type != 0x39) {
-              goto LAB_00259d2c;
-            } else {
+            if (type == 0x39) {
               pcVar3 = "game/dgo%d/%s.cgo";
               goto LAB_0025a024;
             }
@@ -218,7 +198,6 @@ LAB_0025a024:
       } else {
         sprintf(buf, "%sfinal/level%d/%s-vs.bin", prefix_G, (const char *)0x25);
       }
-      // already integrated: sprintf(buf, pcVar3, prefix_G, (const char *)0x25);
     } else if (type != 0x3f) {
       if (type < 0x40) {
         if (type == 0x3c) {
@@ -226,9 +205,7 @@ LAB_0025a024:
         } else if (type < 0x3c) {
           sprintf(buf, "%sfinal/res%d/%s.go", pcVar2, name);
         } else if (type != 0x3d) {
-          if (type != 0x3e) {
-            goto LAB_00259d2c;
-          } else {
+          if (type == 0x3e) {
             sprintf(buf, "%sfinal/vagwad/%s.%s", prefix_G, name);
           }
         } else {
@@ -236,13 +213,10 @@ LAB_0025a024:
         }
       } else if (type == 0x41) {
         sprintf(buf, "%sdb/artdata%d/%s-cl.go", prefix_G, (const char *)0x8);
-        goto LAB_00259d2c;
       } else if (type < 0x41) {
         sprintf(buf, "%sfinal/map%d/%s.go", prefix_G, &DAT_00000001);
       } else if (type != 0x42) {
-        if (type != 0x301) {
-          goto LAB_00259d2c;
-        } else {
+        if (type == 0x301) {
           sprintf(buf, "%sdb/config/refplant/%s", prefix_G, name);
         }
       } else {
@@ -253,7 +227,6 @@ LAB_0025a024:
     }
   }
 
-LAB_00259d2c:
   char* result;
   if (new_string == 0) {
     result = buffer_633;
