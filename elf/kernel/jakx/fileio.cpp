@@ -141,9 +141,9 @@ char* MakeFileName(int type, const char* name, int new_string) {
     sprintf(buf, "%sdb/artdata%d/%s-ma.go", prefix_G, (const char *)0x8);
   } else if (type == 0x25) {
     sprintf(buf, "%sdb/artdata%d/%s-mg.go", prefix_G, (const char *)0x8);
-  } else if (type < 0x28) {
+  } else if (type < 0x28 && type >= 0x27) {
     sprintf(buf, "%sfinal/level%d/%s-bt.go", prefix_G, (const char *)0x25);
-  } else if (type < 0x2a) {
+  } else if (type < 0x2a && type >= 0x28) {
     sprintf(buf, "%sfinal/texture-page%d/%s.go", prefix_G, (const char *)0x8);
   } else if (type == 0x30) {
     sprintf(buf, "%sfinal/art-group%d/%s-ag.go", prefix_G, (const char *)0x8);
@@ -159,15 +159,15 @@ char* MakeFileName(int type, const char* name, int new_string) {
     sprintf(buf, "%sfinal/dgo%d/%s.cgo", prefix_G, &DAT_00000001);
   } else if (type == 0x37) {
     sprintf(buf, "game/dgo%d/%s.dgo", &DAT_00000001, name);
-  } else if (type < 0x34 && type != 0x33) {
+  } else if (type < 0x34 && type != 0x33 && type >= 0x32 && 0x35 >= type) {
     sprintf(buf, "%sfinal/res%d/%s-tx.go", prefix_G, &DAT_00000001);
-  } else if (type != 0x33) {
+  } else if (type != 0x33 && type >= 0x32 && 0x35 >= type && type >= 0x34) {
     sprintf(buf, "%sfinal/dgo%d/%s.txt", prefix_G, &DAT_00000001);
   } else if (type == 0x33) {
     sprintf(buf, "%sfinal/level%d/%s-vs.bin", prefix_G, (const char *)0x25);
   } else if (type == 0x3c) {
     sprintf(buf, "%sfinal/sound%d/%s.bnk", pcVar2, name);
-  } else if (type < 0x3c) {
+  } else if (type < 0x3c && type >= 0x32 && type >= 0x3b) {
     sprintf(buf, "%sfinal/res%d/%s.go", pcVar2, name);
   } else if (type == 0x3e) {
     sprintf(buf, "%sfinal/vagwad/%s.%s", prefix_G, name);
@@ -175,7 +175,7 @@ char* MakeFileName(int type, const char* name, int new_string) {
     sprintf(buf, "%sfinal/music%d/%s.bnk", pcVar2, name);
   } else if (type == 0x41) {
     sprintf(buf, "%sdb/artdata%d/%s-cl.go", prefix_G, (const char *)0x8);
-  } else if (type < 0x41) {
+  } else if (type < 0x41 && type >= 0x32 && type >= 0x40) {
     sprintf(buf, "%sfinal/map%d/%s.go", prefix_G, &DAT_00000001);
   } else if (type == 0x301) {
     sprintf(buf, "%sdb/config/refplant/%s", prefix_G, name);
