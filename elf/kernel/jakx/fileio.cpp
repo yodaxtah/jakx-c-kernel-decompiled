@@ -118,7 +118,7 @@ char* MakeFileName(int type, const char* name, int new_string) {
   } else if (type == 4) {
     sprintf(buffer_633, "pad:0");
 
-  } else if (type <= 5 && type <= 0x20) {
+  } else if (type == 5) {
     kstrcpy(buf, "kernel/LISTENERTOKERNEL_LOCK");
   } else if (type == 6) {
     kstrcpy(buf, "kernel/KERNELTOLISTENER_LOCK");
