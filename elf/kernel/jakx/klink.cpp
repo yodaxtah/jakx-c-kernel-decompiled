@@ -23,128 +23,129 @@ bool is_opengoal_object(void* data) {
 constexpr bool link_debug_printfs = false;
 }  // namespace
 
-void jak3_begin(uint8_t *object_file,const_char *name,int32_t size,kheapinfo heap,uint32_t flags) {
-  short sVar1;
-  int iVar2;
-  kheapinfo *heap_00;
-  s32 *psVar3;
-  u8 *puVar4;
-  undefined *in_t0_lo;
-  undefined4 in_t1_lo;
-  int iVar5;
-  uint uVar6;
-  uint32_t *src;
+void jak3_begin(link_control *this, uint8_t *object_file, const_char *name, int32_t size, kheapinfo *heap, uint32_t flags) {
+  LinkHeaderV5 *new_link_block_mem;
+  u8 *puVar1;
+  uint32_t size&m_flags;
+  char *old_link_block_G;
+  LinkHeaderV5 *l_hdr;
+  kheapinfo *m_heap;
+  LinkHeaderV5Core *m_link_hdr;
+  uint16_t version;
   
-  if (in_t0_lo == &DAT_0025bb70) {
-    kmemopen_from_c((kheapinfo *)&DAT_0025bb70,(const_char *)size);
-    object_file[0x94] = '\x01';
+  if (heap == &kglobalheapinfo) {
+    kmemopen_from_c(&kglobalheapinfo,name);
+    this->m_on_global_heap = true;
   }
   else {
-    object_file[0x94] = '\0';
+    this->m_on_global_heap = false;
   }
-  *(const_char **)object_file = name;
-  strcpy((char *)(object_file + 4),(char *)size);
-  iVar2 = *(int *)object_file;
-  *(undefined4 *)(object_file + 0x58) = *(undefined4 *)(in_t0_lo + 4);
-  *(undefined4 *)(object_file + 0x4c) = in_t1_lo;
-  *(uint32_t *)(object_file + 0x44) = flags;
-  *(undefined4 *)(object_file + 0x50) = 1;
-  *(undefined **)(object_file + 0x48) = in_t0_lo;
-  *(undefined4 *)(object_file + 0x54) = 0;
-  *(undefined4 *)(object_file + 0x5c) = 0;
-  *(int *)(object_file + 0x60) = iVar2 + 4;
-  *(undefined4 *)(object_file + 100) = 0;
-  *(int *)(object_file + 0x90) = iVar2;
-  *(undefined4 *)(object_file + 0x68) = 0;
-  *(undefined4 *)(object_file + 0x6c) = 0;
-  object_file[0x95] = '\0';
-  sVar1 = *(short *)(iVar2 + 8);
-  if (sVar1 == 4) {
-    iVar5 = *(int *)(iVar2 + 0xc);
-    *(int *)object_file = iVar2 + 0x10;
-    *(int *)(object_file + 100) = iVar5;
-    *(int *)(object_file + 0x60) = iVar2 + iVar5 + 0x14;
+  this->m_object_data = object_file;
+  strcpy(this->m_object_name,name);
+  l_hdr = (LinkHeaderV5 *)this->m_object_data;
+  this->m_heap_top = heap->top;
+  this->m_flags = flags;
+  this->m_object_size = size;
+  this->m_busy = 1;
+  this->m_heap = heap;
+  this->m_entry = (uint8_t *)0x0;
+  this->m_keep_debug = 0;
+  this->m_link_hdr = &l_hdr->core;
+  this->m_code_size = 0;
+  this->m_ptr2 = (undefined *)l_hdr;
+  this->m_state = 0;
+  this->m_segment_process = 0;
+  this->m_moved_link_block = false;
+  version = (l_hdr->core).version;
+  if (version == 4) {
+    size&m_flags = (l_hdr->core).length_to_get_to_link;
+    this->m_object_data = (uint8_t *)&(l_hdr->core).link_length;
+    this->m_code_size = size&m_flags;
+    this->m_link_hdr = (LinkHeaderV5Core *)((l_hdr->core).name + (size&m_flags - 1));
   }
   else {
-    iVar5 = *(int *)(iVar2 + 4);
-    *(int *)object_file = iVar2 + iVar5;
-    iVar5 = flags - iVar5;
-    if (sVar1 == 5) {
-      iVar5 = (flags - *(int *)(iVar2 + 0x10)) + -0x50;
+    size&m_flags = (l_hdr->core).length_to_get_to_code;
+    this->m_object_data = (uint8_t *)((l_hdr->core).name + (size&m_flags - 0x15));
+    size&m_flags = size - size&m_flags;
+    if (version == 5) {
+      size&m_flags = (size - (l_hdr->core).link_length) - 0x50;
     }
-    *(int *)(object_file + 100) = iVar5;
-    heap_00 = *(kheapinfo **)(object_file + 0x48);
-    psVar3 = *(s32 **)(object_file + 0x60);
-    if ((int)psVar3 < (int)heap_00->base) {
-      puVar4 = *(u8 **)object_file;
+    this->m_code_size = size&m_flags;
+    m_heap = this->m_heap;
+    m_link_hdr = this->m_link_hdr;
+    if ((int)m_link_hdr < (int)m_heap->base) {
+      puVar1 = this->m_object_data;
     }
     else {
-      if ((int)psVar3 < (int)heap_00->top) {
-        sVar1 = *(short *)(psVar3 + 1);
-        object_file[0x95] = '\x01';
-        if (sVar1 == 5) {
-          src = (uint32_t *)(name + psVar3[2]);
-          puVar4 = kmalloc(heap_00,psVar3[3] + 0x50,0x2000,"link-block");
-          psVar3[2] = 0x50;
-          memcpy(&DAT_002d2f48,name,0x50);
-          ultimate_memcpy_G(puVar4 + 0x50,src,psVar3[3]);
-          memcpy(puVar4,&DAT_002d2f48,0x50);
+      if ((int)m_link_hdr < (int)m_heap->top) {
+        version = m_link_hdr->version;
+        this->m_moved_link_block = true;
+        if (version == 5) {
+          old_link_block_G = (char *)(object_file + m_link_hdr->length_to_get_to_link);
+          new_link_block_mem =
+               (LinkHeaderV5 *)kmalloc(m_heap,m_link_hdr->link_length + 0x50,0x2000,"link-block");
+          m_link_hdr->length_to_get_to_link = 0x50;
+          memcpy(new_link_block_mem_temp,object_file,0x50);
+          ultimate_memcpy_G(new_link_block_mem + 1,old_link_block_G,m_link_hdr->link_length);
+          memcpy(new_link_block_mem,new_link_block_mem_temp,0x50);
         }
         else {
-          puVar4 = kmalloc(heap_00,*psVar3,0x2000,"link-block");
-          src = *(uint32_t **)(object_file + 0x60) + -1;
-          ultimate_memcpy_G(puVar4,src,**(uint32_t **)(object_file + 0x60));
+          new_link_block_mem =
+               (LinkHeaderV5 *)kmalloc(m_heap,m_link_hdr->length_to_get_to_code,0x2000,"link-block")
+          ;
+          old_link_block_G = this->m_link_hdr[-1].name + 0x37;
+          ultimate_memcpy_G(new_link_block_mem,old_link_block_G,
+                            this->m_link_hdr->length_to_get_to_code);
         }
-        *(u8 **)(object_file + 0x60) = puVar4 + 4;
-        if ((int)src < *(int *)(*(int *)(object_file + 0x48) + 8)) {
-          *(uint32_t **)(*(int *)(object_file + 0x48) + 8) = src;
+        this->m_link_hdr = &new_link_block_mem->core;
+        if ((int)old_link_block_G < (int)this->m_heap->current) {
+          this->m_heap->current = (u8 *)old_link_block_G;
         }
         goto LAB_0026f558;
       }
-      puVar4 = *(u8 **)object_file;
+      puVar1 = this->m_object_data;
     }
-    if ((int)puVar4 < (int)heap_00->base) {
-      uVar6 = *(uint *)(object_file + 0x4c);
+    if ((int)puVar1 < (int)m_heap->base) {
+      size&m_flags = this->m_flags;
       goto LAB_0026f55c;
     }
-    if ((int)heap_00->top <= (int)puVar4) {
-      uVar6 = *(uint *)(object_file + 0x4c);
+    if ((int)m_heap->top <= (int)puVar1) {
+      size&m_flags = this->m_flags;
       goto LAB_0026f55c;
     }
-    if ((int)heap_00->current <= (int)puVar4) {
-      uVar6 = *(uint *)(object_file + 0x4c);
+    if ((int)m_heap->current <= (int)puVar1) {
+      size&m_flags = this->m_flags;
       goto LAB_0026f55c;
     }
-    heap_00->current = puVar4;
+    m_heap->current = puVar1;
   }
 LAB_0026f558:
-  uVar6 = *(uint *)(object_file + 0x4c);
+  size&m_flags = this->m_flags;
 LAB_0026f55c:
-  if ((((uVar6 & 0x10) != 0) && (MasterDebug != 0)) && (DiskBoot == 0)) {
-    *(undefined4 *)(object_file + 0x5c) = 1;
+  if ((((size&m_flags & 0x10) != 0) && (MasterDebug != 0)) && (DiskBoot == 0)) {
+    this->m_keep_debug = 1;
   }
   return;
 }
 
-uint32_t jak3_work() {
-  int iVar1;
-  int iVar2;
-  uint32_t uVar3;
-  int in_a0_lo;
+uint32_t jak3_work(link_control *this) {
+  uint32_t rv;
   int unaff_s7_lo;
+  uint16_t m_version;
+  int old_debug_segment;
   
-  iVar2 = DebugSegment;
-  if (*(int *)(in_a0_lo + 0x5c) != 0) {
+  old_debug_segment = DebugSegment;
+  if (this->m_keep_debug != 0) {
     DebugSegment = unaff_s7_lo + 4;
   }
-  iVar1 = *(int *)(in_a0_lo + 0x60);
-  *(undefined4 *)(iVar1 + -4) = *(undefined4 *)(unaff_s7_lo + 0x1f);
-  uVar3 = 0;
-  if (*(short *)(iVar1 + 4) == 5) {
-    uVar3 = jak3_work_opengoal();
+  m_version = this->m_link_hdr->version;
+  *(undefined4 *)(this->m_link_hdr[-1].name + 0x37) = *(undefined4 *)(unaff_s7_lo + 0x1f);
+  rv = 0;
+  if (m_version == 5) {
+    rv = jak3_work_opengoal(this);
   }
-  DebugSegment = iVar2;
-  return uVar3;
+  DebugSegment = old_debug_segment;
+  return rv;
 }
 
 namespace jak3 {
@@ -456,292 +457,300 @@ uint32_t symlink_v3(Ptr<uint8_t> link, Ptr<uint8_t> data) {
 }
 }  // namespace
 
-uint32_t jak3_work_opengoal() {
+uint32_t jak3_work_opengoal(link_control *this) {
   byte bVar1;
   byte bVar2;
-  int *piVar3;
-  int iVar4;
-  uint *puVar5;
-  short sVar6;
+  u8 **ppuVar3;
+  short sVar4;
+  int iVar5;
+  u8 *code_infos[1|2].offset;
+  int iVar6;
   int iVar7;
-  u8 *puVar8;
-  Type *pTVar9;
-  code *pcVar10;
-  size_t sVar11;
-  int *in_a0_lo;
-  kheapinfo *heap;
+  Type *pTVar8;
+  code *pcVar9;
+  size_t sVar10;
+  kheapinfo *m_heap;
   void *dst;
-  char *pcVar12;
+  char *format;
   void *src;
-  undefined4 uVar13;
-  uint uVar14;
-  uint32_t size;
+  uint uVar11;
+  uint uVar12;
   u64 methods;
-  uint *puVar15;
-  uint uVar16;
-  int *piVar17;
-  byte *pbVar18;
+  uint *puVar13;
+  undefined4 *puVar14;
+  byte *pbVar15;
   short *name;
-  uint uVar19;
-  int iVar20;
-  int iVar21;
-  int iVar22;
+  uint8_t *puVar17;
+  uint8_t *segId_W;
+  ObjectFileHeader *ofh_W;
+  ObjectFileHeader *m_link_block_ptr;
+  ObjectFileHeader *m_link_block_ptr__;
+  ObjectFileHeader *m_link_block_ptr_;
+  ObjectFileHeader *puVar16;
+  uint32_t __code_infos[segId].size__;
+  SegmentInfo *code_infos;
+  LinkHeaderV5Core *m_link_hdr;
   
-  iVar7 = (*(code *)PTR_read_clock_code_002836d0)();
-  if (in_a0_lo[0x1a] == 0) {
-    piVar3 = (int *)in_a0_lo[0x18];
-    bVar1 = *(byte *)(piVar3 + 4);
-    iVar20 = (int)piVar3 + piVar3[2] + -4;
-    in_a0_lo[0x1c] = (uint)bVar1;
-    piVar3[2] = iVar20;
-    iVar22 = bVar1 - 1;
-    in_a0_lo[0x23] = iVar20;
+  iVar5 = (*(code *)PTR_read_clock_code_002836d0)();
+  if (this->m_state == 0) {
+    m_link_hdr = this->m_link_hdr;
+    __code_infos[segId].size__ = m_link_hdr->length_to_get_to_link;
+    bVar1 = m_link_hdr->n_segments;
+    this->m_code_start = (uint8_t *)(uint)bVar1;
+    m_link_hdr->length_to_get_to_link =
+         (uint32_t)(m_link_hdr->name + (__code_infos[segId].size__ - 0x15));
+    segId_W = (uint8_t *)(uint)bVar1 + -1;
+    this->m_link_block_ptr = (uint8_t *)(m_link_hdr->name + (__code_infos[segId].size__ - 0x15));
 LAB_0026f70c:
     do {
-      iVar20 = iVar22 * 0x10;
-      if (iVar22 < 0) {
-        in_a0_lo[0x1b] = 0;
-        in_a0_lo[0x1a] = 1;
-        iVar20 = (*(code *)PTR_read_clock_code_002836d0)();
-        if (200000 < (uint)(iVar20 - iVar7)) {
+      if ((int)segId_W < 0) {
+        this->m_segment_process = 0;
+        this->m_state = 1;
+        iVar6 = (*(code *)PTR_read_clock_code_002836d0)();
+        if (200000 < (uint)(iVar6 - iVar5)) {
           return 0;
         }
         goto LAB_0026f94c;
       }
-      iVar21 = in_a0_lo[0x23];
-      iVar4 = *in_a0_lo;
-      piVar17 = (int *)(iVar20 + iVar21);
-      *piVar17 = iVar21 + *piVar17;
-      piVar17[1] = iVar4 + piVar17[1];
-      if (iVar22 == 1) {
-        iVar20 = iVar21 + 0x10;
+      ofh_W = (ObjectFileHeader *)this->m_link_block_ptr;
+      puVar17 = this->m_object_data;
+      puVar14 = &ofh_W->code_infos[(int)(segId_W + -1)].unknown_0xc;
+      *puVar14 = (int)ofh_W->code_infos + *puVar14 + -4;
+      puVar14[1] = puVar17 + puVar14[1];
+      if (segId_W == &DAT_00000001) {
+        code_infos = ofh_W->code_infos;
         if (DebugSegment == 0) {
-          *(undefined4 *)(iVar21 + 0x18) = 0;
-          *(undefined4 *)(iVar21 + 0x14) = 0;
+          ofh_W->code_infos[1].size = 0;
+          ofh_W->code_infos[1].offset = 0;
         }
         else {
-          if (*(int *)(iVar21 + 0x18) != 0) {
-            src = *(void **)(iVar21 + 0x14);
-            puVar8 = kmalloc(kdebugheap,*(int *)(iVar21 + 0x18),0,"debug-segment");
-            iVar20 = in_a0_lo[0x23];
-            *(u8 **)(iVar21 + 0x14) = puVar8;
-            dst = *(void **)(iVar20 + 0x14);
+          __code_infos[segId].size__ = ofh_W->code_infos[1].size;
+          if (__code_infos[segId].size__ != 0) {
+            src = (void *)ofh_W->code_infos[1].offset;
+            code_infos[1|2].offset =
+                 kmalloc(kdebugheap,__code_infos[segId].size__,0,"debug-segment");
+            m_link_block_ptr__ = (ObjectFileHeader *)this->m_link_block_ptr;
+            ofh_W->code_infos[1].offset = (uint32_t)code_infos[1|2].offset;
+            dst = (void *)m_link_block_ptr__->code_infos[1].offset;
             if (dst == (void *)0x0) {
-              uVar13 = *(undefined4 *)(iVar20 + 0x18);
-              pcVar12 = "dkernel: unable to malloc %d bytes for debug-segment~%";
+              __code_infos[segId].size__ = m_link_block_ptr__->code_infos[1].size;
+              format = "dkernel: unable to malloc %d bytes for debug-segment~%";
               goto LAB_0026f838;
             }
-            size = *(uint32_t *)(iVar20 + 0x18);
+            __code_infos[segId].size__ = m_link_block_ptr__->code_infos[1].size;
             goto LAB_0026f81c;
           }
 LAB_0026f8a4:
-          *(undefined4 *)(iVar20 + 4) = 0;
+          (&code_infos->unknown_0xc)[1] = 0;
         }
         goto LAB_0026f754;
       }
-      if (1 < iVar22) {
-        if (iVar22 == 2) {
-          iVar20 = iVar21 + 0x20;
-          if (*(int *)(iVar21 + 0x28) == 0) goto LAB_0026f8a4;
-          src = *(void **)(iVar21 + 0x24);
-          puVar8 = kmalloc((kheapinfo *)in_a0_lo[0x12],*(int *)(iVar21 + 0x28),0x2000,
-                           "top-level-segment");
-          iVar20 = in_a0_lo[0x23];
-          *(u8 **)(iVar21 + 0x24) = puVar8;
-          dst = *(void **)(iVar20 + 0x24);
+      if (1 < (int)segId_W) {
+        if (segId_W == &DAT_00000002) {
+          code_infos = ofh_W->code_infos + 1;
+          __code_infos[segId].size__ = ofh_W->code_infos[2].size;
+          if (__code_infos[segId].size__ == 0) goto LAB_0026f8a4;
+          src = (void *)ofh_W->code_infos[2].offset;
+          code_infos[1|2].offset =
+               kmalloc(this->m_heap,__code_infos[segId].size__,0x2000,"top-level-segment");
+          m_link_block_ptr_ = (ObjectFileHeader *)this->m_link_block_ptr;
+          ofh_W->code_infos[2].offset = (uint32_t)code_infos[1|2].offset;
+          dst = (void *)m_link_block_ptr_->code_infos[2].offset;
           if (dst == (void *)0x0) {
-            uVar13 = *(undefined4 *)(iVar20 + 0x28);
-            pcVar12 = "dkernel: unable to malloc %d bytes for top-level-segment~%";
+            __code_infos[segId].size__ = m_link_block_ptr_->code_infos[2].size;
+            format = "dkernel: unable to malloc %d bytes for top-level-segment~%";
             goto LAB_0026f838;
           }
-          size = *(uint32_t *)(iVar20 + 0x28);
+          __code_infos[segId].size__ = m_link_block_ptr_->code_infos[2].size;
 LAB_0026f81c:
-          iVar22 = iVar22 + -1;
-          ultimate_memcpy_G(dst,src,size);
+          segId_W = segId_W + -1;
+          ultimate_memcpy_G(dst,src,__code_infos[segId].size__);
         }
         else {
-          iVar22 = iVar22 + -1;
+          segId_W = segId_W + -1;
         }
         goto LAB_0026f70c;
       }
-      if (iVar22 != 0) {
+      if (segId_W != (uint8_t *)0x0) {
 LAB_0026f754:
-        iVar22 = iVar22 + -1;
+        segId_W = segId_W + -1;
         goto LAB_0026f70c;
       }
-      if (*(int *)(iVar21 + 8) == 0) {
-        *(undefined4 *)(iVar21 + 4) = 0;
+      if (ofh_W->code_infos[0].size == 0) {
+        ofh_W->code_infos[0].offset = 0;
         goto LAB_0026f754;
       }
-      iVar21 = iVar20 + iVar21;
-      if (*(char *)((int)in_a0_lo + 0x95) == '\0') {
-        heap = (kheapinfo *)in_a0_lo[0x12];
+      if (this->m_moved_link_block == false) {
+        m_heap = this->m_heap;
 LAB_0026f7e8:
-        src = *(void **)(iVar21 + 4);
-        puVar8 = kmalloc(heap,*(s32 *)(iVar21 + 8),0,"main-segment");
-        iVar4 = in_a0_lo[0x23];
-        *(u8 **)(iVar21 + 4) = puVar8;
-        iVar20 = iVar20 + iVar4;
-        dst = *(void **)(iVar20 + 4);
+        src = (void *)ofh_W->code_infos[0].offset;
+        code_infos[1|2].offset = kmalloc(m_heap,ofh_W->code_infos[0].size,0,"main-segment");
+        puVar16 = (ObjectFileHeader *)this->m_link_block_ptr;
+        ofh_W->code_infos[0].offset = (uint32_t)code_infos[1|2].offset;
+        dst = (void *)puVar16->code_infos[0].offset;
         if (dst == (void *)0x0) {
-          uVar13 = *(undefined4 *)(iVar20 + 8);
-          pcVar12 = "dkernel: unable to malloc %d bytes for main-segment~%";
+          __code_infos[segId].size__ = puVar16->code_infos[0].size;
+          format = "dkernel: unable to malloc %d bytes for main-segment~%";
 LAB_0026f838:
-          MsgErr(pcVar12,uVar13);
+          MsgErr(format,__code_infos[segId].size__);
           return 1;
         }
-        size = *(uint32_t *)(iVar20 + 8);
+        __code_infos[segId].size__ = puVar16->code_infos[0].size;
         goto LAB_0026f81c;
       }
-      if (piVar3[3] + 0x50 <= *piVar3) {
-        heap = (kheapinfo *)in_a0_lo[0x12];
+      if ((int)(m_link_hdr->link_length + 0x50) <= (int)m_link_hdr->length_to_get_to_code) {
+        m_heap = this->m_heap;
         goto LAB_0026f7e8;
       }
-      iVar20 = in_a0_lo[0x12];
-      uVar19 = iVar4 + in_a0_lo[0x19];
-      *(uint *)(iVar20 + 8) = uVar19;
-      iVar22 = -1;
-    } while (uVar19 < *(uint *)(iVar20 + 4));
+      m_heap = this->m_heap;
+      puVar17 = puVar17 + this->m_code_size;
+      m_heap->current = puVar17;
+      segId_W = &_gp_4;
+    } while (puVar17 < m_heap->top);
     MsgErr("dkernel: heap overflow~%");
   }
   else {
 LAB_0026f94c:
-    iVar20 = in_a0_lo[0x1a];
-    if ((iVar20 < in_a0_lo[0x1c] + 1) && (in_a0_lo[0x1b] == 0)) {
-      iVar22 = in_a0_lo[0x23] + iVar20 * 0x10;
-      if ((*(int *)(iVar22 + -0xc) != 0) && (*(int *)(iVar22 + -8) != 0)) {
-        iVar21 = *(int *)(iVar22 + -0x10);
-        in_a0_lo[0x1b] = 1;
-        in_a0_lo[0x1f] = iVar21;
-        *(undefined *)(in_a0_lo + 0x22) = 0;
-        iVar22 = *(int *)(iVar22 + -0xc);
-        *in_a0_lo = iVar22;
-        in_a0_lo[0x21] = iVar22 + -4;
-        in_a0_lo[0x20] = iVar22;
+    __code_infos[segId].size__ = this->m_state;
+    if (((int)__code_infos[segId].size__ < (int)(this->m_code_start + 1)) &&
+       (this->m_segment_process == 0)) {
+      m_link_block_ptr = (ObjectFileHeader *)this->m_link_block_ptr;
+      if ((m_link_block_ptr->code_infos[__code_infos[segId].size__ - 1].offset != 0) &&
+         (m_link_block_ptr->code_infos[__code_infos[segId].size__ - 1].size != 0)) {
+        segId_W = (uint8_t *)
+                  m_link_block_ptr->code_infos[__code_infos[segId].size__ - 2].unknown_0xc;
+        this->m_segment_process = 1;
+        this->m_original_object_location = segId_W;
+        *(undefined *)&this->m_loc_ptr = 0;
+        segId_W = (uint8_t *)m_link_block_ptr->code_infos[__code_infos[segId].size__ - 1].offset;
+        this->m_object_data = segId_W;
+        this->m_base_ptr = segId_W + -4;
+        this->m_reloc_ptr = segId_W;
         goto LAB_0026f9c0;
       }
-      in_a0_lo[0x1b] = 0;
-      in_a0_lo[0x1a] = iVar20 + 1;
+      this->m_segment_process = 0;
+      this->m_state = __code_infos[segId].size__ + 1;
       goto LAB_0026f94c;
     }
 LAB_0026f9c0:
-    if (iVar20 < in_a0_lo[0x1c] + 1) {
-      iVar20 = in_a0_lo[0x1b];
-      if (iVar20 == 1) {
-        iVar20 = 0x400;
-        if (*(char *)in_a0_lo[0x1f] != '\0') {
+    if ((int)__code_infos[segId].size__ < (int)(this->m_code_start + 1)) {
+      __code_infos[segId].size__ = this->m_segment_process;
+      if (__code_infos[segId].size__ == 1) {
+        iVar6 = 0x400;
+        if (*this->m_original_object_location != '\0') {
 LAB_0026f9e8:
           do {
-            bVar1 = *(byte *)(in_a0_lo + 0x22);
+            bVar1 = *(byte *)&this->m_loc_ptr;
             while( true ) {
-              iVar22 = 0;
+              iVar7 = 0;
               if (bVar1 == 0) {
-                in_a0_lo[0x21] = in_a0_lo[0x21] + (uint)*(byte *)in_a0_lo[0x1f] * 4;
-                pcVar12 = (char *)in_a0_lo[0x1f];
+                this->m_base_ptr = this->m_base_ptr + (uint)*this->m_original_object_location * 4;
+                segId_W = this->m_original_object_location;
               }
               else {
-                pbVar18 = (byte *)in_a0_lo[0x1f];
-                bVar2 = *pbVar18;
+                pbVar15 = this->m_original_object_location;
+                bVar2 = *pbVar15;
                 while (bVar2 != 0) {
-                  puVar5 = (uint *)in_a0_lo[0x21];
-                  uVar19 = *puVar5;
-                  uVar14 = uVar19 >> 8 & 0xf;
-                  puVar15 = (uint *)((uVar19 >> 10 & 0x3c) + (int)puVar5);
-                  if (uVar19 >> 0x18 == 0) {
-                    *puVar5 = uVar19 + in_a0_lo[0x20];
+                  ppuVar3 = (u8 **)this->m_base_ptr;
+                  code_infos[1|2].offset = *ppuVar3;
+                  uVar12 = (uint)code_infos[1|2].offset >> 8 & 0xf;
+                  puVar13 = (uint *)(((uint)code_infos[1|2].offset >> 10 & 0x3c) + (int)ppuVar3);
+                  if ((uint)code_infos[1|2].offset >> 0x18 == 0) {
+                    *ppuVar3 = code_infos[1|2].offset + (int)this->m_reloc_ptr;
                   }
                   else {
-                    uVar16 = *(int *)(uVar14 * 0x10 + in_a0_lo[0x23] + 4) +
-                             ((uVar19 & 0xff) << 0x10 | (uint)*(ushort *)puVar15);
-                    if ((DebugSegment == 0) && (uVar14 == 1)) {
-                      uVar16 = 0;
+                    uVar11 = *(int *)(this->m_link_block_ptr + uVar12 * 0x10 + 4) +
+                             (((uint)code_infos[1|2].offset & 0xff) << 0x10 |
+                             (uint)*(ushort *)puVar13);
+                    if ((DebugSegment == 0) && (uVar12 == 1)) {
+                      uVar11 = 0;
                     }
-                    *puVar5 = uVar19 & 0xffff0000 | uVar16 >> 0x10;
-                    *puVar15 = *puVar15 & 0xffff0000 | uVar16 & 0xffff;
+                    *ppuVar3 = (u8 *)((uint)code_infos[1|2].offset & 0xffff0000 | uVar11 >> 0x10);
+                    *puVar13 = *puVar13 & 0xffff0000 | uVar11 & 0xffff;
                   }
-                  iVar22 = iVar22 + 1;
-                  in_a0_lo[0x21] = (int)(puVar5 + 1);
-                  bVar2 = iVar22 < (int)(uint)*pbVar18;
+                  iVar7 = iVar7 + 1;
+                  this->m_base_ptr = (u8 *)(ppuVar3 + 1);
+                  bVar2 = iVar7 < (int)(uint)*pbVar15;
                 }
-                pcVar12 = (char *)in_a0_lo[0x1f];
+                segId_W = this->m_original_object_location;
               }
-              if (*pcVar12 == -1) {
-                in_a0_lo[0x1f] = (int)(pcVar12 + 1);
+              if (*segId_W == 0xff) {
+                this->m_original_object_location = segId_W + 1;
                 goto LAB_0026f9e8;
               }
-              in_a0_lo[0x1f] = (int)(pcVar12 + 1);
-              *(byte *)(in_a0_lo + 0x22) = bVar1 ^ 1;
-              iVar20 = iVar20 + -1;
-              if (pcVar12[1] == '\0') goto LAB_0026fb20;
-              if (iVar20 == 0) break;
-              bVar1 = *(byte *)(in_a0_lo + 0x22);
+              this->m_original_object_location = segId_W + 1;
+              *(byte *)&this->m_loc_ptr = bVar1 ^ 1;
+              iVar6 = iVar6 + -1;
+              if (segId_W[1] == '\0') goto LAB_0026fb20;
+              if (iVar6 == 0) break;
+              bVar1 = *(byte *)&this->m_loc_ptr;
             }
-            iVar22 = (*(code *)PTR_read_clock_code_002836d0)();
-            iVar20 = 0x400;
-            if (200000 < (uint)(iVar22 - iVar7)) {
+            iVar7 = (*(code *)PTR_read_clock_code_002836d0)();
+            iVar6 = 0x400;
+            if (200000 < (uint)(iVar7 - iVar5)) {
               return 0;
             }
           } while( true );
         }
 LAB_0026fb20:
-        in_a0_lo[0x1f] = in_a0_lo[0x1f] + 1;
-        in_a0_lo[0x1b] = in_a0_lo[0x1b] + 1;
-        iVar20 = in_a0_lo[0x1b];
+        this->m_original_object_location = this->m_original_object_location + 1;
+        this->m_segment_process = this->m_segment_process + 1;
+        __code_infos[segId].size__ = this->m_segment_process;
       }
-      if (iVar20 != 2) goto LAB_0026fcac;
-      pbVar18 = (byte *)in_a0_lo[0x1f];
-      uVar19 = *(uint *)(in_a0_lo[0x23] + in_a0_lo[0x1a] * 0x10 + -4);
+      if (__code_infos[segId].size__ != 2) goto LAB_0026fcac;
+      pbVar15 = this->m_original_object_location;
+      uVar12 = *(uint *)(this->m_link_block_ptr + this->m_state * 0x10 + -4);
       while( true ) {
-        bVar1 = *pbVar18;
-        uVar14 = (uint)bVar1;
-        if (uVar14 == 0) break;
-        in_a0_lo[0x1f] = (int)(pbVar18 + 1);
+        bVar1 = *pbVar15;
+        uVar11 = (uint)bVar1;
+        if (uVar11 == 0) break;
+        this->m_original_object_location = pbVar15 + 1;
         if ((bVar1 & 0x80) == 0) {
-          sVar6 = *(short *)(pbVar18 + 1);
-          in_a0_lo[0x1f] = (int)(pbVar18 + 3);
-          pTVar9 = (Type *)intern_from_c((int)sVar6,uVar14,(const_char *)(pbVar18 + 3));
-          pcVar12 = (char *)in_a0_lo[0x1f];
+          sVar4 = *(short *)(pbVar15 + 1);
+          this->m_original_object_location = pbVar15 + 3;
+          pTVar8 = (Type *)intern_from_c((int)sVar4,uVar11,(const_char *)(pbVar15 + 3));
+          segId_W = this->m_original_object_location;
         }
         else {
-          iVar20 = (uVar14 & 0x3f) * 4;
-          if ((uVar14 & 0x3f) == 0x3f) {
-            bVar1 = pbVar18[1];
-            in_a0_lo[0x1f] = (int)(pbVar18 + 2);
+          iVar6 = (uVar11 & 0x3f) * 4;
+          if ((uVar11 & 0x3f) == 0x3f) {
+            bVar1 = pbVar15[1];
+            this->m_original_object_location = pbVar15 + 2;
             methods = (long)(int)((uint)bVar1 * 4 + 3);
           }
           else {
-            methods = (long)iVar20;
-            if ((long)iVar20 != 0) {
-              methods = (long)(iVar20 + 3);
+            methods = (long)iVar6;
+            if ((long)iVar6 != 0) {
+              methods = (long)(iVar6 + 3);
             }
           }
-          name = (short *)in_a0_lo[0x1f] + 1;
-          sVar6 = *(short *)in_a0_lo[0x1f];
-          in_a0_lo[0x1f] = (int)name;
-          pTVar9 = intern_type_from_c((int)sVar6,uVar14,(const_char *)name,methods);
-          pcVar12 = (char *)in_a0_lo[0x1f];
+          name = (short *)((int)this->m_original_object_location + 2);
+          sVar4 = *(short *)this->m_original_object_location;
+          this->m_original_object_location = (uint8_t *)name;
+          pTVar8 = intern_type_from_c((int)sVar4,uVar11,(const_char *)name,methods);
+          segId_W = this->m_original_object_location;
         }
-        sVar11 = strlen(pcVar12);
-        in_a0_lo[0x1f] = in_a0_lo[0x1f] + (int)sVar11 + 1;
-        if ((uVar19 & 1) == 0) {
-          iVar20 = *in_a0_lo;
-          pcVar10 = (code *)symlink3_G;
+        sVar10 = strlen((char *)segId_W);
+        this->m_original_object_location = this->m_original_object_location + (int)sVar10 + 1;
+        if ((uVar12 & 1) == 0) {
+          segId_W = this->m_object_data;
+          pcVar9 = (code *)symlink3_G;
         }
         else {
-          iVar20 = *in_a0_lo;
-          pcVar10 = (code *)symlink2_G;
+          segId_W = this->m_object_data;
+          pcVar9 = (code *)symlink2_G;
         }
-        iVar20 = (*pcVar10)(iVar20,pTVar9);
-        in_a0_lo[0x1f] = iVar20;
-        iVar20 = (*(code *)PTR_read_clock_code_002836d0)();
-        if (200000 < (uint)(iVar20 - iVar7)) {
+        segId_W = (uint8_t *)(*pcVar9)(segId_W,pTVar8);
+        this->m_original_object_location = segId_W;
+        iVar6 = (*(code *)PTR_read_clock_code_002836d0)();
+        if (200000 < (uint)(iVar6 - iVar5)) {
           return 0;
         }
-        pbVar18 = (byte *)in_a0_lo[0x1f];
+        pbVar15 = this->m_original_object_location;
       }
-      in_a0_lo[0x1b] = 0;
-      in_a0_lo[0x1a] = in_a0_lo[0x1a] + 1;
-      in_a0_lo[0x15] = *in_a0_lo + 4;
+      this->m_segment_process = 0;
+      this->m_state = this->m_state + 1;
+      this->m_entry = this->m_object_data + 4;
       goto LAB_0026f94c;
     }
 LAB_0026fcac:
@@ -750,68 +759,61 @@ LAB_0026fcac:
   return 1;
 }
 
-void jak3_finish(bool jump_from_c_to_goal) {
-  short sVar1;
-  int iVar2;
-  int iVar3;
-  code *pcVar4;
+void jak3_finish(link_control *this,bool jump_from_c_to_goal) {
   char *a2;
-  int iVar5;
-  int iVar6;
   int unaff_s7_lo;
-  int iVar7;
+  code *m_entry;
+  kheapinfo *m_heap;
+  LinkHeaderV5Core *m_link_hdr;
+  int old_debug_segment;
+  uint16_t version;
   
   FlushCache(0);
   FlushCache(2);
-  iVar3 = DebugSegment;
-  if (*(int *)(jump_from_c_to_goal + 0x5c) != 0) {
+  old_debug_segment = DebugSegment;
+  if (this->m_keep_debug != 0) {
     DebugSegment = unaff_s7_lo + 4;
   }
-  if ((*(uint *)(jump_from_c_to_goal + 0x4c) & 0x20) != 0) {
-    FastLink = 1;
+  if ((this->m_flags & 0x20) != 0) {
+    FastLink = true;
   }
-  iVar5 = (int)jump_from_c_to_goal;
-  iVar2 = *(int *)(iVar5 + 0x60);
-  sVar1 = *(short *)(iVar2 + 4);
-  *EnableMethodSet = *EnableMethodSet + *(int *)(iVar5 + 0x5c);
-  iVar6 = (int)jump_from_c_to_goal;
-  iVar7 = (int)jump_from_c_to_goal;
-  if (sVar1 == 5) {
-    pcVar4 = *(code **)(iVar5 + 0x54);
-    if (pcVar4 != (code *)0x0) {
-      if ((*(int *)(pcVar4 + -4) == *(int *)(unaff_s7_lo + 7)) &&
-         ((*(uint *)(iVar5 + 0x4c) & 5) != 0)) {
-        if ((*(uint *)(iVar5 + 0x4c) & 4) == 0) {
-          pcVar4 = *(code **)(unaff_s7_lo + 0x93);
+  m_link_hdr = this->m_link_hdr;
+  version = m_link_hdr->version;
+  *EnableMethodSet = *EnableMethodSet + this->m_keep_debug;
+  if (version == 5) {
+    m_entry = (code *)this->m_entry;
+    if (m_entry != (code *)0x0) {
+      if ((*(int *)(m_entry + -4) == *(int *)(unaff_s7_lo + 7)) && ((this->m_flags & 5) != 0)) {
+        if ((this->m_flags & 4) == 0) {
+          m_entry = *(code **)(unaff_s7_lo + 0x93);
         }
         else {
-          (*pcVar4)();
-          pcVar4 = *(code **)(unaff_s7_lo + 0x93);
+          (*m_entry)();
+          m_entry = *(code **)(unaff_s7_lo + 0x93);
         }
-        (*pcVar4)();
-        if ((*(uint *)(iVar7 + 0x4c) & 1) != 0) {
-          output_segment_load((const_char *)(iVar2 + 0x11),*(void **)(iVar2 + 8),
-                              *(uint *)(iVar7 + 0x4c));
+        (*m_entry)();
+        if ((this->m_flags & 1) != 0) {
+          output_segment_load(m_link_hdr->name,(ObjectFileHeader *)m_link_hdr->length_to_get_to_link
+                              ,this->m_flags);
         }
       }
-      else if ((pcVar4 != (code *)0x0) && ((*(uint *)(iVar7 + 0x4c) & 4) != 0)) {
-        a2 = basename_goal((char *)(iVar6 + 4));
+      else if ((m_entry != (code *)0x0) && ((this->m_flags & 4) != 0)) {
+        a2 = basename(this->m_object_name);
         call_method_of_type_arg2
-                  (*(u32 *)(iVar6 + 0x54),*(Type **)(*(u32 *)(iVar6 + 0x54) - 4),7,
-                   *(u32 *)(iVar6 + 0x48),(u32)a2);
+                  ((u32)this->m_entry,*(Type **)(this->m_entry + -4),7,(u32)this->m_heap,(u32)a2);
       }
     }
   }
   else {
-    MsgErr("dkernel: FATAL ERROR: unknown goal file version %d~%");
+    MsgErr("dkernel: FATAL ERROR: unknown goal file version %d~%",version);
   }
-  iVar2 = *(int *)(iVar6 + 0x48);
-  FastLink = 0;
-  *EnableMethodSet = *EnableMethodSet - *(int *)(iVar6 + 0x5c);
-  DebugSegment = iVar3;
-  *(undefined4 *)(iVar2 + 4) = *(undefined4 *)(iVar6 + 0x58);
-  *(undefined4 *)(iVar7 + 0x50) = 0;
-  if (*(char *)(iVar7 + 0x94) != '\0') {
+  m_heap = this->m_heap;
+  FastLink = false;
+  *EnableMethodSet = *EnableMethodSet - this->m_keep_debug;
+  DebugSegment = old_debug_segment;
+  m_heap->top = this->m_heap_top;
+  this->m_busy = 0;
+  if (this->m_on_global_heap != false) {
     kmemclose();
   }
   return;
@@ -820,22 +822,23 @@ void jak3_finish(bool jump_from_c_to_goal) {
 
 namespace jak3 {
 
-uint8_t * link_and_exec(uint8_t *data,const_char *name,int32_t size,kheapinfo *heap,uint32_t flags, bool jump_from_c_to_goal) {
-  uint32_t uVar1;
-  long lVar2;
-  kheapinfo in_stack_ffffff30;
-  uint8_t *local_7c;
+uint8_t * link_and_exec(uint8_t *data, const_char *name, int32_t size, kheapinfo *heap, uint32_t flags, bool jump_from_c_to_goal) {
+  uint32_t done;
+  long link_busy_result;
+  long lVar1;
+  uint8_t *lc.m_entry;
   
-  lVar2 = link_busy();
-  if (lVar2 != 0) {
+  lVar1 = (long)(int)data;
+  link_busy_result = link_busy();
+  if (link_busy_result != 0) {
     printf("-------------> saved link is busy\n");
   }
-  jak3_begin(&stack0xffffff30,(const_char *)data,(int32_t)name,in_stack_ffffff30,size);
+  jak3_begin((link_control *)&stack0xffffff30,data,name,size,heap,flags);
   do {
-    uVar1 = jak3_work();
-  } while (uVar1 == 0);
-  jak3_finish(SUB41(&stack0xffffff30,0));
-  return local_7c;
+    done = jak3_work((link_control *)&stack0xffffff30);
+  } while (done == 0);
+  jak3_finish((link_control *)&stack0xffffff30,SUB81(lVar1,0));
+  return lc.m_entry;
 }
 
 u64 link_and_exec_wrapper(u64* args) {
@@ -845,34 +848,35 @@ u64 link_and_exec_wrapper(u64* args) {
 }
 
 u32 link_busy() {
-  return saved_link_control.m_busy;
+  return saved_link_control_WG.m_busy;
 }
 void link_reset() {
-  saved_link_control.m_busy = 0;
+  saved_link_control_WG.m_busy = 0;
+  return;
 }
 uint64_t link_begin(u64 *args) {
-  kheapinfo heap;
-  uint32_t uVar1;
-  int32_t in_a1_lo;
-  uint32_t in_a2_lo;
-  undefined8 unaff_s0;
-  undefined8 unaff_retaddr;
+  uint32_t work_result;
+  undefined jump_from_c_to_goal;
+  const_char *in_a1_lo;
+  int32_t in_a2_lo;
+  kheapinfo *in_a3_lo;
+  uint32_t in_t0_lo;
   
-  heap._8_8_ = unaff_retaddr;
-  heap._0_8_ = unaff_s0;
-  jak3_begin(&DAT_002d2f98,(const_char *)args,in_a1_lo,heap,in_a2_lo);
-  uVar1 = jak3_work();
-  if (uVar1 != 0) {
-    jak3_finish(true);
+  jump_from_c_to_goal = SUB41(args,0);
+  jak3_begin(&saved_link_control_WG,(uint8_t *)args,in_a1_lo,in_a2_lo,in_a3_lo,in_t0_lo);
+  work_result = jak3_work(&saved_link_control_WG);
+  if (work_result != 0) {
+    jak3_finish(&saved_link_control_WG,(bool)jump_from_c_to_goal);
   }
-  return (ulong)(uVar1 != 0);
+  return (ulong)(work_result != 0);
 }
 uint64_t link_resume() {
   uint32_t uVar1;
+  undefined in_a1_lo;
   
-  uVar1 = jak3_work();
+  uVar1 = jak3_work(&saved_link_control_WG);
   if (uVar1 != 0) {
-    jak3_finish(true);
+    jak3_finish(&saved_link_control_WG,(bool)in_a1_lo);
   }
   return (ulong)(uVar1 != 0);
 }
