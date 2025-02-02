@@ -154,12 +154,14 @@ u64 CPadOpen(u64 cpad_info,s32 pad_number) {
  * Not checked super carefully for jak 2, but looks the same
  */
 u64 CPadGetData(u64 cpad_info) {
-  int iVar1;
-  long lVar2;
-  char* format;
-  byte *pbVar3;
-  undefined4 uVar4;
-  int iVar5;
+  byte bVar1;
+  uint uVar2;
+  int iVar3;
+  char *format;
+  CPadInfo *cpad;
+  long lVar4;
+  undefined4 uVar5;
+  int iVar6;
   undefined local_70;
   char local_6f;
   undefined local_60 [16];
@@ -171,79 +173,82 @@ u64 CPadGetData(u64 cpad_info) {
     format = "dkernel: error; NULL pad info\n";
   }
   else {
-    pbVar3 = (byte *)cpad_info;
-    if (1 < *(uint *)(pbVar3 + 0x20)) {
-      MsgErr("dkernel: error; invalid controller port index %d\n");
+    cpad = (CPadInfo *)cpad_info;
+    uVar2 = cpad->number;
+    if (1 < uVar2) {
+      MsgErr("dkernel: error; invalid controller port index %d\n",uVar2);
       return cpad_info;
     }
-    iVar1 = (&DAT_00283458_libpad)[*(uint *)(pbVar3 + 0x20)];
-    if (-1 < iVar1) {
-      lVar2 = scePad2GetState(iVar1);
-      if (lVar2 == 0) {
-        *(undefined4 *)(pbVar3 + 0x50) = 0;
+    iVar3 = controllerPortIndexes_SW[uVar2];
+    if (-1 < iVar3) {
+      lVar4 = scePad2GetState(iVar3);
+      if (lVar4 == 0) {
+        cpad->state = 0;
       }
-      iVar5 = *(int *)(pbVar3 + 0x50);
-      *pbVar3 = (byte)lVar2 | 0x80;
-      if (iVar5 == 0x46) {
-        lVar2 = sceVibGetProfile(iVar1,local_40);
-        if (lVar2 < 0) {
+      iVar6 = cpad->state;
+      cpad->valid = (byte)lVar4 | 0x80;
+      if (iVar6 == 0x46) {
+        lVar4 = sceVibGetProfile(iVar3,local_40);
+        if (lVar4 < 0) {
           return cpad_info;
         }
-        if ((lVar2 < 1) || (uVar4 = 1, (local_40[0] & 3) == 0)) {
-          uVar4 = 0;
+        if ((lVar4 < 1) || (uVar5 = 1, (local_40[0] & 3) == 0)) {
+          uVar5 = 0;
         }
-        *(undefined4 *)(pbVar3 + 0x7c) = uVar4;
-        *(undefined4 *)(pbVar3 + 0x50) = 99;
+        *(undefined4 *)cpad[1].abutton = uVar5;
+        cpad->state = 99;
         return cpad_info;
       }
-      if (0x46 < iVar5) {
-        if (iVar5 != 99) {
+      if (0x46 < iVar6) {
+        if (iVar6 != 99) {
           return cpad_info;
         }
-        if (lVar2 != 1) {
+        if (lVar4 != 1) {
           return cpad_info;
         }
-        lVar2 = scePad2Read(iVar1,pbVar3 + 2);
-        if (-1 < lVar2) {
-          iVar5 = (int)lVar2 + 1 >> 1;
-          if (0xf < iVar5) {
-            iVar5 = 0xf;
+        lVar4 = scePad2Read(iVar3,&cpad->button0);
+        if (-1 < lVar4) {
+          iVar6 = (int)lVar4 + 1 >> 1;
+          if (0xf < iVar6) {
+            iVar6 = 0xf;
           }
-          *(ushort *)(pbVar3 + 2) = ~*(ushort *)(pbVar3 + 2);
-          pbVar3[1] = (byte)iVar5 | 0x70;
+          cpad->button0 = ~cpad->button0;
+          cpad->status = (byte)iVar6 | 0x70;
         }
-        *pbVar3 = 1;
-        if (*(int *)(pbVar3 + 0x7c) == 0) {
+        cpad->valid = '\x01';
+        if (*(int *)cpad[1].abutton == 0) {
           return cpad_info;
         }
         local_60[0] = 3;
         local_50 = 0;
         local_4f = 0;
-        if (pbVar3[0x54] < 6) {
-          local_50 = pbVar3[pbVar3[0x54] + 0x5a] & 1;
+        if (*(byte *)cpad->buzz_time < 6) {
+          local_50 = *(byte *)((int)cpad->buzz_time + *(byte *)cpad->buzz_time + 6) & 1;
         }
-        if (pbVar3[0x55] < 6) {
-          local_4f = pbVar3[pbVar3[0x55] + 0x5a] >> 7;
-          local_50 = local_50 | (byte)((pbVar3[pbVar3[0x55] + 0x5a] & 0x7f) << 1);
+        bVar1 = *(byte *)((int)cpad->buzz_time + 1);
+        if (bVar1 < 6) {
+          bVar1 = *(byte *)((int)cpad->buzz_time + bVar1 + 6);
+          local_4f = bVar1 >> 7;
+          local_50 = local_50 | (byte)((bVar1 & 0x7f) << 1);
         }
-        sceVibSetActParam(iVar1,1,local_60,2,&local_50);
+        sceVibSetActParam(iVar3,1,local_60,2,&local_50);
         return cpad_info;
       }
-      if (iVar5 != 0) {
+      if (iVar6 != 0) {
         return cpad_info;
       }
-      if (lVar2 != 1) {
+      if (lVar4 != 1) {
         return cpad_info;
       }
-      lVar2 = scePad2GetButtonProfile(iVar1,&local_70);
-      *(undefined4 *)(pbVar3 + 0x50) = 0x5a;
-      if (lVar2 < 4) {
+      lVar4 = scePad2GetButtonProfile(iVar3,&local_70);
+      cpad->state = 0x5a;
+      if (lVar4 < 4) {
         return cpad_info;
       }
       if (local_6f != -1) {
         return cpad_info;
       }
-      *(undefined4 *)(pbVar3 + 0x50) = 0x46;
+      cpad->state = 0x46;
       return cpad_info;
     }
     format = "dkernel: error; invalid pad socket\n";
