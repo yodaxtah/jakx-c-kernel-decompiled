@@ -119,7 +119,7 @@ char* MakeFileName(int type, const char* name, int new_string) {
   } else if (type < 0x32) {
     if (type == 0x21) {
 LAB_00259f40:
-      pcVar3 = "%sfinal/texture-page%d/%s.go";
+      sprintf(buf, "%sfinal/texture-page%d/%s.go", prefix_G, (const char *)0x8);
     } else {
       if (type < 0x22) {
         if (type == 4) {
@@ -127,7 +127,8 @@ LAB_00259f40:
           goto LAB_00259d2c;
         } else if (type < 5) {
           if (type == 2) {
-            pcVar3 = "kernel/KERNELTOLISTENER";
+            kstrcpy(buf,"kernel/KERNELTOLISTENER");
+            goto LAB_00259d2c;
           } else if (2 < type) {
             pcVar2 = "game/obj/%s.o";
             pcVar3 = buf;
@@ -137,10 +138,12 @@ LAB_00259dc8:
           } else if (type != 1) {
             goto LAB_00259d2c;
           } else {
-            pcVar3 = "kernel/LISTENERTOKERNEL";
+            kstrcpy(buf,"kernel/LISTENERTOKERNEL");
+            goto LAB_00259d2c;
           }
         } else if (type == 6) {
-          pcVar3 = "kernel/KERNELTOLISTENER_LOCK";
+          kstrcpy(buf,"kernel/KERNELTOLISTENER_LOCK");
+          goto LAB_00259d2c;
         } else if (5 < type) {
           if (type != 8) {
             if (type != 0x20) {
@@ -155,31 +158,27 @@ LAB_00259dc8:
             goto LAB_00259dc8;
           }
         } else {
-          pcVar3 = "kernel/LISTENERTOKERNEL_LOCK";
+          kstrcpy(buf, "kernel/LISTENERTOKERNEL_LOCK");
+          goto LAB_00259d2c;
         }
-        kstrcpy(buf,pcVar3);
-        goto LAB_00259d2c;
       } else if (type == 0x26) {
         pcVar3 = "%sfinal/%s-tg.go";
         pcVar2 = prefix_G;
         goto LAB_00259e20;
       } else if (type < 0x27) {
         if (type == 0x23) {
-          pcVar3 = "%sdb/artdata%d/%s-jg.go";
+          sprintf(buf, "%sdb/artdata%d/%s-jg.go", prefix_G, (const char *)0x8);
         } else if (type < 0x23) {
-          pcVar3 = "%sdb/artdata%d/%s-ja.go";
+          sprintf(buf, "%sdb/artdata%d/%s-ja.go", prefix_G, (const char *)0x8);
         } else if (type == 0x24) {
-          pcVar3 = "%sdb/artdata%d/%s-ma.go";
+          sprintf(buf, "%sdb/artdata%d/%s-ma.go", prefix_G, (const char *)0x8);
         } else if (type != 0x25) {
           goto LAB_00259d2c;
         } else {
-          pcVar3 = "%sdb/artdata%d/%s-mg.go";
+          sprintf(buf, "%sdb/artdata%d/%s-mg.go", prefix_G, (const char *)0x8);
         }
       } else if (type < 0x2a) {
         if (type < 0x28) {
-          // pcVar3 = "%sfinal/level%d/%s-bt.go";
-          // name = (const char *)0x25;
-          // goto LAB_00259ec4;
           sprintf(buf, "%sfinal/level%d/%s-bt.go", prefix_G, (const char *)0x25);
         } else {
           goto LAB_00259f40;
@@ -188,12 +187,11 @@ LAB_00259dc8:
         goto LAB_00259d2c;
       } else {
         pcVar3 = "%sfinal/art-group%d/%s-ag.go";
+        name = (const char *)0x8;
+LAB_00259ec4:
+        sprintf(buf, pcVar3, prefix_G, name);
       }
     }
-    // LAB_00259ebc:
-    name = (const char *)0x8;
-LAB_00259ec4:
-    sprintf(buf, pcVar3, prefix_G, name);
   } else {
     if (type == 0x3a) {
       pcVar3 = "%sfinal/res%d/game-cnt.go";
