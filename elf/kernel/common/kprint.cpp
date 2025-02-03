@@ -58,23 +58,19 @@ void kprint_init_globals_common() {
  * Allocates buffers.
  */
 void init_output() {
-  kheapinfo *heap;
-  s32 size;
-  
   if ((MasterDebug == 0) && (DebugSegment == 0)) {
-    heap = &kglobalheapinfo;
-    size = 0x2000;
-    MessBufArea = (u8 *)0x0;
-    OutputBufArea = (u8 *)0x0;
+    MessBufArea = nullptr;
+    OutputBufArea = nullptr;
+    PrintBufArea =
+        kmalloc(kglobalheapinfo, 0x2000, 0x1100, "print-buf");
+  } else {
+    MessBufArea = kmalloc(kdebugheap, 0x80000, 0x1100,
+                          "mess-buf");
+    OutputBufArea = kmalloc(kdebugheap, 0x80000,
+                          0x1100, "output-buf");
+    PrintBufArea = kmalloc(kdebugheap, 0x200000, 0x1100,
+                          "print-buf");
   }
-  else {
-    MessBufArea = kmalloc(kdebugheap,0x80000,0x1100,"mess-buf");
-    OutputBufArea = kmalloc(kdebugheap,0x80000,0x1100,"output-buf");
-    size = 0x200000;
-    heap = kdebugheap;
-  }
-  PrintBufArea = kmalloc(heap,size,0x1100,"print-buf");
-  return;
 }
 
 /*!
@@ -82,10 +78,9 @@ void init_output() {
  */
 void clear_output() {
   if (MasterDebug != 0) {
-    strcpy((char *)(OutputBufArea + 0x18),"");
+    strcpy((char *)(OutputBufArea + 0x18), "");
     OutputPending = 0;
   }
-  return;
 }
 
 /*!
@@ -93,8 +88,7 @@ void clear_output() {
  */
 void clear_print() {
   PrintBufArea[0x18] = 0;
-  PrintPending = (char *)0x0;
-  return;
+  PrintPending = nullptr;
 }
 
 /*!
@@ -102,48 +96,41 @@ void clear_print() {
  * Write to the beginning of the output buffer.
  */
 void reset_output() {
-  undefined *unaff_s7_lo;
-  
   if (MasterDebug != 0) {
-    sprintf((char *)(OutputBufArea + 0x18),"reset #x%x\n",unaff_s7_lo);
+    undefined *unaff_s7_lo;
+    sprintf((char *)(OutputBufArea + 0x18), "reset #x%x\n", unaff_s7_lo);
     OutputPending = OutputBufArea + 0x18;
   }
-  return;
 }
 
 /*!
  * Buffer message to compiler indicating some object file has been unloaded.
- * TBD, EXACT
+ * DONE, EXACT
  */
 void output_unload(const char* name) {
-  char* __s;
-  
   if (MasterDebug != 0) {
-    __s = strend((char *)(OutputBufArea + 0x18));
-    sprintf(__s,"unload \"%s\"\n",name);
+    sprintf(strend((char *)(OutputBufArea + 0x18)),
+            "unload \"%s\"\n", name);
     OutputPending = OutputBufArea + 0x18;
   }
-  return;
 }
 
 /*!
  * Buffer message to compiler indicating some object file has been loaded.
  */
-void output_segment_load(const char* name,void* link_block,u32 flags) {
-  char* __s;
-  char* pcVar1;
-  
+void output_segment_load(const char* name, void* link_block, u32 flags) {
   if (MasterDebug != 0) {
-    __s = strend((char *)(OutputBufArea + 0x18));
-    pcVar1 = "t";
-    if ((flags & 2) == 0) {
-      pcVar1 = "nil";
-    }
-    sprintf(__s,"load \"%s\" %s #x%x #x%x #x%x\n",name,pcVar1,*(int *)((int)link_block + 4) + 4,
-            *(int *)((int)link_block + 0x14) + 4,*(int *)((int)link_block + 0x24) + 4);
+    char* buffer = strend((char *)(OutputBufArea + 0x18));
+    char true_str[] = "t";
+    char false_str[] = "nil";
+    char* flag_str = ((flags & 2) != 0) ? true_str : false_str;
+    ObjectFileHeader* lbp = (ObjectFileHeader*)link_block;
+    sprintf(buffer, "load \"%s\" %s #x%x #x%x #x%x\n", name, flag_str,
+            lbp->code_infos[0].offset + 4, lbp->code_infos[1].offset + 4, lbp->code_infos[2].offset + 4);
+    // Why +4? The struct SegmentInfo might itself be nested at 0x4 in another one:
+    // ObjectFileHeader --contains--> SomeStruct of 16 bytes --contains--> SegmentInfo.
     OutputPending = OutputBufArea + 0x18;
   }
-  return;
 }
 
 /*!
@@ -152,8 +139,7 @@ void output_segment_load(const char* name,void* link_block,u32 flags) {
  * This is a different behavior from all the other prints!
  * TBD, EXACT
  */
-void cprintf(const char* format,...) {
-  char* str;
+void cprintf(const char* format, ...) {
   undefined8 in_a1;
   undefined8 in_a2;
   undefined8 in_a3;
@@ -169,8 +155,8 @@ void cprintf(const char* format,...) {
   undefined8 local_10;
   undefined8 local_8;
   
-  str = PrintPending;
-  if (PrintPending == (char *)0x0) {
+  char* str = PrintPending;
+  if (PrintPending == nullptr) {
     str = PrintBufArea + 0x18;
   }
   local_38 = in_a1;
@@ -181,8 +167,7 @@ void cprintf(const char* format,...) {
   local_10 = in_t2;
   local_8 = in_t3;
   PrintPending = strend(str);
-  vsprintf(PrintPending,format,&local_38);
-  return;
+  vsprintf(PrintPending, format, &local_38);
 }
 
 /*!
@@ -190,7 +175,7 @@ void cprintf(const char* format,...) {
  * The "k" parameter is ignored, so this is just like printf
  * TBD, changed vprintf to lg::printstd
  */
-void Msg(s32 k,const char* format,...) {
+void Msg(s32 k, const char* format, ...) {
   undefined8 in_a2;
   undefined8 in_a3;
   undefined8 in_t0;
@@ -210,8 +195,7 @@ void Msg(s32 k,const char* format,...) {
   local_18 = in_t1;
   local_10 = in_t2;
   local_8 = in_t3;
-  vprintf(format,&local_30);
-  return;
+  vprintf(format, &local_30);
 }
 
 /*!
@@ -219,7 +203,7 @@ void Msg(s32 k,const char* format,...) {
  * This is idential to Msg
  * TBD, changed vprintf to lg::printstd
  */
-void MsgWarn(const char* format,...) {
+void MsgWarn(const char* format, ...) {
   undefined8 in_a1;
   undefined8 in_a2;
   undefined8 in_a3;
@@ -242,8 +226,7 @@ void MsgWarn(const char* format,...) {
   local_18 = in_t1;
   local_10 = in_t2;
   local_8 = in_t3;
-  vprintf(format,&local_38);
-  return;
+  vprintf(format, &local_38);
 }
 
 /*!
@@ -251,7 +234,7 @@ void MsgWarn(const char* format,...) {
  * This is idential to Msg
  * TBD, changed vprintf to lg::printstd
  */
-void MsgErr(const char* format,...) {
+void MsgErr(const char* format, ...) {
   undefined8 in_a1;
   undefined8 in_a2;
   undefined8 in_a3;
@@ -274,37 +257,22 @@ void MsgErr(const char* format,...) {
   local_18 = in_t1;
   local_10 = in_t2;
   local_8 = in_t3;
-  vprintf(format,&local_38);
-  return;
+  vprintf(format, &local_38);
 }
 
 /*!
  * Reverse string in place.
- * TBD, EXACT
+ * DONE, EXACT
  */
 void reverse(char* str) {
-  char cVar1;
-  int iVar2;
-  size_t sVar3;
-  int iVar4;
-  char* pcVar5;
-  char* pcVar6;
-  
-  sVar3 = strlen(str);
-  iVar2 = (int)sVar3 + -1;
-  if (0 < iVar2) {
-    iVar4 = 0;
-    do {
-      pcVar6 = str + iVar4;
-      pcVar5 = str + iVar2;
-      cVar1 = *pcVar6;
-      iVar4 = iVar4 + 1;
-      iVar2 = iVar2 + -1;
-      *pcVar6 = *pcVar5;
-      *pcVar5 = cVar1;
-    } while (iVar4 < iVar2);
+  s32 i = 0;
+  s32 end = (s32)strlen(str);
+  while (end--, i < end) {
+    char c = str[i];
+    str[i] = str[end];
+    str[end] = c;
+    i++;
   }
-  return;
 }
 
 /*!
@@ -312,50 +280,53 @@ void reverse(char* str) {
  * It is unused and believed to be not correct.
  * Currently copy-pasta from GHIDRA
  * (not checked in jak2)
+ * TBD
  */
-char* round(float x,s32* param_2,char* start,char* sEnd,char padchar,s32 *param_6) {
+char* round(float x, s32* param1, char* start, char* sEnd, char padchar, s32 *param4) {
   char cVar1;
+  float f;
   float local_40 [4];
-  
-  if (x == 0.0) {
-    local_40[0] = (float)(padchar + -0x30);
+
+  if (x == 0.00000000) {
+    f = (float)(padchar - 0x30);
+  } else {
+    modf((double)(long)(int)local_40,(double *)start);  // Why is this not ':'?
   }
-  else {
-    modf((double)(long)(int)local_40,(double *)start);
-  }
-  if (4.0 < local_40[0]) {
-    while( true ) {
+  if (4.00000000 < f) {
+    while (true) {
       if (*sEnd == '.') {
         sEnd = sEnd + -1;
       }
       cVar1 = *sEnd;
-      *sEnd = cVar1 + '\x01';
-      if ((char)(cVar1 + '\x01') < ':') {
+      *sEnd = cVar1 + 1;
+      if ((char)(cVar1 + 1) < ':') { // Why is this not <= '9'?
         return start;
       }
       *sEnd = '0';
-      if (sEnd == start) break;
+      if (sEnd == start)
+        break;
       sEnd = sEnd + -1;
     }
-    if (param_2 == (s32 *)0x0) {
-      start[-1] = '1';
+    if (param1 == (int*)0x0) {
+      start[-1] = '1'; // Why is this not sEnd?
       start = start + -1;
+    } else {
+      *start = '1'; // Why is this not sEnd?
+      *param1 = *param1 + 1;
     }
-    else {
-      *start = '1';
-      *param_2 = *param_2 + 1;
-    }
-  }
-  else if (*param_6 == 0x2d) {
-    while( true ) {
-      if (*sEnd == '.') {
+  } else {
+    if (*param4 == 0x2d) {
+      while (true) {
+        if (*sEnd == '.') {
+          sEnd = sEnd + -1;
+        }
+        if (*sEnd != '0')
+          break;
+        if (sEnd == start) {
+          *param4 = 0;
+        }
         sEnd = sEnd + -1;
       }
-      if (*sEnd != '0') break;
-      if (sEnd == start) {
-        *param_6 = 0;
-      }
-      sEnd = sEnd + -1;
     }
   }
   return start;
@@ -379,13 +350,8 @@ char* round(float x,s32* param_2,char* start,char* sEnd,char padchar,s32 *param_
  *
  * Not checked closely in jak 2.
  */
-s32 cvt_float(float x,s32 precision,s32* lead_char,char* buff_start,char* buff_end,u32 flags) {
-  bool bVar1;
+s32 cvt_float(float x, s32 precision, s32* lead_char, char* buff_start, char* buff_end, u32 flags) {
   long lVar2;
-  char* pcVar3;
-  char* pcVar4;
-  char* start;
-  int iVar5;
   float x_00;
   float fVar6;
   float local_60;
@@ -394,80 +360,88 @@ s32 cvt_float(float x,s32 precision,s32* lead_char,char* buff_start,char* buff_e
   
   lVar2 = (long)(int)lead_char;
   x_00 = 0.0;
-  *buff_start = '\0';
-  iVar5 = 0;
-  if (x < 0.0) {
+
+  *buff_start = 0;
+  s32 forward_count = 0;
+
+  if (x < 0.0f) {
     x_00 = -x;
-    *lead_char = 0x2d;
+    *lead_char = '-';
     x = x_00;
-  }
-  else {
+  } else {
     *lead_char = 0;
   }
+
   local_58 = flags;
   if (((uint)x & 0x7fffffff) == 0x7fffffff) {
-    strcpy(buff_start,"NaN");
+    strcpy(buff_start, "NaN");
     return 3;
   }
-  start = buff_start + 1;
-  pcVar3 = buff_end + -1;
+
+  char* start_ptr = buff_start + 1;
+  char* end_ptr = buff_end - 1;
   modf((double)(long)(int)&local_60,(double *)lead_char);
-  while ((start <= pcVar3 && (fVar6 = 0.0, local_60 != 0.0))) {
-    iVar5 = iVar5 + 1;
+  while ((start_ptr <= end_ptr && (fVar6 = 0.0, local_60 != 0.0))) {
     modf((double)(long)(int)&local_60,(double *)lVar2);
-    *pcVar3 = (char)(int)(fVar6 * 10.0 + 0.5) + '0';
-    pcVar3 = pcVar3 + -1;
+    *end_ptr = (char)(int)(fVar6 * 10.0 + 0.5) + '0';
+    end_ptr--;
+
+    forward_count++;
     local_5c = fVar6;
   }
-  pcVar4 = start;
-  if (iVar5 == 0) {
-    pcVar4 = buff_start + 2;
-    *start = '0';
-  }
-  else {
-    while (pcVar3 = pcVar3 + 1, pcVar3 < buff_end) {
-      *pcVar4 = *pcVar3;
-      pcVar4 = pcVar4 + 1;
+
+  char* count_chrp = start_ptr;
+  if (forward_count == 0) {
+    *start_ptr = '0';
+    count_chrp = buff_start + 2;
+  } else {
+    while (end_ptr = end_ptr + 1,
+           end_ptr < buff_end) {
+      *count_chrp = *end_ptr;
+      count_chrp++;
     }
   }
+
   if (precision != 0) {
-    *pcVar4 = '.';
-    pcVar4 = pcVar4 + 1;
+    *count_chrp = '.';
+    count_chrp++;
   }
-  bVar1 = x_00 == 0.0;
-  if (bVar1) {
-    iVar5 = precision + -1;
+
+  s32 prec = 0;
+
+  if (x_00 == 0.0) {
+    prec = precision - 1;
   }
   else {
     if (precision == 0) {
 LAB_002676d4:
-      if (bVar1) {
-        iVar5 = precision + -1;
+      if (x_00 == 0.0) {
+        prec = precision - 1;
         goto LAB_002676b0;
       }
       if ((local_58 & 1) != 0) {
-        start = round(x_00,(s32 *)0x0,start,pcVar4 + -1,'\0',lead_char);
+        start_ptr = round(x_00,(s32 *)0x0,start_ptr,count_chrp + -1,'\0',lead_char);
       }
     }
     else {
       do {
         x_00 = 0.0;
-        precision = precision + -1;
         modf((double)(long)(int)&local_5c,(double *)lVar2);
-        bVar1 = x_00 == 0.0;
-        *pcVar4 = (char)(int)local_5c + '0';
-        pcVar4 = pcVar4 + 1;
+        *count_chrp = (char)(int)local_5c + '0';
+        count_chrp++;
+        precision--;
         if (precision == 0) goto LAB_002676d4;
-      } while (!bVar1);
+      } while (true && (x_00 != 0.0));
     }
-    iVar5 = precision + -1;
+    prec = precision - 1;
   }
+
 LAB_002676b0:
-  for (; iVar5 != -1; iVar5 = iVar5 + -1) {
-    *pcVar4 = '0';
-    pcVar4 = pcVar4 + 1;
+  while (prec = prec - 1, prec != -1) {
+    *count_chrp = '0';
+    count_chrp++;
   }
-  return (int)pcVar4 - (int)start;
+  return (int)count_chrp - (int)start_ptr;
 }
 
 /*!
@@ -486,50 +460,56 @@ LAB_002676b0:
  * TBD
  * Not checked super closely in jak 2.
  */
-void ftoa(char* out_str,float x,s32 desired_len,char pad_char,s32 precision,u32 flags) {
-  int iVar1;
-  int iVar2;
+void ftoa(char* out_str, float x, s32 desired_len, char pad_char, s32 precision, u32 flags) {
   char* pcVar3;
-  char local_130;
-  char acStack_12f [126];
-  char acStack_b1 [129];
-  int local_30 [4];
-  
-  iVar1 = cvt_float(x,precision,local_30,&local_130,acStack_b1,flags);
-  if (0x3f < iVar1) {
-    strcpy(&local_130,"NaN");
-    local_30[0] = 0;
-    iVar1 = 3;
+  char local_130;         // 256
+  char acStack_12f [126]; // 256
+  char acStack_b1 [129];  // 256
+  s32 lead_char;
+  // int local_30 [4];
+
+  s32 count = cvt_float(x, precision, &lead_char, &local_130, acStack_b1, flags);
+
+  if (count > 0x3f) {
+    strcpy(&local_130, "NaN");
+    count = 3;
+    lead_char = 0;
   }
+
   pcVar3 = acStack_12f;
   if (local_130 != '\0') {
     pcVar3 = &local_130;
   }
-  iVar2 = iVar1 + (uint)(local_30[0] != 0);
-  if (((0 < desired_len) && (iVar2 < desired_len)) && (iVar2 = desired_len - iVar2, 0 < iVar2)) {
+
+  s32 real_count = (uint)(lead_char != 0) + count;
+
+  char* out_ptr = out_str;
+
+  if (((desired_len > 0) && (desired_len > real_count)) && (real_count = desired_len - real_count, 0 < real_count)) {
     do {
-      *out_str = pad_char;
-      iVar2 = iVar2 + -1;
-      out_str = out_str + 1;
-    } while (iVar2 != 0);
+      *out_ptr = pad_char;
+      real_count--;
+      out_ptr++;
+    } while (real_count != 0);
   }
-  if (local_30[0] != 0) {
-    *out_str = (char)local_30[0];
-    out_str = out_str + 1;
+  if (lead_char != 0) {
+    *out_ptr = (char)lead_char;
+    out_ptr++;
   }
-  if (iVar1 < 1) {
-    *out_str = '\0';
+
+  if (count < 1) {
+    *out_ptr = '\0';
   }
   else {
     do {
-      iVar1 = iVar1 + -1;
-      *out_str = *pcVar3;
-      pcVar3 = pcVar3 + 1;
-      out_str = out_str + 1;
-    } while (iVar1 != 0);
-    *out_str = '\0';
+      count--;
+      *out_ptr = *pcVar3;
+      pcVar3++;
+      out_ptr++;
+    } while (count != 0);
+
+    *out_ptr = '\0';
   }
-  return;
 }
 
 /*!
@@ -544,65 +524,55 @@ void ftoa(char* out_str,float x,s32 desired_len,char pad_char,s32 precision,u32 
  * @param flags  : flag.  Only the 2nd bit is used, which will disable negative sings on
  * binary/hexadecimal truncated numbers.  Something like -1 (0xffffffff) will print as -fffffff....
  * Not checked super closely in jak 2
+ * TBD
  */
-char* kitoa(char* buffer,s64 value,u64 base,s32 length,char pad,u32 flag) {
-  int iVar1;
-  long lVar2;
-  char cVar3;
-  char* pcVar4;
-  int iVar5;
-  int iVar6;
-  int local_48;
-  
-  local_48 = 0;
-  lVar2 = value;
-  if ((value < 0) && (base == 10)) {
-    local_48 = (int)value;
-    lVar2 = -value;
+char* kitoa(char* buffer, s64 value, u64 base, s32 length, char pad, u32 flag) {
+  s32 negativeValue = 0;
+  s64 value_to_print = value;
+
+  if ((value < 0) && base == 10) {
+    negativeValue = (s32)value;
+    value_to_print = -value;
   }
-  iVar6 = 0;
+
+  int count = 0;
   do {
-    iVar5 = iVar6;
-    iVar1 = __umoddi3_Proxy_G(lVar2,(int)base);
-    iVar6 = iVar5 + 1;
-    buffer[iVar5] = s_0123456789abcdef_00282fa8[iVar1];
-    lVar2 = __udivdi3_Proxy_G(lVar2,(int)base);
-  } while (lVar2 != 0);
-  if (local_48 < 0) {
-    buffer[iVar6] = '-';
-    iVar6 = iVar5 + 2;
+    buffer[count++] = ConvertTable_G[__umoddi3_Proxy_G(value_to_print,(int)base)];
+    value_to_print = __udivdi3_Proxy_G(value_to_print, (int)base);
+  } while (value_to_print != 0);
+
+  if (negativeValue < 0) {
+    buffer[count++] = '-';
   }
-  iVar1 = length - iVar6;
-  if (iVar1 < 1) {
-    pcVar4 = buffer + iVar6;
-    if (((length < 1) || (-1 < value)) || ((base != 2 && (pcVar4 = buffer + iVar6, base != 0x10))))
-    goto LAB_00267998;
-    if (length < iVar6) {
-      cVar3 = 'f';
-      if (base != 0x10) {
-        cVar3 = '1';
+
+  s32 rLen = length;
+  if (1 > length - count) {
+    if (((length < 1) || (-1 < value)) || ((base != 2 && (base != 16)))) {
+      buffer[count] = '\0';
+    }
+    else if (length < count) {
+      char c = (base == 16) ? 'f' : '1';
+
+      while (length < count && (buffer[count + -1] == c)) {
+        count--;
       }
-      do {
-        if (buffer[iVar6 + -1] != cVar3) break;
-        iVar6 = iVar6 + -1;
-      } while (length < iVar6);
-      pcVar4 = buffer + iVar6;
-      if ((flag & 2) != 0) goto LAB_00267998;
-      buffer[iVar6] = '-';
-      iVar6 = iVar6 + 1;
+
+      if ((flag & 2) != 0) {
+        buffer[count] = '\0';
+      }
+      else {
+        buffer[count++] = '-';
+      }
     }
   }
-  else {
-    do {
-      pcVar4 = buffer + iVar6;
-      iVar1 = iVar1 + -1;
-      iVar6 = iVar6 + 1;
-      *pcVar4 = pad;
-    } while (0 < iVar1);
+  if (0 < length - count) {
+    rLen = length - count;
+    while (0 < rLen) {
+      buffer[count++] = pad;
+      rLen--;
+    }
   }
-  pcVar4 = buffer + iVar6;
-LAB_00267998:
-  *pcVar4 = '\0';
+  buffer[count] = '\0';
   reverse(buffer);
   return buffer;
 }
@@ -612,10 +582,10 @@ LAB_00267998:
  * It would also require passing 128-bit values between GOAL and C++ and this is not worth
  * implementing. It is only used by the "format" function, which cannot use it properly. "format"
  * uses C varags, but 128-bit varags don't work, so "format" always passes 0 for quadword printing.
+ * TBD
  */
 void kqtoa_G() {
   undefined in_zero_qw [16];
-  char* buffer;
   char* in_a0_lo;
   undefined in_a1_qw [16];
   undefined auVar1 [16];
@@ -623,15 +593,13 @@ void kqtoa_G() {
   int in_a3_lo;
   char in_t0_lo;
   u32 in_t1_lo;
-  s64 value;
   undefined auVar2 [16];
   
-  auVar2 = _por(in_zero_qw,in_a1_qw);
-  auVar1 = _pcpyud(in_a1_qw,in_zero_qw);
-  auVar2 = _pcpyud(in_zero_qw,auVar2);
-  value = auVar2._0_8_;
-  kitoa(in_a0_lo,auVar1._0_8_,in_a2,in_a3_lo + -0x10,in_t0_lo,in_t1_lo);
-  buffer = strend(in_a0_lo);
-  kitoa(buffer,value,in_a2,0x10,'0',0);
-  return;
+  auVar2 = _por(in_zero_qw, in_a1_qw);
+  auVar1 = _pcpyud(in_a1_qw, in_zero_qw);
+  auVar2 = _pcpyud(in_zero_qw, auVar2);
+  s64 value = auVar2._0_8_;
+  kitoa(in_a0_lo, auVar1._0_8_, in_a2, in_a3_lo + -0x10, in_t0_lo, in_t1_lo);
+  char* buffer = strend(in_a0_lo);
+  kitoa(buffer, value, in_a2, 0x10, '0', 0);
 }

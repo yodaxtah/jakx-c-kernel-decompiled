@@ -23,44 +23,38 @@ void klisten_init_globals() {
  * Changed slightly, it will also print to stdout if there's no compiler connected.
  */
 void ClearPending() {
-  char* data;
-  size_t sVar1;
-  int size;
-  size_t sVar2;
-  
   if (MasterDebug == 0) {
-    if (PrintPending != (char *)0x0) {
-      sVar1 = strlen(PrintBufArea + 0x18);
-      if (0 < (long)sVar1) {
-        printf("%s",PrintBufArea + 0x18);
+    if (PrintPending != nullptr) {
+      size_t size = strlen(PrintBufArea + 0x18);
+      if ((long)size > 0) {
+        printf("%s", PrintBufArea + 0x18);
       }
-LAB_00270558:
       clear_print();
-      return;
     }
-  }
-  else if (ListenerStatus != 0) {
-    if (OutputPending != 0) {
-      sVar1 = strlen((char *)(OutputBufArea + 0x18));
-      SendFromBuffer((char *)(OutputBufArea + 0x18),(s32)sVar1);
-      clear_output();
-    }
-    if (PrintPending != (char *)0x0) {
-      sVar1 = strlen(PrintBufArea + 0x18);
-      data = PrintBufArea + 0x18;
-      for (; 0 < (long)sVar1; sVar1 = (size_t)((int)sVar1 - size)) {
-        sVar2 = 64000;
-        if ((long)sVar1 < 64000) {
-          sVar2 = sVar1;
-        }
-        size = (int)sVar2;
-        SendFromBufferD(2,0,data,size);
-        data = data + size;
+  } else {
+    if (ListenerStatus != 0) {
+      if (OutputPending != 0) {
+        size_t size = strlen((char *)(OutputBufArea + 0x18));
+        SendFromBuffer((char *)(OutputBufArea + 0x18), (s32)size);
+        clear_output();
       }
-      goto LAB_00270558;
+
+      if (PrintPending != nullptr) {
+        char* msg = PrintBufArea + 0x18;
+        size_t size = strlen(PrintBufArea + 0x18);
+        while (size > 0) {
+          size_t send_size = 64000;
+          if ((long)size < 64000) {
+            send_size = size;
+          }
+          SendFromBufferD(2, 0, msg, (int)send_size);
+          size -= send_size;
+          msg += send_size;
+        }
+        clear_print();
+      }
     }
   }
-  return;
 }
 
 /*!
@@ -73,8 +67,8 @@ LAB_00270558:
  */
 void SendAck() {
   if (MasterDebug != 0) {
-    SendFromBufferD(0,protoBlock.msg_id,&AckBufArea,0);
-    return;
+    SendFromBufferD(0,protoBlock.msg_id,
+                    &AckBufArea,
+                    0);
   }
-  return;
 }

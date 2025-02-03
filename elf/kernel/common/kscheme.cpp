@@ -42,6 +42,7 @@ void kscheme_init_globals_common() {
 
 /*!
  * Initialize CRC Table.
+ * TBD
  */
 void __thiscall CCrc32.Init_T(void* this,uint* param_1) {
   uint uVar1;
@@ -72,8 +73,8 @@ void __thiscall CCrc32.Init_T(void* this,uint* param_1) {
 
 /*!
  * Take the CRC32 hash of some data
+ * TBD
  */
-
 uint Crc32_WT(const_uchar* data_W,int size) {
   bool bVar1;
   byte bVar2;
@@ -98,15 +99,13 @@ uint Crc32_WT(const_uchar* data_W,int size) {
   return ~uVar3;
 }
 
-
 /*!
  * Delete method for types which cannot have "delete" used on them.
  * Prints an error to stdout and returns false.
  */
 u64 delete_illegal(u32 obj) {
   u64 in_v0;
-  
-  MsgErr("dkernel: illegal attempt to call delete method of static object @ #x%X\n",obj);
+  MsgErr("dkernel: illegal attempt to call delete method of static object @ #x%X\n", obj);
   return in_v0;
 }
 
@@ -180,10 +179,7 @@ u64 call_goal_on_stack(Ptr<Function> f, u64 rsp, u64 st, void* offset) {
  * Call a GOAL function with no arguments.
  */
 u64 call_goal_function(Function *func) {
-  int iVar1;
-  
-  iVar1 = (*(code *)func)();
-  return (long)iVar1;
+  return (long)(*(code *)func)();
 }
 
 /*!
@@ -191,7 +187,7 @@ u64 call_goal_function(Function *func) {
  * Structures have no runtime type info, so there's not much we can do here.
  */
 u64 print_structure(u32 s) {
-  cprintf("#<structure @ #x%x>",(ulong)s);
+  cprintf("#<structure @ #x%x>", (ulong)s);
   return (long)(int)s;
 }
 
@@ -199,14 +195,13 @@ u64 print_structure(u32 s) {
  * Print an integer. Works correctly for 64-bit integers.
  */
 u64 print_integer(u64 obj) {
-  char* str;
-  
-  str = PrintPending;
-  if (PrintPending == (char *)0x0) {
+  char* str = PrintPending;
+  if (str == nullptr) {
     str = PrintBufArea + 0x18;
   }
+
   PrintPending = strend(str);
-  kitoa(PrintPending,obj,10,-1,'0',0);
+  kitoa(PrintPending, obj, 10, -1, '0', 0);
   return obj;
 }
 
@@ -214,14 +209,13 @@ u64 print_integer(u64 obj) {
  * Print a boxed integer. Works correctly for 64-bit integers. Assumes signed.
  */
 u64 print_binteger(u64 obj) {
-  char* str;
-  
-  str = PrintPending;
-  if (PrintPending == (char *)0x0) {
+  char* str = PrintPending;
+  if (PrintPending == nullptr) {
     str = PrintBufArea + 0x18;
   }
+
   PrintPending = strend(str);
-  kitoa(PrintPending,(long)obj >> 3,10,-1,'0',0);
+  kitoa(PrintPending, (s64)obj >> 3, 10, -1, '0', 0);
   return obj;
 }
 
@@ -229,14 +223,15 @@ u64 print_binteger(u64 obj) {
  * Print floating point number.
  */
 u64 print_float(u32 f) {
-  char* str;
-  
-  str = PrintPending;
-  if (PrintPending == (char *)0x0) {
+  float ff = (float)f;
+  char* str = PrintPending;
+  if (PrintPending == nullptr) {
     str = PrintBufArea + 0x18;
   }
+
   PrintPending = strend(str);
-  ftoa(PrintPending,(float)f,-1,' ',4,0);
+
+  ftoa(PrintPending, ff, -1, ' ', 4, 0);
   return (long)(int)f;
 }
 
@@ -244,7 +239,7 @@ u64 print_float(u32 f) {
  * Print method for VU functions.  Again, just prints address.
  */
 u64 print_vu_function(u32 obj) {
-  cprintf("#<compiled vu-function @ #x%x>",(long)(int)obj);
+  cprintf("#<compiled vu-function @ #x%x>", (long)(int)obj);
   return (long)(int)obj;
 }
 
@@ -259,7 +254,7 @@ u64 copy_fixed(u32 it) {
  * Default copy for a structure. Since this has no idea of the actual type, it doesn't know what
  * size to copy.  So we do no copy and return a reference to the original data.
  */
-u64 copy_structure(u32 it,u32 unknown) {
+u64 copy_structure(u32 it, u32 unknown) {
   return (long)(int)it;
 }
 
@@ -267,7 +262,7 @@ u64 copy_structure(u32 it,u32 unknown) {
  * Inspect an integer (works correctly on 64-bit integers)
  */
 u64 inspect_integer(u64 obj) {
-  cprintf("[%16lx] fixnum %ld\n",obj,obj);
+  cprintf("[%16lx] fixnum %ld\n", obj, obj);
   return obj;
 }
 
@@ -275,7 +270,7 @@ u64 inspect_integer(u64 obj) {
  * Inspect a boxed integer (works correctly on 64-integers)
  */
 u64 inspect_binteger(u64 obj) {
-  cprintf("[%16lx] boxed-fixnum %ld\n",obj,(long)obj >> 3);
+  cprintf("[%16lx] boxed-fixnum %ld\n", obj, (s64)obj >> 3);
   return obj;
 }
 
@@ -283,15 +278,17 @@ u64 inspect_binteger(u64 obj) {
  * Inspect a floating point number
  */
 u64 inspect_float(u32 f) {
-  char* str;
-  
-  cprintf("[%8x] float ",(long)(int)f);
-  str = PrintPending;
-  if (PrintPending == (char *)0x0) {
+  float ff = (float)f;
+  cprintf("[%8x] float ", (long)(int)f);
+
+  char* str = PrintPending;
+  if (PrintPending == nullptr) {
     str = PrintBufArea + 0x18;
   }
+
   PrintPending = strend(str);
-  ftoa(PrintPending,(float)f,-1,' ',4,0);
+
+  ftoa(PrintPending, ff, -1, ' ', 4, 0);
   cprintf("\n");
   return (long)(int)f;
 }
@@ -300,7 +297,7 @@ u64 inspect_float(u32 f) {
  * Inspect a structure.
  */
 u64 inspect_structure(u32 obj) {
-  cprintf("[%8x] structure\n",(long)(int)obj);
+  cprintf("[%8x] structure\n", (long)(int)obj);
   return (long)(int)obj;
 }
 
@@ -310,8 +307,15 @@ u64 inspect_structure(u32 obj) {
  * in a giant dump of many functions thats loaded and unloaded all at the same time.
  */
 u64 inspect_vu_function(u32 obj) {
-  cprintf("[%8x] vu-function\n\tlength: %d\n\torigin: #x%x\n\tqlength: %d\n",(long)(int)obj,
-          *(undefined4 *)obj,*(undefined4 *)(obj + 4),*(undefined4 *)(obj + 8));
+  struct VuFunction {
+    u32 length;
+    u32 origin;
+    u32 qlength;
+  };
+
+  VuFunction* vf = (VuFunction*)obj;
+  cprintf("[%8x] vu-function\n\tlength: %d\n\torigin: #x%x\n\tqlength: %d\n", (long)(int)obj, vf->length,
+          vf->origin, vf->qlength);
   return (long)(int)obj;
 }
 

@@ -22,11 +22,11 @@ void fileio_init_globals() {
 /*!
  * Return pointer to null terminator of string.
  * const is for losers.
- * TBD, EXACT
+ * DONE, EXACT
  */
 char* strend(char* str) {
-  for (; *str != '\0'; str = str + 1) {
-  }
+  while (*str)
+    str++;
   return str;
 }
 
@@ -35,7 +35,7 @@ char* strend(char* str) {
  * In this limited decoder, your data must have lower two bits equal to zero.
  * @param loc_ptr pointer to pointer to data to read (will be modified to point to next word)
  * @return decoded word
- * UNUSED, EXACT
+ * TBD, UNUSED, EXACT
  */
 u32 ReadHufWord(u8** loc_ptr) {
   byte bVar1;
@@ -72,64 +72,57 @@ u32 ReadHufWord(u8** loc_ptr) {
 /*!
  * Copy a string from src to dst. The null terminator is copied too.
  * This is identical to normal strcpy.
- * TBD, EXACT
+ * DONE, EXACT
  */
 void kstrcpy(char* dst, const char* src) {
-  char cVar1;
-  
-  cVar1 = *src;
-  while (src = src + 1, cVar1 != '\0') {
-    *dst = cVar1;
-    dst = dst + 1;
-    cVar1 = *src;
+  char* dst_ptr = dst;
+  const char* src_ptr = src;
+
+  while (*src_ptr != 0) {
+    *dst_ptr = *src_ptr;
+    src_ptr++;
+    dst_ptr++;
   }
-  *dst = '\0';
-  return;
+  *dst_ptr = 0;
 }
 
 /*!
  * Copy a string from src to dst, making all letters upper case.
+ * The original if-condition is less restrictive, so it expecteded that src wouldn't contain uppercase characters.
  * The null terminator is copied too.
- * TBD, EXACT
+ * DONE, EXACT
  */
-void kstrcpyup(char* dst,const char* src) {
-  char cVar1;
-  
-  cVar1 = *src;
-  while (cVar1 != '\0') {
-    if ((int)cVar1 - 0x61U < 0x1a) {
-      cVar1 = (char)((uint)((cVar1 + -0x20) * 0x1000000) >> 0x18);
+void kstrcpyup(char* dst, const char* src) {
+  while (*src) {
+    char c = *src;
+    if (c >= 'a' && c <= 'z') {  // A-Z,a-z
+      c -= 0x20;
     }
-    *dst = cVar1;
-    src = src + 1;
-    dst = dst + 1;
-    cVar1 = *src;
+    *dst = c;
+    dst++;
+    src++;
   }
-  *dst = '\0';
-  return;
+  *dst = 0;
 }
 
 /*!
  * Concatenate two strings.  Src is added to dest.
- * The new string is null terminated.  No bounds checking is TBD.
- * TBD, EXACT
+ * The new string is null terminated.  No bounds checking is done.
+ * DONE, EXACT
  */
-void kstrcat(char* dest,const char* src) {
-  char cVar1;
-  
-  cVar1 = *dest;
-  while (cVar1 != '\0') {
-    dest = dest + 1;
-    cVar1 = *dest;
+void kstrcat(char* dest, const char* src) {
+  // seek to end of first string
+  while (*dest) {
+    dest++;
   }
-  cVar1 = *src;
-  while (src = src + 1, cVar1 != '\0') {
-    *dest = cVar1;
-    dest = dest + 1;
-    cVar1 = *src;
+  // copy second string
+  while (*src) {
+    *dest = *src;
+    src++;
+    dest++;
   }
-  *dest = '\0';
-  return;
+  // null terminate
+  *dest = 0;
 }
 
 /*!
@@ -137,57 +130,44 @@ void kstrcat(char* dest,const char* src) {
  * The maximum length should be larger than the length of the original string.
  * The resulting string will be truncated when it reaches the given length.
  * The null terminator is added, but doesn't count toward the length.
- * TBD, EXACT
+ * DONE, EXACT
  */
-void kstrncat(char* dest,const char* src,s32 count) {
-  int iVar1;
-  char cVar2;
-  
-  iVar1 = 0;
-  cVar2 = *dest;
-  while (cVar2 != '\0') {
-    dest = dest + 1;
-    iVar1 = iVar1 + 1;
-    cVar2 = *dest;
+void kstrncat(char* dest, const char* src, s32 count) {
+  // seek to null terminator of first string, count length
+  s32 i = 0;
+  while (*dest) {
+    dest++;
+    i++;
   }
-  cVar2 = *src;
-  for (; (cVar2 != '\0' && (iVar1 < count)); iVar1 = iVar1 + 1) {
-    *dest = cVar2;
-    src = src + 1;
-    cVar2 = *src;
-    dest = dest + 1;
+
+  // append second string, not exceeding length
+  while (*src && (i < count)) {
+    *dest = *src;
+    src++;
+    dest++;
+    i++;
   }
-  *dest = '\0';
-  return;
+
+  // null terminate
+  *dest = 0;
 }
 
 /*!
  * Insert the pad char at the beginning of a string, count times.
- * TBD, EXACT
+ * DONE, EXACT
  */
-char* kstrinsert(char* str,char pad,s32 count) {
-  int iVar1;
-  size_t sVar2;
-  char* pcVar3;
-  
-  sVar2 = strlen(str);
-  if (-1 < (long)sVar2) {
-    pcVar3 = str + (int)sVar2 + count;
-    do {
-      iVar1 = (int)sVar2;
-      sVar2 = (size_t)(iVar1 + -1);
-      *pcVar3 = str[iVar1];
-      pcVar3 = pcVar3 + -1;
-    } while (-1 < (long)sVar2);
+char* kstrinsert(char* str, char pad, s32 count) {
+  // shift string+null terminator to the right.
+  s32 len = strlen(str);
+  while (len > -1) {
+    str[len + count] = str[len];
+    len--;
   }
-  iVar1 = 0;
-  pcVar3 = str;
-  if (0 < count) {
-    do {
-      *pcVar3 = pad;
-      iVar1 = iVar1 + 1;
-      pcVar3 = str + iVar1;
-    } while (iVar1 < count);
+
+  // pad
+  len = 0;
+  while (len < count) {
+    str[len++] = pad;
   }
   return str;
 }
@@ -200,75 +180,75 @@ char* kstrinsert(char* str,char pad,s32 count) {
  *   a/b/c.e will return c.e
  *   a\b\c.e will return c.e
  *   asdf.asdf will return asdf.asdf
- *   TBD, EXACT
+ *   DONE, EXACT
  */
 char* basename_goal(char* s) {
-  char* pcVar1;
-  char* pcVar2;
-  char cVar3;
-  
-  cVar3 = *s;
-  pcVar2 = s;
-  while (cVar3 != '\0') {
-    pcVar2 = pcVar2 + 1;
-    cVar3 = *pcVar2;
-  }
-  do {
-    pcVar1 = pcVar2;
-    if (pcVar1 <= s) {
-      return s;
+  char* input = s;
+  char* pt = s;
+
+  // seek to end
+  for (;;) {
+    char c = *pt;
+    if (c) {
+      pt++;
+    } else {
+      break;
     }
-    cVar3 = pcVar1[-1];
-  } while ((cVar3 != '\\') && (pcVar2 = pcVar1 + -1, cVar3 != '/'));
-  return pcVar1;
+  }
+
+  // back up...
+  for (;;) {
+    if (pt <= input) {
+      return input;
+    }
+    pt--;
+    char c = *pt;
+    // until we hit a slash.
+    if (c == '\\' || c == '/') {  // slashes
+      return pt + 1;              // and return one past
+    }
+  }
 }
 
 /*!
  * Does the file exist?  No.  It doesn't.
  * @return 0 always, even if the file exists.
- * TBD, EXACT, UNUSED
+ * DONE, EXACT, UNUSED
  */
-u32 FileExists(const char* name) {
+u32 FileExists(const char*) {
   return 0;
 }
 
 /*!
  * Does nothing. Likely is supposed to delete a file.
  * @param name
- * TBD, EXACT, UNUSED
+ * DONE, EXACT, UNUSED
  */
-void FileDelete(const char* name) {
-  return;
-}
+void FileDelete(const char*) {}
 
 /*!
  * Does nothing. Likely is supposed to copy a file.
  * @param a
  * @param b
- * TBD, EXACT, UNUSED
+ * DONE, EXACT, UNUSED
  */
-void FileCopy(const char* a,const char* b) {
-  return;
-}
+void FileCopy(const char*, const char*) {}
 
 /*!
  * Determine the file length in bytes.
- * TBD, EXACT
+ * DONE, EXACT
  */
 s32 FileLength(char* filename) {
-  s32 sVar1;
-  s32 sVar2;
-  
-  sVar1 = sceOpen(filename,1);
-  if (sVar1 < 0) {
-    MsgErr("dkernel: file length !open: \'%s\' (%d)\n",filename,sVar1);
-    sVar2 = -5;
+  s32 fd = sceOpen(filename, SCE_RDONLY);
+  if (fd < 0) {
+    MsgErr("dkernel: file length !open \'%s\' (%d)\n", filename, fd);
+    sceClose(fd);
+    return -5;
+  } else {
+    s32 rv = sceLseek(fd, 0, SCE_SEEK_END);
+    sceClose(fd);
+    return rv;
   }
-  else {
-    sVar2 = sceLseek(sVar1,0,2);
-    sceClose(sVar1);
-  }
-  return sVar2;
 }
 
 /*!
@@ -279,90 +259,75 @@ s32 FileLength(char* filename) {
  * @param malloc_flags : flags for the kmalloc
  * @param size_out : file size is written here, if it's not null
  * @return pointer to file data
- * TBD, EXACT
+ * DONE, EXACT
  */
-u8* FileLoad(char* name,kheapinfo *heap,u8* memory,u32 malloc_flags,s32* size_out) {
-  s32 sVar1;
-  u8* puVar2;
-  undefined4 uVar3;
-  u8* puVar4;
-  long lVar5;
-  long lVar6;
-  
-  sVar1 = sceOpen(name,1);
-  if (sVar1 < 0) {
-    MsgErr("dkernel: file read !open: \'%s\' (%d)\n",name,sVar1);
-    puVar2 = (u8 *)0xfffffffb;
+u8* FileLoad(char* name, kheapinfo* heap, u8* memory, u32 malloc_flags, s32* size_out) {
+  s32 fd = sceOpen(name, SCE_RDONLY);
+  if (fd < 0) {
+    MsgErr("dkernel: file read !open \'%s\' (%d)\n", name, fd);
+    sceClose(fd);
+    return (u8*)(-5);
   }
-  else {
-    uVar3 = sceLseek(sVar1,0,1);
-    lVar5 = sceLseek(sVar1,0,2);
-    sceLseek(sVar1,uVar3,0);
-    puVar4 = (u8 *)lVar5;
-    puVar2 = puVar4;
-    if (0 < lVar5) {
-      if ((memory == (u8 *)0x0) &&
-         (memory = kmalloc(heap,(s32)(puVar4 + 0x40),malloc_flags,name), memory == (u8 *)0x0)) {
-        MsgErr("dkernel: mem full for file read: \'%s\' (%d bytes)\n",name,lVar5);
-        puVar2 = (u8 *)0xfffffffd;
-      }
-      else {
-        lVar6 = sceRead(sVar1,memory,puVar4);
-        if (lVar6 == lVar5) {
-          sceClose(sVar1);
-          puVar2 = memory;
-          if (size_out != (s32 *)0x0) {
-            *size_out = (s32)puVar4;
-          }
-        }
-        else {
-          MsgErr("dkernel: can\'t read full file (%d of %d): \'%s\'\n",lVar6,lVar5,name);
-          sceClose(sVar1);
-          puVar2 = (u8 *)0xfffffffb;
-        }
-      }
+
+  // determine size
+  s32 initial_pos = sceLseek(fd, 0, SCE_SEEK_CUR);
+  s32 size = sceLseek(fd, 0, SCE_SEEK_END);
+  sceLseek(fd, initial_pos, SCE_SEEK_SET);
+
+  if (size > 0) {
+    if (memory == 0) {
+      memory = kmalloc(heap, size + 0x40, malloc_flags, name);
     }
+    if (memory == 0) {
+      MsgErr("dkernel: mem full for file read: '%s' (%d bytes)\n", name, size);
+      return (u8*)(-3);
+    }
+
+    s32 read_amount = sceRead(fd, memory, size);
+    if (read_amount == size) {
+      sceClose(fd);
+      if (size_out)
+        *size_out = size;
+      return memory;
+    } else {
+      MsgErr("dkernel: can't read full file (%d of %d): '%s'\n", read_amount, size, name);
+      sceClose(fd);
+      return (u8*)(-5);
+    }
+  } else {
+    return Ptr<u8>(0);
   }
-  return puVar2;
 }
 
 /*!
  * Write a file.
- * TBD, EXACT
+ * DONE, EXACT
  */
-s32 FileSave(char* name,u8* data,s32 size) {
-  s32 sVar1;
-  int iVar2;
-  int iVar4;
-  int iVar5;
-  long lVar3;
-  
-  sVar1 = sceOpen(name,0x602);
-  lVar3 = (long)sVar1;
-  if (lVar3 < 0) {
-    MsgErr("dkernel: file write !open: \'%s\'\n",name);
-    sVar1 = -6;
+s32 FileSave(char* name, u8* data, s32 size) {
+  s32 fd = sceOpen(name, SCE_WRONLY | SCE_TRUNC | SCE_CREAT);
+  if (fd < 0) {
+    MsgErr("dkernel: file write !open: '%s'\n", name);
+    sceClose(fd);
+    return -6;
   }
-  else {
-    iVar5 = 0;
-    if (size != 0) {
-      do {
-        iVar4 = 0x1000000;
-        if (size < 0x1000000) {
-          iVar4 = size;
-        }
-        iVar2 = sceWrite(lVar3,(char *)(data + iVar5),iVar4);
-        iVar5 = iVar5 + iVar2;
-        size = size - iVar2;
-        if (iVar2 != iVar4) {
-          MsgErr("dkernel: can\'t write full file: \'%s\'\n",name);
-          sceClose(lVar3);
-          return -6;
-        }
-      } while (size != 0);
-    }
-    sceClose(lVar3);
-    sVar1 = 0;
+  else if (size != 0) {
+    int writeOffset = 0;
+    do {
+      int chunkSize = 0x1000000;
+      if (size < 0x1000000) {
+        chunkSize = size; // one or final write
+      }
+      int written = sceWrite(fd,(char *)(data + writeOffset), chunkSize);
+      writeOffset = writeOffset + written;
+      size = size - written;
+      if (written != chunkSize) {
+        MsgErr("dkernel: can't write full file: '%s'\n", name);
+        sceClose(fd);
+        return -6;
+      }
+    } while (size != 0);
   }
-  return sVar1;
+
+  sceClose(fd);
+  return 0;
 }

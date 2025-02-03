@@ -223,44 +223,38 @@ void link_control::jak1_jak2_begin(Ptr<uint8_t> object_file,
   }
 }
 
-byte * c_symlink2(uint* param_1,uint param_2,byte *param_3)
-{
-  byte bVar1;
-  ushort uVar2;
-  uint3 uVar3;
-  byte *pbVar4;
-  uint uVar5;
-  int unaff_s7_lo;
-  
-  bVar1 = *param_3;
-  while( true ) {
-    uVar5 = (uint)bVar1;
-    pbVar4 = param_3 + 1;
-    if ((bVar1 & 3) != 0) {
-      uVar2 = CONCAT11(param_3[1],bVar1);
-      uVar5 = (uint)uVar2;
-      pbVar4 = param_3 + 2;
-      if ((bVar1 & 2) != 0) {
-        uVar3 = CONCAT12(param_3[2],uVar2);
-        uVar5 = (uint)uVar3;
-        pbVar4 = param_3 + 3;
-        if ((bVar1 & 1) != 0) {
-          uVar5 = CONCAT13(param_3[3],uVar3);
-          pbVar4 = param_3 + 4;
+u8* c_symlink2(u8* objData, u8* linkObj, u8* relocTable) {
+  u8* relocPtr = relocTable;
+  u8* objPtr = objData;
+
+  do {
+    u8 table_value = *relocPtr;
+    u32 result = (uint)table_value;
+    u8* next_reloc = relocPtr + 1;
+
+    if ((result & 3) != 0) {
+      result = CONCAT11(relocPtr[1], table_value);
+      next_reloc = relocPtr + 2;
+      if ((result & 2) != 0) {
+        result = CONCAT12(relocPtr[2], result);
+        next_reloc = relocPtr + 3;
+        if ((result & 1) != 0) {
+          result = CONCAT13(relocPtr[3], result);
+          next_reloc = relocPtr + 4;
         }
       }
     }
-    param_3 = pbVar4;
-    param_1 = (uint *)((int)param_1 + (uVar5 & 0xfffffffc));
-    uVar5 = *param_1;
-    if (uVar5 == 0xffffffff) {
-      *param_1 = param_2;
+
+    relocPtr = next_reloc;
+    objPtr = (u8 *)((int)objPtr + (result & 0xfffffffc));
+    u32 objValue = *(u8 **)objPtr;
+    if (objValue == &_gp_4) {
+      *(u8 **)objPtr = linkObj;
+    } else {
+      *(u8 **)objPtr =
+           (u8 *)((uint)objValue & 0xffff0000 | (int)(objValue + (int)linkObj) - unaff_s7_lo & 0xffffU);
     }
-    else {
-      *param_1 = uVar5 & 0xffff0000 | (uVar5 + param_2) - unaff_s7_lo & 0xffff;
-    }
-    if (*param_3 == 0) break;
-    bVar1 = *param_3;
-  }
-  return param_3 + 1;
+  } while (*relocPtr != 0);
+
+  return relocPtr + 1;
 }

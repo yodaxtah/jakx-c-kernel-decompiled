@@ -56,27 +56,28 @@ void kmachine_init_globals_common() {
 
 /*!
  * Initialize the CD Drive
- * TBD, EXACT
+ * DONE, EXACT
  */
 void InitCD() {
-  s32 sVar1;
-  
   if (cd_S_INITIALIZE_CD_W != '\0') {
-    while( true ) {
+    s32 result;
+    while (true) {
       strlen("dkernel: Initializing DVD drive...\n");
       printf("dkernel: Initializing DVD drive...\n");
-      sVar1 = sceCdInit(0);
-      if (sVar1 != 0) break;
-      printf("dkernel: DVD drive initialization failed, retrying...\n",0);
+      result = sceCdInit(0);
+      if (result != 0) {
+        break;
+      }
+      printf("dkernel: DVD drive initialization failed, retrying...\n");
     }
-    printf("dkernel: DVD drive initialized; result=%d\n",sVar1);
+    printf("dkernel: DVD drive initialized; result=%d\n", result);
   }
-  return;
 }
 
 /*!
  * Initialize the GS and display the splash screen.
  * Not yet implemented. TODO
+ * TBD
  */
 void InitVideo() {
   bool bVar1;
@@ -124,10 +125,9 @@ void InitVideo() {
 /*!
  * Flush caches.  Does all the memory, regardless of what you specify
  */
-void CacheFlush(void* mem,int size) {
-  FlushCache(0);
-  FlushCache(2);
-  return;
+void CacheFlush(void* mem, int size) {
+  // FlushCache(0);
+  // FlushCache(2);
 }
 
 /*!
@@ -135,33 +135,30 @@ void CacheFlush(void* mem,int size) {
  * Set the new_pad flag to 1 and state to 0.
  * Prints an error if it fails to open.
  */
-u64 CPadOpen(u64 cpad_info,s32 pad_number) {
-  int iVar1;
-  
+u64 CPadOpen(u64 cpad_info, s32 pad_number) {
+  CPadInfo* pad = (CPadInfo*)cpad_info;
   if (cpad_info == 0) {
     MsgErr("dkernel: error; NULL pad info\n");
     cpad_info = 0;
-  }
-  else if (((uint)pad_number < 2) && (iVar1 = (int)cpad_info, *(int *)(iVar1 + 0x24) == 0)) {
-    *(undefined4 *)(iVar1 + 0x50) = 0;
-    *(undefined4 *)(iVar1 + 0x4c) = 1;
-    *(undefined4 *)(iVar1 + 0x24) = 1;
+  } else if (((uint)pad_number < 2) && pad->cpad_file == 0) {
+    cpad->new_pad = 1;
+    cpad->state = 0;
+    cpad->cpad_file = 1;
   }
   return cpad_info;
 }
 
 /*!
- * Not checked super carefully for jak 2, but looks the same
+ * Different in Jak X, uses scePad2 instead of scePad.
+ * TBD
  */
 u64 CPadGetData(u64 cpad_info) {
   byte bVar1;
-  uint uVar2;
   int iVar3;
   char *format;
   CPadInfo *cpad;
   long lVar4;
   undefined4 uVar5;
-  int iVar6;
   undefined local_70;
   char local_6f;
   undefined local_60 [16];
@@ -170,24 +167,24 @@ u64 CPadGetData(u64 cpad_info) {
   byte local_40 [16];
   
   if (cpad_info == 0) {
-    format = "dkernel: error; NULL pad info\n";
+    MsgErr("dkernel: error; NULL pad info\n");
   }
   else {
     cpad = (CPadInfo *)cpad_info;
-    uVar2 = cpad->number;
-    if (1 < uVar2) {
-      MsgErr("dkernel: error; invalid controller port index %d\n",uVar2);
+    uint portIndex = cpad->number;
+    if (1 < portIndex) {
+      MsgErr("dkernel: error; invalid controller port index %d\n",portIndex);
       return cpad_info;
     }
-    iVar3 = controllerPortIndexes_SW[uVar2];
+    iVar3 = controllerPortIndexes_SW[portIndex];
     if (-1 < iVar3) {
       lVar4 = scePad2GetState(iVar3);
       if (lVar4 == 0) {
         cpad->state = 0;
       }
-      iVar6 = cpad->state;
+      int cpad_state = cpad->state;
       cpad->valid = (byte)lVar4 | 0x80;
-      if (iVar6 == 0x46) {
+      if (cpad_state == 0x46) {
         lVar4 = sceVibGetProfile(iVar3,local_40);
         if (lVar4 < 0) {
           return cpad_info;
@@ -199,8 +196,8 @@ u64 CPadGetData(u64 cpad_info) {
         cpad->state = 99;
         return cpad_info;
       }
-      if (0x46 < iVar6) {
-        if (iVar6 != 99) {
+      if (0x46 < cpad_state) {
+        if (cpad_state != 99) {
           return cpad_info;
         }
         if (lVar4 != 1) {
@@ -208,12 +205,12 @@ u64 CPadGetData(u64 cpad_info) {
         }
         lVar4 = scePad2Read(iVar3,&cpad->button0);
         if (-1 < lVar4) {
-          iVar6 = (int)lVar4 + 1 >> 1;
-          if (0xf < iVar6) {
-            iVar6 = 0xf;
+          cpad_state = (int)lVar4 + 1 >> 1;
+          if (0xf < cpad_state) {
+            cpad_state = 0xf;
           }
           cpad->button0 = ~cpad->button0;
-          cpad->status = (byte)iVar6 | 0x70;
+          cpad->status = (byte)cpad_state | 0x70;
         }
         cpad->valid = '\x01';
         if (*(int *)cpad[1].abutton == 0) {
@@ -234,145 +231,125 @@ u64 CPadGetData(u64 cpad_info) {
         sceVibSetActParam(iVar3,1,local_60,2,&local_50);
         return cpad_info;
       }
-      if (iVar6 != 0) {
+      if (cpad_state != 0) {
         return cpad_info;
       }
       if (lVar4 != 1) {
         return cpad_info;
       }
       lVar4 = scePad2GetButtonProfile(iVar3,&local_70);
-      cpad->state = 0x5a;
+      cpad->state = 90;
       if (lVar4 < 4) {
         return cpad_info;
       }
       if (local_6f != -1) {
         return cpad_info;
       }
-      cpad->state = 0x46;
+      cpad->state = 70;
       return cpad_info;
     }
-    format = "dkernel: error; invalid pad socket\n";
+    MsgErr("dkernel: error; invalid pad socket\n");
   }
-  MsgErr(format);
   return 0;
 }
 
 // should make sure this works the same way in jak 2
-void InstallHandler(u32 handler_idx,u32 handler_func) {
+void InstallHandler(u32 handler_idx, u32 handler_func) {
   DisableIntc(handler_idx);
   AddIntcHandler(handler_idx,(void *)handler_func,0);
   EnableIntc(handler_idx);
-  return;
 }
 
 // nothing used this in jak1, hopefully same for 2
 void InstallDebugHandler() {
   SetDebugHandler();
-  return;
 }
 
 /*!
  * Get length of a file.
  */
 s32 klength(u64 fs) {
-  int iVar1;
-  int iVar2;
-  uint* puVar3;
-  uint uVar4;
-  
-  puVar3 = (uint *)fs;
-  iVar1 = 0;
-  if (((*(byte *)puVar3 ^ 1) & 1) != 0) {
-    iVar1 = sceLseek(puVar3[3],0,2);
-    iVar2 = sceLseek(puVar3[3],0,0);
-    if (iVar1 < 0) {
-      uVar4 = *puVar3;
+  FileStream* file_stream = (FileStream*)fs;
+  if (((*(byte *)&file_stream->flags ^ 1) & 1) != 0) {
+    int end_seek = sceLseek(file_stream->file, 0, 2);
+    int reset_seek = sceLseek(file_stream->file, 0, 0);
+    if (end_seek < 0 || !(-1 < reset_seek)) { // matches jak3's condition
+      file_stream->flags |= 1;
     }
-    else {
-      if (-1 < iVar2) {
-        return iVar1;
-      }
-      uVar4 = *puVar3;
-    }
-    *puVar3 = uVar4 | 1;
+    return end_seek;
+  } else {
+    return 0;
   }
-  return iVar1;
 }
 
 /*!
  * Seek a file stream.
  */
-s32 kseek(u64 fs,s32 offset,s32 where) {
-  int iVar1;
-  uint* puVar2;
-  
-  iVar1 = -1;
-  puVar2 = (uint *)fs;
-  if ((((*(byte *)puVar2 ^ 1) & 1) != 0) && (iVar1 = sceLseek(puVar2[3],offset,where), iVar1 < 0)) {
-    *puVar2 = *puVar2 | 1;
+s32 kseek(u64 fs, s32 offset, s32 where) {
+  s32 result = -1;
+  FileStream* file_stream = (FileStream*)fs;
+  if (((*(byte *)&file_stream->flags ^ 1) & 1) != 0) {
+    result = sceLseek(file_stream->file, offset, where);
+    if (result < 0) {
+      file_stream->flags |= 1;
+    }
   }
-  return iVar1;
+  return result;
 }
 
 /*!
  * Read from a file stream.
  */
-s32 kread(u64 fs,u64 buffer,s32 size) {
-  int iVar1;
-  uint* puVar2;
-  
-  iVar1 = -1;
-  puVar2 = (uint *)fs;
-  if ((((*(byte *)puVar2 ^ 1) & 1) != 0) &&
-     (iVar1 = sceRead(puVar2[3],(void *)buffer,size), iVar1 < 0)) {
-    *puVar2 = *puVar2 | 1;
+s32 kread(u64 fs, u64 buffer, s32 size) {
+  s32 result = -1;
+  FileStream* file_stream = (FileStream*)fs;
+  if (((*(byte *)&file_stream->flags ^ 1) & 1) != 0) {
+    result = sceRead(file_stream->file, (void *)buffer, size)
+    if (result < 0) {
+      file_stream->flags |= 1;
+    }
   }
-  return iVar1;
+  return result;
 }
 
 /*!
  * Write to a file stream.
  */
-s32 kwrite(u64 fs,u64 buffer,s32 size) {
-  int iVar1;
-  uint* puVar2;
-  
-  iVar1 = -1;
-  puVar2 = (uint *)fs;
-  if ((((*(byte *)puVar2 ^ 1) & 1) != 0) &&
-     (iVar1 = sceWrite(puVar2[3],(const_void *)buffer,size), iVar1 < 0)) {
-    *puVar2 = *puVar2 | 1;
+s32 kwrite(u64 fs, u64 buffer, s32 size) {
+  s32 result = -1;
+  FileStream* file_stream = (FileStream*)fs;
+  if (((*(byte *)&file_stream->flags ^ 1) & 1) != 0) {
+    result = sceWrite(file_stream->file, (const void *)buffer, size);
+    if (result < 0) {
+      file_stream->flags |= 1;
+    }
   }
-  return iVar1;
+  return result;
 }
 
 /*!
  * Close a file stream.
  */
 u64 kclose(u64 fs) {
-  undefined4 *puVar1;
-  
-  puVar1 = (undefined4 *)fs;
-  if (((*(byte *)puVar1 ^ 1) & 1) != 0) {
-    sceClose(puVar1[3]);
-    puVar1[3] = 0xffffffff;
+  FileStream* file_stream = (FileStream*)fs;
+  if (((*(byte *)&file_stream->flags ^ 1) & 1) != 0) {
+    sceClose(file_stream->file);
+    file_stream->file = -1;
   }
-  *puVar1 = 0;
+  file_stream->flags = 0;
   return fs;
 }
 
 // TODO dma_to_iop
-bool dma_to_iop(void* param_1,int param_2,void* param_3) {
-  u32 id;
-  s32 sVar1;
-  SifDmaTransfer_t local_20;
-  
-  local_20.attr = 0;
-  local_20.src = param_1;
-  local_20.dest = param_3;
-  local_20.size = param_2;
-  id = sceSifSetDma(&local_20,1);
+bool dma_to_iop(void* src_G, int size_G, void* dest_G) {
+  SifDmaTransfer_t transfer_W;
+  transfer_W.attr = 0;
+  transfer_W.src = src_G;
+  transfer_W.dest = dest_G;
+  transfer_W.size = size_G;
+  u32 id = sceSifSetDma(&transfer_W, 1);
   if (id != 0) {
+    s32 sVar1;
     do {
       sVar1 = sceSifDmaStat(id);
     } while (-1 < sVar1);
@@ -380,45 +357,36 @@ bool dma_to_iop(void* param_1,int param_2,void* param_3) {
   return id == 0;
 }
 
-u64 DecodeLanguage()
-{
+u64 DecodeLanguage() {
   return (ulong)masterConfig.language;
 }
 
-u64 DecodeAspect()
-{
+u64 DecodeAspect() {
   return (ulong)masterConfig.aspect;
 }
 
-u64 DecodeVolume()
-{
+u64 DecodeVolume() {
   return (ulong)masterConfig.volume;
 }
 
 // NOTE: this is originally hardcoded, and returns different values depending on the disc region.
 // it returns 0 for NTSC-U, 1 for PAL and 2 for NTSC-J
-u64 DecodeTerritory()
-{
+u64 DecodeTerritory() {
   return 1;
 }
 
-u64 DecodeTimeout()
-{
+u64 DecodeTimeout() {
   return (ulong)masterConfig.timeout;
 }
 
-u64 DecodeInactiveTimeout()
-{
+u64 DecodeInactiveTimeout() {
   return (ulong)masterConfig.inactive_timeout;
 }
 
 void DecodeTime(u32 ptr) {
-  long lVar1;
-  
-  if ((ptr != 0) && (lVar1 = FUN_0027476c_called_in_DecodeTime_implicit_dkernel(), lVar1 != 0)) {
+  if (ptr != 0 && FUN_0027476c_called_in_DecodeTime_implicit_dkernel() != 0) {
     sceScfGetLocalTimefromRTC(ptr);
   }
-  return;
 }
 
 // void vif_interrupt_callback(int bucket_id) {

@@ -471,16 +471,14 @@ void pc_game_load_synch() {
  *  - if there is a requested operation, starts running sony functions.
  *  - if there is none of the above, and unknown cards, finds out about them.
  *  - every now and then, recheck cards.
+ * TBD, FUN_002730e4, FUN_002732e4
  */
 void MC_run() {
-  s32 sema_id;
-  
-  sema_id = DAT_002d3908_mc_sema_id;
+  s32 sema_id = DAT_002d3908_mc_sema_id;
   WaitSema(DAT_002d3908_mc_sema_id);
   FUN_002730e4();
   FUN_002732e4();
   SignalSema(sema_id);
-  return;
 }
 
 /////////////////////////
@@ -494,14 +492,10 @@ void MC_run() {
  * Why is this a memory card func?
  */
 int MC_set_language(s32 l) {
-  s32 sema_id;
-  int iVar1;
-  
-  sema_id = DAT_002d3908_mc_sema_id;
+  s32 sema_id = DAT_002d3908_mc_sema_id;
   WaitSema(DAT_002d3908_mc_sema_id);
   language = l;
-  iVar1 = SignalSema(sema_id);
-  return iVar1;
+  return SignalSema(sema_id);
 }
 
 /*!
@@ -509,28 +503,25 @@ int MC_set_language(s32 l) {
  * Doesn't do anything in the port because we don't use memory cards.
  */
 u64 MC_format(s32 card_idx) {
-  s32 sema_id;
-  u64 uVar1;
-  
-  sema_id = DAT_002d3908_mc_sema_id;
+  s32 sema_id = DAT_002d3908_mc_sema_id;
   WaitSema(DAT_002d3908_mc_sema_id);
-  if ((op.operation == 0) && (op.unknown_field_W < 1)) {
-    op.result = 0;
+  bool can_add = op.operation == 0 && op.unknown_field_W < 1;
+  if (can_add) {
     op.operation = 1;
-    op.param2 = 0;
+    op.result = 0;
     op.retry_count = 100;
-    op.data_ptr = (u8 *)0x0;
-    op.data_ptr2 = (u8 *)0x0;
-    op.unknown_field_W = 0;
     op.param = card_idx;
+    op.param2 = 0;
+    op.data_ptr = nullptr;
+    op.data_ptr2 = nullptr;
+    op.unknown_field_W = 0;
     SignalSema(sema_id);
-    uVar1 = 1;
+    return 1;
   }
   else {
     SignalSema(sema_id);
-    uVar1 = 0;
+    return 0;
   }
-  return uVar1;
 }
 
 
@@ -539,57 +530,51 @@ u64 MC_format(s32 card_idx) {
  * You get the idea.
  */
 u64 MC_unformat(s32 card_idx) {
-  s32 sema_id;
-  u64 uVar1;
-  
-  sema_id = DAT_002d3908_mc_sema_id;
+  s32 sema_id = DAT_002d3908_mc_sema_id;
   WaitSema(DAT_002d3908_mc_sema_id);
-  if ((op.operation == 0) && (op.unknown_field_W < 1)) {
-    op.result = 0;
+  bool can_add = op.operation == 0 && op.unknown_field_W < 1;
+  if (can_add) {
     op.operation = 2;
-    op.param2 = 0;
+    op.result = 0;
     op.retry_count = 100;
-    op.data_ptr = (u8 *)0x0;
-    op.data_ptr2 = (u8 *)0x0;
-    op.unknown_field_W = 0;
     op.param = card_idx;
+    op.param2 = 0;
+    op.data_ptr = nullptr;
+    op.data_ptr2 = nullptr;
+    op.unknown_field_W = 0;
     SignalSema(sema_id);
-    uVar1 = 1;
+    return 1;
   }
   else {
     SignalSema(sema_id);
-    uVar1 = 0;
+    return 0;
   }
-  return uVar1;
 }
 
 /*!
  * Set the current memory card operation to create the save file.
  * The data I believe is just an empty buffer used as temporary storage.
  */
-u64 MC_createfile(s32 param,u8* data) {
-  s32 sema_id;
-  u64 uVar1;
-  
-  sema_id = DAT_002d3908_mc_sema_id;
+u64 MC_createfile(s32 param, u8* data) {
+  s32 sema_id = DAT_002d3908_mc_sema_id;
   WaitSema(DAT_002d3908_mc_sema_id);
-  if ((op.operation == 0) && (op.unknown_field_W < 1)) {
-    op.result = 0;
+  bool can_add = op.operation == 0 && op.unknown_field_W < 1;
+  if (can_add) {
     op.operation = 3;
-    op.param2 = 0;
+    op.result = 0;
     op.retry_count = 100;
-    op.data_ptr2 = (u8 *)0x0;
-    op.unknown_field_W = 0;
     op.param = param;
+    op.param2 = 0;
     op.data_ptr = data;
+    op.data_ptr2 = nullptr;
+    op.unknown_field_W = 0;
     SignalSema(sema_id);
-    uVar1 = 1;
+    return 1;
   }
   else {
     SignalSema(sema_id);
-    uVar1 = 0;
+    return 0;
   }
-  return uVar1;
 }
 
 /*!
@@ -597,104 +582,92 @@ u64 MC_createfile(s32 param,u8* data) {
  * The "summary data" is data that will be used when previewing save files (number of orbs etc)
  * TODO put synchronous call here
  */
-u64 MC_save(s32 card_idx,s32 file_idx,u8* save_data,u8* save_summary_data) {
-  s32 sema_id;
-  u64 uVar1;
-  
-  sema_id = DAT_002d3908_mc_sema_id;
+u64 MC_save(s32 card_idx, s32 file_idx, u8* save_data, u8* save_summary_data) {
+  s32 sema_id = DAT_002d3908_mc_sema_id;
   WaitSema(DAT_002d3908_mc_sema_id);
-  if ((op.operation == 0) && (op.unknown_field_W < 1)) {
-    op.result = 0;
+  bool can_add = op.operation == 0 && op.unknown_field_W < 1;
+  if (can_add) {
     op.operation = 4;
+    op.result = 0;
     op.retry_count = 100;
-    op.unknown_field_W = 0;
     op.param = card_idx;
     op.param2 = file_idx;
     op.data_ptr = save_data;
     op.data_ptr2 = save_summary_data;
+    op.unknown_field_W = 0;
     SignalSema(sema_id);
-    uVar1 = 1;
+    return 1;
   }
   else {
     SignalSema(sema_id);
-    uVar1 = 0;
+    return 0;
   }
-  return uVar1;
 }
 
-undefined4 mc_save_common_S(uint32_t param_1,u8* param_2) {
-  s32 sema_id;
-  undefined4 uVar1;
-  
-  sema_id = DAT_002d3908_mc_sema_id;
+u64 mc_save_common_S(uint32_t param_1, u8* data_ptr) {
+  s32 sema_id = DAT_002d3908_mc_sema_id;
   WaitSema(DAT_002d3908_mc_sema_id);
-  if ((op.operation == 0) && (op.unknown_field_W < 1)) {
-    op.result = 0;
+  bool can_add = op.operation == 0 && op.unknown_field_W < 1;
+  if (can_add) {
     op.operation = 5;
-    op.param2 = 0;
+    op.result = 0;
     op.retry_count = 100;
-    op.data_ptr2 = (u8 *)0x0;
-    op.unknown_field_W = 0;
     op.param = param_1;
-    op.data_ptr = param_2;
+    op.param2 = 0;
+    op.data_ptr = data_ptr;
+    op.data_ptr2 = nullptr;
+    op.unknown_field_W = 0;
     SignalSema(sema_id);
-    uVar1 = 1;
+    return 1;
   }
   else {
     SignalSema(sema_id);
-    uVar1 = 0;
+    return 0;
   }
-  return uVar1;
 }
 
-undefined4 mc_save_patch_S(uint32_t param_1,u8* param_2) {
-  s32 sema_id;
-  undefined4 uVar1;
-  
-  sema_id = DAT_002d3908_mc_sema_id;
+u64 mc_save_patch_S(uint32_t param_1, u8* data_ptr) {
+  s32 sema_id = DAT_002d3908_mc_sema_id;
   WaitSema(DAT_002d3908_mc_sema_id);
-  if ((op.operation == 0) && (op.unknown_field_W < 1)) {
-    op.result = 0;
+  bool can_add = op.operation == 0 && op.unknown_field_W < 1;
+  if (can_add) {
     op.operation = 6;
-    op.param2 = 0;
+    op.result = 0;
     op.retry_count = 100;
-    op.data_ptr2 = (u8 *)0x0;
-    op.unknown_field_W = 0;
     op.param = param_1;
-    op.data_ptr = param_2;
+    op.param2 = 0;
+    op.data_ptr = data_ptr;
+    op.data_ptr2 = nullptr;
+    op.unknown_field_W = 0;
     SignalSema(sema_id);
-    uVar1 = 1;
+    return 1;
   }
   else {
     SignalSema(sema_id);
-    uVar1 = 0;
+    return 0;
   }
-  return uVar1;
 }
 
-undefined4 mc_save_ghost_S(uint32_t param_1,uint32_t param_2,u8* param_3) {
-  s32 sema_id;
-  undefined4 uVar1;
-  
-  sema_id = DAT_002d3908_mc_sema_id;
+u64 mc_save_ghost_S(uint32_t param_1, uint32_t param_2, u8* data_ptr) {
+  s32 sema_id = DAT_002d3908_mc_sema_id;
   WaitSema(DAT_002d3908_mc_sema_id);
-  if ((op.operation == 0) && (op.unknown_field_W < 1)) {
-    op.result = 0;
+  bool can_add = op.operation == 0 && op.unknown_field_W < 1;
+  if (can_add) {
     op.operation = 7;
+    op.result = 0;
     op.retry_count = 100;
-    op.data_ptr2 = (u8 *)0x0;
-    op.unknown_field_W = 0;
     op.param = param_1;
     op.param2 = param_2;
-    op.data_ptr = param_3;
+    op.data_ptr = data_ptr;
+    op.data_ptr2 = nullptr;
+    op.unknown_field_W = 0;
     SignalSema(sema_id);
-    uVar1 = 1;
+    return 1;
   }
   else {
     SignalSema(sema_id);
-    uVar1 = 0;
+    return 0;
   }
-  return uVar1;
 }
 
 
@@ -702,135 +675,116 @@ undefined4 mc_save_ghost_S(uint32_t param_1,uint32_t param_2,u8* param_3) {
  * Set the current operation to LOAD.
  * TODO put synchronous call here
  */
-u64 MC_load(s32 card_idx,s32 file_idx,u8* data) {
-  s32 sema_id;
-  u64 uVar1;
-  
-  sema_id = DAT_002d3908_mc_sema_id;
+u64 MC_load(s32 card_idx, s32 file_idx, u8* data) {
+  s32 sema_id = DAT_002d3908_mc_sema_id;
   WaitSema(DAT_002d3908_mc_sema_id);
-  if ((op.operation == 0) && (op.unknown_field_W < 1)) {
-    op.result = 0;
+  bool can_add = op.operation == 0 && op.unknown_field_W < 1;
+  if (can_add) {
     op.operation = 8;
+    op.result = 0;
     op.retry_count = 100;
-    op.data_ptr2 = (u8 *)0x0;
-    op.unknown_field_W = 0;
     op.param = card_idx;
     op.param2 = file_idx;
     op.data_ptr = data;
+    op.data_ptr2 = nullptr;
+    op.unknown_field_W = 0;
     SignalSema(sema_id);
-    uVar1 = 1;
+    return 1;
   }
   else {
     SignalSema(sema_id);
-    uVar1 = 0;
+    return 0;
   }
-  return uVar1;
 }
 
-undefined4 mc_load_common_S(uint32_t param_1,u8* param_2) {
-  s32 sema_id;
-  undefined4 uVar1;
-  
-  sema_id = DAT_002d3908_mc_sema_id;
+u64 mc_load_common_S(uint32_t param_1, u8* data_ptr) {
+  s32 sema_id = DAT_002d3908_mc_sema_id;
   WaitSema(DAT_002d3908_mc_sema_id);
-  if ((op.operation == 0) && (op.unknown_field_W < 1)) {
-    op.result = 0;
+  bool can_add = op.operation == 0 && op.unknown_field_W < 1;
+  if (can_add) {
     op.operation = 9;
-    op.param2 = 0;
+    op.result = 0;
     op.retry_count = 100;
-    op.data_ptr2 = (u8 *)0x0;
-    op.unknown_field_W = 0;
     op.param = param_1;
-    op.data_ptr = param_2;
+    op.param2 = 0;
+    op.data_ptr = data_ptr;
+    op.data_ptr2 = nullptr;
+    op.unknown_field_W = 0;
     SignalSema(sema_id);
-    uVar1 = 1;
+    return 1;
   }
   else {
     SignalSema(sema_id);
-    uVar1 = 0;
+    return 0;
   }
-  return uVar1;
 }
 
-undefined4 mc_load_patch_S(uint32_t param_1,u8* param_2) {
-  s32 sema_id;
-  undefined4 uVar1;
-  
-  sema_id = DAT_002d3908_mc_sema_id;
+u64 mc_load_patch_S(uint32_t param_1, u8* data_ptr) {
+  s32 sema_id = DAT_002d3908_mc_sema_id;
   WaitSema(DAT_002d3908_mc_sema_id);
-  if ((op.operation == 0) && (op.unknown_field_W < 1)) {
-    op.result = 0;
+  bool can_add = op.operation == 0 && op.unknown_field_W < 1;
+  if (can_add) {
     op.operation = 10;
-    op.param2 = 0;
+    op.result = 0;
     op.retry_count = 100;
-    op.data_ptr2 = (u8 *)0x0;
-    op.unknown_field_W = 0;
     op.param = param_1;
-    op.data_ptr = param_2;
+    op.param2 = 0;
+    op.data_ptr = data_ptr;
+    op.data_ptr2 = nullptr;
+    op.unknown_field_W = 0;
     SignalSema(sema_id);
-    uVar1 = 1;
+    return 1;
   }
   else {
     SignalSema(sema_id);
-    uVar1 = 0;
+    return 0;
   }
-  return uVar1;
 }
 
-undefined4 mc_load_ghost_S(uint32_t param_1,uint32_t param_2,u8* param_3) {
-  s32 sema_id;
-  undefined4 uVar1;
-  
-  sema_id = DAT_002d3908_mc_sema_id;
+u64 mc_load_ghost_S(uint32_t param_1, uint32_t param_2, u8* param_3) {
+  s32 sema_id = DAT_002d3908_mc_sema_id;
   WaitSema(DAT_002d3908_mc_sema_id);
-  if ((op.operation == 0) && (op.unknown_field_W < 1)) {
-    op.result = 0;
+  bool can_add = op.operation == 0 && op.unknown_field_W < 1;
+  if (can_add) {
     op.operation = 0xb;
+    op.result = 0;
     op.retry_count = 100;
-    op.data_ptr2 = (u8 *)0x0;
-    op.unknown_field_W = 0;
     op.param = param_1;
     op.param2 = param_2;
     op.data_ptr = param_3;
+    op.data_ptr2 = nullptr;
+    op.unknown_field_W = 0;
     SignalSema(sema_id);
-    uVar1 = 1;
+    return 1;
   }
   else {
     SignalSema(sema_id);
-    uVar1 = 0;
+    return 0;
   }
-  return uVar1;
 }
 
 /*!
  * Some sort of test function for memory card stuff.
  * This is exported as a GOAL function, but nothing calls it.
  */
-void MC_makefile(s32 port,s32 size) {
+void MC_makefile(s32 port, s32 size) {
   return;
 }
 
 u32 MC_check_result() {
-  s32 sema_id;
-  u32 uVar1;
-  
-  sema_id = DAT_002d3908_mc_sema_id;
+  s32 sema_id = DAT_002d3908_mc_sema_id;
   WaitSema(DAT_002d3908_mc_sema_id);
-  uVar1 = op.result;
   SignalSema(sema_id);
-  return uVar1;
+  return op.result;
 }
-
 
 /*!
  * Update the info for the given slot.
  * You can call this at any time.
  * The slot includes the four save slots (8 banks), and a few other files.
  */
-void MC_get_status(s32 slot,mc_slot_info *info) {
-  s32 sema_id;
-  
-  sema_id = DAT_002d3908_mc_sema_id;
+void MC_get_status(s32 slot, mc_slot_info* info) {
+  s32 sema_id = DAT_002d3908_mc_sema_id;
   WaitSema(DAT_002d3908_mc_sema_id);
   if (((uint)slot < 2) && (info != (mc_slot_info *)0x0)) {
     FUN_00271098(&DAT_00283740 + slot * 0x8c0,info);
@@ -840,16 +794,11 @@ void MC_get_status(s32 slot,mc_slot_info *info) {
 }
 
 uint mc_get_secrets_S() {
-  uint uVar1;
-  uint uVar2;
-  int iVar3;
-  int iVar4;
-  
-  uVar1 = 0;
-  iVar3 = 0;
+  uint uVar1 = 0;
+  int iVar3 = 0;
   do {
-    uVar2 = 0;
-    iVar4 = iVar3 + 1;
+    uint uVar2 = 0;
+    int iVar4 = iVar3 + 1;
     if ((&DAT_00283864)[iVar3 * 0x230] == 3) {
       uVar2 = (&DAT_00283fe0)[iVar3 * 0x230];
     }
@@ -857,4 +806,92 @@ uint mc_get_secrets_S() {
     iVar3 = iVar4;
   } while (iVar4 < 2);
   return uVar1;
+}
+
+void FUN_00274280_mc(int param_1, long param_2) {
+  undefined *puVar1;
+  int iVar2;
+  
+  if ((param_2 == 0xffff) && (param_1 == 1)) {
+    FUN_00270e2c_create_sema(&DAT_002d3908_mc_sema_id);
+  }
+  if ((param_2 == 0xffff) && (param_1 == 1)) {
+    FUN_00270e2c_create_sema(&DAT_002d3910);
+  }
+  if ((param_2 == 0xffff) && (param_1 == 1)) {
+    iVar2 = 1;
+    puVar1 = &DAT_00283740;
+    do {
+      iVar2 = iVar2 + -1;
+      FUN_00270f74_identical_to_previous(puVar1);
+      puVar1 = puVar1 + 0x8c0;
+    } while (iVar2 != -1);
+  }
+  if ((param_2 == 0xffff) && (param_1 == 1)) {
+    op.operation = 0;
+    op.unknown_field_W = 0;
+    op.param = 0;
+    op.param2 = 0;
+    op.result = 1;
+    op.retry_count = 100;
+    op.data_ptr = nullptr;
+    op.data_ptr2 = nullptr;
+  }
+  return;
+}
+
+void FUN_002743a4(void) {
+  FUN_00274280_mc(1,0xffff);
+  return;
+}
+
+void FUN_002743c0(void) {
+  FUN_00274280_mc(0,0xffff);
+  return;
+}
+
+undefined FUN_00273870_mc(void) {
+  return MC_INITIALIZED_S;
+}
+
+int FUN_00273910_memory_card(void) {
+  s32 sema_id;
+  int iVar1;
+  
+  sema_id = DAT_002d3908_mc_sema_id;
+  WaitSema(DAT_002d3908_mc_sema_id);
+  DAT_002d3d44 = DAT_002d3d44 + -1;
+  if (DAT_002d3d44 < 0) {
+    printf("MC: error; lock count underflow\n");
+    DAT_002d3d44 = 0;
+  }
+  else {
+    SignalSema(DAT_002d3910);
+  }
+  iVar1 = SignalSema(sema_id);
+  return iVar1;
+}
+
+int MC_shutdown_G(void) {
+  int iVar1;
+  int iVar2;
+  
+  if (MC_INITIALIZED_S == '\0') {
+    iVar1 = printf("MC: error; MC_shutdown() called without call to MC_initialize()\n");
+    return iVar1;
+  }
+  FUN_0027387c();
+  iVar1 = 0;
+  do {
+    iVar2 = iVar1 + 1;
+    if ((&DAT_00283860)[iVar1 * 0x230] != -1) {
+      FUN_001c7ee8((&DAT_00283860)[iVar1 * 0x230]);
+      (&DAT_00283860)[iVar1 * 0x230] = 0xffffffff;
+    }
+    iVar1 = iVar2;
+  } while (iVar2 < 2);
+  sceMc2End();
+  iVar1 = FUN_00273910_memory_card();
+  MC_INITIALIZED_S = 0;
+  return iVar1;
 }

@@ -39,76 +39,51 @@ void klisten_init_globals() {
  * There was an "ACK" message sent here, but this is removed because we don't need it.
  */
 void InitListener() {
-  u32 *puVar1;
-  u32 *puVar2;
-  String *car;
-  u64 uVar3;
+  ListenerLinkBlock = intern_from_c(-1, 0, "*listener-link-block*");
+  ListenerFunction = intern_from_c(-1, 0, "*listener-function*");
+  KernelFunction = intern_from_c(-1, 0, "*kernel-function*");
+  kernel_dispatcher = intern_from_c(-1, 0, "kernel-dispatcher");
+  sync_dispatcher = intern_from_c(-1, 0, "sync-dispatcher");
+  kernel_packages = intern_from_c(-1, 0, "*kernel-packages*");
+  print_column = intern_from_c(-1, 0, "*print-column*");
+
   int unaff_s7_lo;
-  
-  ListenerLinkBlock = intern_from_c(-1,0,"*listener-link-block*");
-  ListenerFunction = intern_from_c(-1,0,"*listener-function*");
-  KernelFunction = intern_from_c(-1,0,"*kernel-function*");
-  kernel_dispatcher = intern_from_c(-1,0,"kernel-dispatcher");
-  sync_dispatcher = intern_from_c(-1,0,"sync-dispatcher");
-  kernel_packages = intern_from_c(-1,0,"*kernel-packages*");
-  print_column = intern_from_c(-1,0,"*print-column*");
-  puVar1 = ListenerFunction;
   *(int *)((int)ListenerLinkBlock + -1) = unaff_s7_lo;
-  puVar2 = KernelFunction;
-  *(int *)((int)puVar1 + -1) = unaff_s7_lo;
-  *(int *)((int)puVar2 + -1) = unaff_s7_lo;
-  puVar1 = kernel_packages;
-  car = make_string_from_c("kernel");
-  uVar3 = new_pair(unaff_s7_lo + 0xa0,*(u32 *)(unaff_s7_lo + 0x6f),(u32)car,
-                   *(u32 *)((int)kernel_packages + -1));
-  *(int *)((int)puVar1 + -1) = (int)uVar3;
-  if (MasterDebug != 0) {
-    SendFromBufferD(0,0,&AckBufArea,0);
-    return;
-  }
-  return;
+  *(int *)((int)ListenerFunction + -1) = unaff_s7_lo;
+  *(int *)((int)KernelFunction + -1) = unaff_s7_lo;
+
+  *(int *)((int)kernel_packages + -1) =
+      new_pair(unaff_s7_lo + 0xa0, *(u32 *)(unaff_s7_lo + 0x6f),
+             (u32)make_string_from_c("kernel"), *(u32 *)((int)kernel_packages + -1));
+  //  if (MasterDebug != 0) {
+  //    SendFromBufferD(0, 0, &AckBufArea, 0);
+  //  }
 }
 
 /*!
  * Handle an incoming listener message
  */
-void ProcessListenerMessage(char *msg) {
-  kheapinfo *heap;
-  s32 sVar1;
-  u32 uVar2;
-  u8 *data;
-  uint8_t *puVar3;
-  undefined in_t1_lo;
-  ulong uVar4;
-  size_t __n;
-  int unaff_s7_lo;
-  undefined4 unaff_s7_hi;
-  
-  sVar1 = MessCount;
+void ProcessListenerMessage(char* msg) {
   ListenerStatus = 1;
-  if (false) {
-switchD_00270650_caseD_2:
-    MsgErr("dkernel: unknown message error: <%d> of %d bytes\n",protoBlock.field57_0x48,MessCount);
-  }
-  else {
-    switch(protoBlock.field57_0x48) {
+  switch (protoBlock.msg_kind) {
     case 1:
+      ClearPending();
       break;
-    default:
-      goto switchD_00270650_caseD_2;
     case 5:
-      uVar2 = atoi(msg);
-      inspect_object(uVar2);
+      inspect_object(atoi(msg));
+      ClearPending();
       break;
     case 6:
-      uVar2 = atoi(msg);
-      print_object(uVar2);
+      print_object(atoi(msg));
+      ClearPending();
       break;
     case 7:
-      uVar4 = CONCAT44(unaff_s7_hi,unaff_s7_lo);
+      undefined4 unaff_s7_hi;
+      int unaff_s7_lo;
+      ulong uVar4 = CONCAT44(unaff_s7_hi,unaff_s7_lo);
       if (CONCAT44(unaff_s7_hi,unaff_s7_lo) < (ulong)(long)LastSymbol) {
         do {
-          uVar2 = (u32)uVar4;
+          u32 uVar2 = (u32)uVar4;
           if (*(int *)((uVar2 - unaff_s7_lo) + SymbolString) != 0) {
             inspect_object(uVar2);
           }
@@ -118,67 +93,66 @@ switchD_00270650_caseD_2:
       uVar4 = (ulong)SymbolTable2;
       if (uVar4 < CONCAT44(unaff_s7_hi,unaff_s7_lo)) {
         do {
-          uVar2 = (u32)uVar4;
+          u32 uVar2 = (u32)uVar4;
           if (*(int *)((uVar2 - unaff_s7_lo) + SymbolString) != 0) {
             inspect_object(uVar2);
           }
           uVar4 = (ulong)(int)(uVar2 + 4);
         } while (uVar4 < CONCAT44(unaff_s7_hi,unaff_s7_lo));
       }
+      ClearPending();
       break;
     case 8:
       KernelShutdown(1);
-      goto LAB_00270664;
-    case 9:
-      __n = (size_t)MessCount;
-      data = kmalloc(kdebugheap,MessCount,0,"listener-link-buf");
-      memcpy(data,msg,__n);
-      heap = kdebugheap;
-      *(u8 **)(ListenerLinkBlock + -1) = data + 4;
-      puVar3 = link_and_exec(data,"*listener*",sVar1 - *(int *)(data + 4),heap,0x10,(bool)in_t1_lo);
-      *(uint8_t **)(ListenerFunction + -1) = puVar3;
+    case 9: {
+      u8* buffer = kmalloc(kdebugheap, MessCount, 0, "listener-link-buf");
+      memcpy(buffer, msg, (size_t)MessCount);
+      *(u8 **)(ListenerLinkBlock + -1) = buffer + 4;
+
+      undefined in_t1_lo; // TODO: why would this be true? I expect this to be false...
+      *(uint8_t **)(ListenerFunction + -1) = link_and_exec(buffer, "*listener*", MessCount - *(int *)(buffer + 4), kdebugheap,
+                                                           0x10, (bool)in_t1_lo);
       return;
-    }
-    ClearPending();
+    } break;
+    default:
+      MsgErr("dkernel: unknown message error: <%d> of %d bytes\n", protoBlock.msg_kind, MessCount);
+      break;
   }
-LAB_00270664:
   SendAck();
-  return;
 }
 
-int sql_query_sync(String *string_in) {
-  int iVar1;
-  int unaff_s7_lo;
-  undefined4 unaff_s7_hi;
+int sql_query_sync(String* string_in) {
   
   if (MasterDebug == 0) {
-    iVar1 = unaff_s7_lo + -7;
+    int unaff_s7_lo;
+    return unaff_s7_lo + -7;
   }
   else {
+    int unaff_s7_lo;
+    undefined4 unaff_s7_hi;
     *(int *)(SqlResult + -1) = unaff_s7_lo;
     output_sql_query(string_in + 1);
     *(int *)(ListenerFunction + -1) = unaff_s7_lo;
     ListenerStatus = 1;
     ClearPending();
     SendAck();
-    iVar1 = *(int *)(ListenerFunction + -1);
-    kdebugheap->top = kdebugheap->top + -0x4000;
-    if ((long)iVar1 == CONCAT44(unaff_s7_hi,unaff_s7_lo)) {
+    int listener = *(int *)(ListenerFunction + -1);
+    kdebugheap->top -= 0x4000;
+    if ((long)listener == CONCAT44(unaff_s7_hi,unaff_s7_lo)) {
       while ((long)*(int *)(SqlResult + -1) == CONCAT44(unaff_s7_hi,unaff_s7_lo)) {
         KernelDispatch(*(u32 *)(sync_dispatcher + -1));
         SendAck();
         if ((long)*(int *)(SqlResult + -1) == CONCAT44(unaff_s7_hi,unaff_s7_lo)) {
-          iVar1 = 0;
+          int i = 0;
           do {
-            iVar1 = iVar1 + 1;
-          } while (iVar1 < 100000);
+            i++;
+          } while (i < 100000);
         }
       }
     }
-    iVar1 = *(int *)(SqlResult + -1);
-    kdebugheap->top = kdebugheap->top + 0x4000;
+    kdebugheap->top += 0x4000;
+    return *(int *)(SqlResult + -1);
   }
-  return iVar1;
 }
 
 }  // namespace jak3

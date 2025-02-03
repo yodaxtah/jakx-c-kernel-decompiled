@@ -30,55 +30,55 @@ void kdgo_init_globals() {
  * @param buffer2 : the other of the two file loading buffers
  * @param currentHeap : the current heap (for loading directly into the heap).
  *
- * TBD,
+ * DONE,
  * MODIFIED : Added print statement to indicate when DGO load starts.
  */
-void BeginLoadingDGO(const_char *name,u8 *buffer1,u8 *buffer2,u8 *currentHeap) {
-  RPC_Dgo_Cmd *mess;
-  uint msgID;
-  
-  msgID = sMsgNum;
-  mess = sMsg + sMsgNum;
+void BeginLoadingDGO(const char *name,u8 *buffer1,u8 *buffer2,u8 *currentHeap) {
+  uint msgID = sMsgNum;
+  RPC_Dgo_Cmd* mess = sMsg + sMsgNum;
   sMsgNum = sMsgNum ^ 1;
   RpcSync(4);
-  sMsg[msgID].result = 0x29a;
-  sMsg[msgID].cgo_id = cgo_id;
+
+  sMsg[msgID].result = 0x29a; // why is this result? Swap with status?
+
   sMsg[msgID].buffer1 = (uint32_t)buffer1;
   sMsg[msgID].buffer2 = (uint32_t)buffer2;
-  cgo_id = cgo_id + 1;
+
   sMsg[msgID].buffer_heap_top = (uint32_t)currentHeap;
-  strcpy(sMsg[msgID].name,name);
-  RpcCallNoCallback(4,0,true,mess,0x40,mess,0x40);
+
+  sMsg[msgID].cgo_id = cgo_id;
+  cgo_id++;
+
+  strcpy(sMsg[msgID].name, name);
+  RpcCallNoCallback(4, 0, true, mess, 0x40, mess,
+          0x40);
   sLastMsg = mess;
-  return;
 }
 
 /*!
  * Get the next object in the DGO.  Will block until something is loaded.
  * @param lastObjectFlag: will get set to 1 if this is the last object.
  *
- * TBD,
+ * DONE,
  * MODIFIED : added exception if the sLastMessage isn't set (game just returns null as buffer)
  */
-u8 * GetNextDGO(u32 *lastObjectFlag) {
-  u8 *puVar1;
-  
+u8* GetNextDGO(u32* lastObjectFlag) {
   *lastObjectFlag = 1;
-  puVar1 = (u8 *)0x0;
   RpcSync(4);
-  if (sLastMsg != (RPC_Dgo_Cmd *)0x0) {
-    if (sLastMsg->result == 2) {
-      puVar1 = (u8 *)sLastMsg->buffer1;
+  u8* buffer = nullptr;
+  if (sLastMsg != nullptr) {
+    if (sLastMsg->result == 2 || sLastMsg->result == 0) { // Should be status
+      buffer =
+          (u8 *)sLastMsg->buffer1;
     }
-    else if (sLastMsg->result == 0) {
-      puVar1 = (u8 *)sLastMsg->buffer1;
-    }
-    if (sLastMsg->result == 2) {
+
+    if (sLastMsg->result == 2) { // Should be status
       *lastObjectFlag = 0;
     }
-    sLastMsg = (RPC_Dgo_Cmd *)0x0;
+
+    sLastMsg = nullptr;
   }
-  return puVar1;
+  return buffer;
 }
 
 /*!
@@ -90,96 +90,97 @@ u8 * GetNextDGO(u32 *lastObjectFlag) {
  *
  * Unlike jak 1, we update buffer1 and buffer2 here for borrow heap loads.
  */
-void ContinueLoadingDGO(u8 *heapPtr) {
-  RPC_Dgo_Cmd *sendBuff_00;
-  uint msgID;
-  RPC_Dgo_Cmd *sendBuff;
-  
-  msgID = sMsgNum;
-  sendBuff_00 = sMsg + sMsgNum;
-  sendBuff = sMsg + sMsgNum;
+void ContinueLoadingDGO(u8 b1, u8* b2, u8* heapPtr) {
+  u32 msgID = sMsgNum;
+  RPC_Dgo_Cmd* sendBuff = sMsg + sMsgNum;
   sMsgNum = sMsgNum ^ 1;
-  sendBuff->buffer_heap_top = (uint32_t)heapPtr;
-  sMsg[msgID].result = 0x29a;
+  sMsg[msgID].result = 0x29a; // Should be status
   sMsg[msgID].buffer1 = (int)(char)b1;
   sMsg[msgID].buffer2 = (uint32_t)b2;
-  RpcCallNoCallback(4,1,true,sendBuff_00,0x40,sendBuff_00,0x40);
-  sLastMsg = sendBuff_00;
-  return;
+  sendBuff->buffer_heap_top = (uint32_t)heapPtr;
+  RpcCallNoCallback(4, 1, true, sendBuff, 0x40,
+          sendBuff, 0x40);
+  sLastMsg = sendBuff;
 }
-
 /*!
  * Load and link a DGO file.
  * This does not use the mutli-threaded linker and will block until the entire file is done.
  */
-void load_and_link_dgo(u64 name_gstr,u64 heap_info,u64 flag,u64 buffer_size)
-{
-  bool in_t0_lo;
-  
-  load_and_link_dgo_from_c((const_char *)((int)name_gstr + 4),(kheapinfo *)heap_info,(u32)flag,(s32)buffer_size,in_t0_lo);
-  return;
+void load_and_link_dgo(u64 name_gstr, u64 heap_info, u64 flag, u64 buffer_size) {
+  const char * name = (const char *)((int)name_gstr + 4);
+  kheapinfo * heap = (kheapinfo *)heap_info;
+  load_and_link_dgo_from_c(name, heap, (u32)flag, (s32)buffer_size, false);
 }
 
 /*!
  * Load and link a DGO file.
  * This does not use the mutli-threaded linker and will block until the entire file is done.e
  */
-void load_and_link_dgo_from_c(const_char *name,kheapinfo *heap,u32 linkFlag,s32 bufferSize, bool jump_from_c_to_goal) {
-  bool bVar1;
-  u8 *buffer2;
-  u8 *buffer1;
-  int32_t *piVar2;
-  size_t sVar3;
-  undefined in_t1_lo;
-  char acStack_b4 [4];
-  char acStack_b0 [8];
-  undefined local_a8;
-  char acStack_90 [64];
-  u32 local_50;
-  u32 local_4c;
-  u8 *local_48;
-  int local_44;
+void load_and_link_dgo_from_c(const char* name,
+                              kheapinfo* heap,
+                              u32 linkFlag,
+                              s32 bufferSize,
+                              bool jump_from_c_to_goal) {
+  u8* oldHeapTop = heap->top;
+
+  u8* buffer2 = kmalloc(heap, bufferSize, 0x2040, "dgo-buffer-2");
+  u8* buffer1 = kmalloc(heap, bufferSize, 0x2040, "dgo-buffer-2");
   
-  local_48 = heap->top;
-  local_4c = linkFlag;
-  buffer2 = kmalloc(heap,bufferSize,0x2040,"dgo-buffer-2");
-  buffer1 = kmalloc(heap,bufferSize,0x2040,"dgo-buffer-2");
-  local_50 = 0;
-  kstrcpyup(acStack_b0,name);
-  sVar3 = strlen(acStack_b0);
-  if (acStack_b4[(int)sVar3] != '.') {
-    local_a8 = 0;
-    strcat(acStack_b0,".CGO");
+  undefined fileName_a8;
+  char fileName_b4 [4];
+  char fileName_b0 [8];
+  kstrcpyup(fileName_b0, name);
+  if (fileName_b4[(int)strlen(fileName_b0)] != '.') {
+    fileName_a8 = 0;
+    strcat(fileName_b0, ".CGO");
   }
-  bVar1 = setStallMsg_GW(false);
-  local_44 = (int)bVar1;
+
+  bool oldShowStall = setStallMsg_GW(false);
+
   if (POWERING_OFF_W == false) {
-    BeginLoadingDGO(acStack_b0,buffer1,buffer2,(u8 *)((uint)(heap->current + 0x3f) & 0xffffffc0));
-    while( true ) {
+    BeginLoadingDGO(
+      acStack_b0, buffer1, buffer2,
+      (u8*)((uint)(heap->current + 0x3f) & 0xffffffc0));
+
+    u32 lastObjectLoaded = 0;
+    while (true) {
+      int32_t* dgoObj;
       do {
-        if ((local_50 != 0) || (POWERING_OFF_W != false)) goto LAB_00270d58;
-        piVar2 = (int32_t *)GetNextDGO(&local_50);
-      } while (piVar2 == (int32_t *)0x0);
-      if (local_50 != 0) {
-        heap->top = local_48;
+        if ((lastObjectLoaded != 0) || (POWERING_OFF_W != false)) {
+          goto LAB_00270d58;
+        }
+        dgoObj = (int32_t *)GetNextDGO(&lastObjectLoaded);
+      } while (dgoObj == nullptr);
+
+      if (lastObjectLoaded != 0) {
+        heap->top = oldHeapTop;
       }
-      FUN_0027cc90_patch(piVar2,bufferSize);
-      strcpy(acStack_90,(char *)(piVar2 + 1));
-      link_and_exec((uint8_t *)(piVar2 + 0x10),acStack_90,*piVar2,heap,local_4c,(bool)in_t1_lo);
-      if (local_50 != 0) break;
+
+      FUN_0027cc90_patch(dgoObj, bufferSize);
+
+      uint8_t* obj = (uint8_t*)(dgoObj + 0x10);
+      u32 objSize = *dgoObj;
+
+      char objName[64];
+      strcpy(objName, (char *)(dgoObj + 1));
+      undefined in_t1_lo;
+      link_and_exec(obj, objName, objSize, heap, linkFlag, (bool)in_t1_lo);
+      if (lastObjectLoaded != 0) {
+        break;
+      }
       if (POWERING_OFF_W == false) {
-        ContinueLoadingDGO((u8)buffer1,buffer2,(u8 *)((uint)(heap->current + 0x3f) & 0xffffffc0));
+        ContinueLoadingDGO((u8)buffer1, buffer2, (u8 *)((uint)(heap->current + 0x3f) & 0xffffffc0));
       }
     }
   }
 LAB_00270d58:
   if (POWERING_OFF_W == false) {
-    setStallMsg_GW(SUB41(local_44,0));
+    setStallMsg_GW(oldShowStall);
     return;
   }
   KernelShutdown(3);
   ShutdownMachine(3);
-  Msg(6,"load_and_link_dgo_from_c: cannot continue; load aborted\n");
+  Msg(6, "load_and_link_dgo_from_c: cannot continue; load aborted\n");
   do {
                     /* WARNING: Do nothing block with infinite loop */
   } while( true );

@@ -18,6 +18,7 @@ ee::sceSifClientData cd[6];  //! client data for each IOP Remove Procedure Call.
 u32 sShowStallMsg;           //! setting to show a "stalled on iop" message
 u16 x[8];                    //! stupid temporary for storing a message
 u32 sMsgNum;                 //! Toggle for double buffered message sending.
+s32 numberOfRpcChannels = 7;
 
 void kdgo_init_globals() {
   memset(x, 0, sizeof(x));
@@ -25,67 +26,65 @@ void kdgo_init_globals() {
   sShowStallMsg = 1;
 }
 
-/*!
- * Call the given RPC with the given function number and buffers.
- */
-
-s32 RpcCallProxy(s32 rpcChannel,u32 fno,bool async,void* sendBuff,s32 sendSize,void* recvBuff,
-                s32 recvSize) {
-  s32 sVar1;
-  
-  sVar1 = RpcCall(rpcChannel,fno,async,sendBuff,sendSize,recvBuff,recvSize,(void *)0x0);
-  return sVar1;
-}
-
-s32 RpcCall(s32 rpcChannel,u32 fno,bool async,void* sendBuff,s32 sendSize,void* recvBuff,
-           s32 recvSize,void* callback) {
+// TDB
+int RpcCallEndFunction_W(long param_1) {
+  int in_v0_lo;
   int iVar1;
-  char* format;
-  int in_stack_00000000;
-  int in_stack_00000008;
+  int *piVar2;
   
-  if ((uint)rpcChannel < 7) {
-    if ((((uint)sendSize < 0xffff1) && (-1 < recvSize)) && (recvSize < 0xffff1)) {
-      if ((sendSize < 1) || (sendBuff != (void *)0x0)) {
-        if ((recvSize < 1) || (recvBuff != (void *)0x0)) {
-          if (((uint)sendBuff & 0xf) == 0) {
-            if (((uint)recvBuff & 0xf) == 0) {
-              WaitSema(RpcCallEndFunctionArgs_W[rpcChannel].sema_id);
-              RpcCallEndFunctionArgs_W[rpcChannel].callback = callback;
-              RpcCallEndFunctionArgs_W[rpcChannel].fourth = in_stack_00000008;
-              RpcCallEndFunctionArgs_W[rpcChannel].third = in_stack_00000000;
-              iVar1 = SifCallRpc(cd_G_rpc + rpcChannel,fno,(int)async,sendBuff,sendSize,recvBuff,
-                                 recvSize,RpcCallEndFunction_W,RpcCallEndFunctionArgs_W + rpcChannel
-                                );
-              return iVar1;
-            }
-            format = "dkernel: RpcCall() error; misaligned receive buffer (recv=0x%08x rsize=%d\n";
-          }
-          else {
-            format = "dkernel: RpcCall() error; misaligned send buffer (send=0x%08x ssize=%d\n";
-            recvBuff = sendBuff;
-            recvSize = sendSize;
-          }
-        }
-        else {
-          recvBuff = (void *)0x0;
-          format = "dkernel: RpcCall() error; NULL receive buffer (recv=0x%08x rsize=%d)\n";
-        }
-      }
-      else {
-        recvBuff = (void *)0x0;
-        format = "dkernel: RpcCall() error; NULL send buffer (send=0x%08x ssize=%d)\n";
-        recvSize = sendSize;
-      }
+  if (param_1 != 0) {
+    piVar2 = (int *)param_1;
+    if ((code *)piVar2[1] == nullptr) {
+      iVar1 = *piVar2;
     }
     else {
-      format = "dkernel: RpcCall() error; invalid send/receive sizes (ssize=%d rsize=%d)\n";
-      recvBuff = (void *)sendSize;
+      (*(code *)piVar2[1])(piVar2[2],piVar2[3]);
+      iVar1 = *piVar2;
     }
-    MsgErr(format,(s32)recvBuff,recvSize);
+    iVar1 = iSignalSema(iVar1);
+    return iVar1;
   }
-  else {
-    MsgErr("dkernel: RpcCall() error; invalid port id %d\n",rpcChannel);
+  return in_v0_lo;
+}
+
+/*!
+ * Function overload for the RpcCall with a null callback.
+ */
+s32 RpcCall(s32 rpcChannel, u32 fno, bool async, void* sendBuff, s32 sendSize, void* recvBuff, s32 recvSize) {
+  return RpcCall(rpcChannel, fno, async, sendBuff, sendSize, recvBuff, recvSize, nullptr);
+}
+
+/*!
+ * Call the given RPC with the given function number and buffers.
+ * In Jak X, errors are written out. The conditions have been negated.
+ * DONE, EXACT.
+ */
+s32 RpcCall(s32 rpcChannel,
+            u32 fno,
+            bool async,
+            void* sendBuff,
+            s32 sendSize,
+            void* recvBuff,
+            s32 recvSize,
+            void* callback) {
+  if (rpcChannel >= numberOfRpcChannels) {
+    MsgErr("dkernel: RpcCall() error; invalid port id %d\n", rpcChannel);
+  } else if (sendSize >= 0xffff1) {
+    MsgErr("dkernel: RpcCall() error; invalid send/receive sizes (ssize=%d rsize=%d)\n", (s32)sendSize, recvSize);
+  } else if (!((((uint)sendSize < 0xffff1) && (-1 < recvSize)) && (recvSize < 0xffff1))) {
+    MsgErr("dkernel: RpcCall() error; NULL send buffer (secv=0x%08x ssize=%d)\n", (s32)nullptr, sendSize);
+  } else if (!(recvSize < 1) || (recvBuff != nullptr)) {
+    MsgErr("dkernel: RpcCall() error; NULL receive buffer (recv=0x%08x rsize=%d)\n", (s32)nullptr, recvSize);
+  } else if (((uint)sendBuff & 0xf) != 0) {
+    MsgErr("dkernel: RpcCall() error; misaligned send buffer (send=0x%08x ssize=%d)\n", sendBuff, sendSize); // added missing parenthesis
+  } else if (((uint)recvBuff & 0xf) != 0) {
+    MsgErr("dkernel: RpcCall() error; misaligned receive buffer (recv=0x%08x rsize=%d\n", recvBuff, recvSize);
+  } else {
+    WaitSema(RpcCallEndFunctionArgs_W[rpcChannel].sema_id);
+    RpcCallEndFunctionArgs_W[rpcChannel].callback = callback;
+    RpcCallEndFunctionArgs_W[rpcChannel].fourth = 0; // in_stack_00000008;
+    RpcCallEndFunctionArgs_W[rpcChannel].third = 0; // in_stack_00000000;
+    return SifCallRpc(cd_G_rpc + rpcChannel, fno, (int)async, sendBuff, sendSize, recvBuff, recvSize, RpcCallEndFunction_W, RpcCallEndFunctionArgs_W + rpcChannel);
   }
   return -1;
 }
@@ -121,147 +120,135 @@ struct GoalStackArgs {
 
 /*!
  * Check if the given RPC is busy, by channel.
+ * DONE.
  */
 u32 RpcBusy(s32 channel) {
-  int iVar1;
-  uint uVar2;
-  
-  uVar2 = 1;
-  if ((uint)channel < 7) {
-    iVar1 = SifCheckStatRpc(cd_G_rpc + channel);
-    uVar2 = (uint)(iVar1 != 0);
+  if (channel < numberOfRpcChannels) {
+    return sceSifCheckStatRpc(cd_G_rpc + channel) != 0;
+  } else {
+    return 1;
   }
-  return uVar2;
 }
 
 /*!
  * Wait for an RPC to not be busy. Prints a stall message if sShowStallMsg is true and we have
  * to wait on the IOP.  Stalling here is bad because it means the rest of the game can't run.
+ * DONE, EXACT.
  */
 void RpcSync(s32 channel) {
-  u32 uVar1;
-  
   if (6 < (uint)channel) {
-    MsgErr("dkernel: RpcSync() error; invalid port id %d\n",channel);
-    return;
+    MsgErr("dkernel: RpcSync() error; invalid port id %d\n", channel);
   }
-  uVar1 = RpcBusy(channel);
-  if (uVar1 != 0) {
-    if (sShowStallMsg != '\0') {
-      Msg(6,"dkernel: RpcSync() warning; port #%d stalled; waiting...\n",channel);
+  if (RpcBusy(channel)) {
+    if (sShowStallMsg) {
+      Msg(6, "dkernel: RpcSync() warning; port #%d stalled; waiting...\n", channel);
     }
     WaitSema(RpcCallEndFunctionArgs_W[channel].sema_id);
     SignalSema(RpcCallEndFunctionArgs_W[channel].sema_id);
-    while (uVar1 = RpcBusy(channel), uVar1 != 0) {
+    while (RpcBusy(channel)) {
       sceKernelDelayThread_G(10000);
     }
-    if (sShowStallMsg != '\0') {
-      Msg(6,"dkernel: RpcSync(); port #%d acquired\n",channel);
-      return;
+    if (sShowStallMsg) {
+      Msg(6, "dkernel: RpcSync(); port #%d acquired\n", channel);
     }
   }
-  return;
 }
 
 /*!
  * Setup an RPC.
+ * DONE, EXACT.
  */
-s32 RpcBind(s32 channel,s32 id) {
-  bool bVar1;
-  int iVar2;
-  
-  if ((uint)channel < 7) {
-    bVar1 = false;
-    while( true ) {
-      iVar2 = SifBindRpc(cd_G_rpc + channel,id,0);
-      if (iVar2 < 0) break;
-      if (cd_G_rpc[channel].server != (SifRpcServerData_t *)0x0) {
-        MsgErr("dkernel: RpcBind() port #%d id 0x%08x bound\n",channel,id);
+s32 RpcBind(s32 channel, s32 id) {
+  if (channel < numberOfRpcChannels) {
+    bool displayedWarning = false;
+    while (true) {
+      if (SifBindRpc(cd_G_rpc + channel, id, 0) < 0) {
+        MsgErr("dkernel: RpcBind() error; bind failed on port #%d id 0x%08x\n", channel, id);
+        return -1;
+      }
+      if (cd_G_rpc[channel].server != nullptr) {
+        MsgErr("dkernel: RpcBind() port #%d id 0x%08x bound\n", channel, id);
         return 0;
       }
-      if (!bVar1) {
-        bVar1 = true;
-        MsgErr("dkernel: RpcBind() warning; port #%d id 0x%08x not responding; retrying...\n",
-               channel,id);
+      if (!displayedWarning) {
+        displayedWarning = true;
+        MsgErr("dkernel: RpcBind() warning; port #%d id 0x%08x not responding; retrying...\n", channel, id);
       }
       sceKernelDelayThread_G(10000);
+      // it might seem like looping here is a bad idea (unclear if sceSifBindRpc can be called
+      // multiple times!) but this actually happens sometimes, at least on development hardware!
+      // (also, it's not clear that the "serve" field having data in it really means anything - maybe
+      // the sceSifBindRpc doesn't wait for the connection to be fully set up?  This seems likely
+      // because they had to put that little delay in there before checking.)
     }
-    MsgErr("dkernel: RpcBind() error; bind failed on port #%d id 0x%08x\n",channel,id);
   }
   else {
-    MsgErr("dkernel: RpcBind() error; invalid port id %d\n",channel);
+    MsgErr("dkernel: RpcBind() error; invalid port id %d\n", channel);
+    return -1;
   }
-  return -1;
 }
 
 /*!
- * Setup all RPCs
+ * Setup all RPCs.
+ * DONE, EXACT.
  */
 s32 InitRPC() {
   s32 sVar1;
-  int iVar2;
+  int semaId;
   int iVar3;
   ee_sema_t eStack_40;
   
-  if (RPC_Initialized_G == '\0') {
-    iVar3 = 0;
-    do {
-      iVar2 = iVar3 + 1;
-      RpcCallEndFunctionArgs_W[iVar3].fourth = 0;
-      RpcCallEndFunctionArgs_W[iVar3].sema_id = -1;
-      RpcCallEndFunctionArgs_W[iVar3].callback = (void *)0x0;
-      RpcCallEndFunctionArgs_W[iVar3].third = 0;
-      iVar3 = iVar2;
-    } while (iVar2 < 7);
-    iVar3 = 0;
-    do {
-      iVar2 = iVar3 + 1;
-      sVar1 = RpcBind(RpcChannels_W[iVar3].channel,RpcChannels_W[iVar3].id);
-      if (sVar1 != 0) {
-        return -1;
-      }
-      iVar3 = iVar2;
-    } while (iVar2 < 6);
-    iVar3 = 0;
-    while( true ) {
-      memset(&eStack_40,0,0x18);
-      eStack_40.init_count = 1;
-      eStack_40.max_count = 1;
-      iVar2 = CreateSema(&eStack_40);
-      RpcCallEndFunctionArgs_W[iVar3].sema_id = iVar2;
-      if (iVar2 < 0) break;
-      iVar3 = iVar3 + 1;
-      if (6 < iVar3) {
-        RPC_Initialized_G = 1;
-        return 0;
-      }
-    }
-    while (iVar3 = iVar3 + -1, -1 < iVar3) {
-      DeleteSema(RpcCallEndFunctionArgs_W[iVar3].sema_id);
-      RpcCallEndFunctionArgs_W[iVar3].sema_id = -1;
-    }
+  if (RPC_Initialized_G) {
+    MsgErr("dkernel: InitRPC() error; multiple initializations attempted");
+    return -1;
   }
   else {
-    MsgErr("dkernel: InitRPC() error; multiple initializations attempted");
+    for (int i = 0; i < numberOfRpcChannels; ++i) {
+      RpcCallEndFunctionArgs_W[i].fourth = 0;
+      RpcCallEndFunctionArgs_W[i].sema_id = -1;
+      RpcCallEndFunctionArgs_W[i].callback = nullptr;
+      RpcCallEndFunctionArgs_W[i].third = 0;
+    }
+    for (int i = 0; i < 6; ++i) { // TODO: why is it 6 here?
+      if (!RpcBind(RpcChannels_W[i].channel, RpcChannels_W[i].id)) {
+        return -1;
+      }
+    }
+    for (int i = 0; i < numberOfRpcChannels; ++i) {
+      memset(&eStack_40, 0, 0x18);
+      eStack_40.init_count = 1;
+      eStack_40.max_count = 1;
+      semaId = CreateSema(&eStack_40);
+      RpcCallEndFunctionArgs_W[i].sema_id = semaId;
+      if (semaId < 0) {
+        for (int j = i; j > 0; --j) {
+          DeleteSema(RpcCallEndFunctionArgs_W[j].sema_id);
+          RpcCallEndFunctionArgs_W[j].sema_id = -1;
+        }
+        return -1;
+      }
+    }
+    RPC_Initialized_G = true;
+    return 0;
   }
-  return -1;
 }
 
 /*!
  * Send a message to the IOP to stop it.
+ * DONE, EXACT.
  */
 int StopIOP_G() {
-  int iVar1;
-  
-  iVar1 = Is_RPC_Initialized_G();
-  if ((iVar1 != 0) && (IOP_RUNNING_W != '\0')) {
-    DAT_002d2d82 = 0x10;
-    RpcSync(1);
-    iVar1 = RpcCallProxy(1,0,false,&DAT_002d2d80,0x30,(void *)0x0,0);
-    IOP_RUNNING_W = '\0';
+  if (Is_RPC_Initialized_G() != 0 && IOP_RUNNING_W) {                                                 
+    x[2] = 0x10;
+    x[3] = 0;
+    // RpcSync(1); // TODO: PLAYER_RPC_CHANNEL at 1? Previously at 0.
+    IOP_RUNNING_W = false;
+    return RpcCall(1, 0, false, &x, 0x30, nullptr, 0);
+  } else {
+    return 0;
   }
-  return iVar1;
 }
+
 /*!
  * Load the TEST.DGO file.
  * Presumably used for debugging DGO loads.
@@ -272,21 +259,25 @@ int StopIOP_G() {
  * UNUSED
  */
 void LoadDGOTest() {
-  undefined4 *puVar1;
-  undefined8 uVar2;
-  u32 local_20 [4];
-  
-  local_20[0] = 0;
-  uVar2 = setStallMsg_G(0);
-  BeginLoadingDGO("TEST.DGO",(u8 *)0x4800000,(u8 *)0x4c00000,(u8 *)0x4000000);
-  while( true ) {
+  u32 lastObject = 0;
+
+  bool lastShowStall = setStallMsg_G(false);
+
+  BeginLoadingDGO("TEST.DGO", (u8 *)0x4800000, (u8 *)0x4c00000, (u8 *)0x4000000);
+  while (true) {
+    u8 *dest_buffer;
     do {
-      puVar1 = (undefined4 *)GetNextDGO(local_20);
-    } while (puVar1 == (undefined4 *)0x0);
-    Msg(6,"Loaded %s at %8.8X length %d\n",puVar1 + 1,puVar1,*puVar1);
-    if (local_20[0] != 0) break;
+      dest_buffer = GetNextDGO(&lastObject);
+    } while (dest_buffer == nullptr);
+
+    Msg(6, "Loaded %s at %8.8X length %d\n", dest_buffer + 1, dest_buffer,
+        *dest_buffer);
+    if (lastObject != 0) {
+      break;
+    }
+
     ContinueLoadingDGO((u8 *)0x4800000);
   }
-  setStallMsg_G(uVar2,0x4c00000,0x4000000);
-  return;
+
+  setStallMsg_G(lastShowStall);
 }
