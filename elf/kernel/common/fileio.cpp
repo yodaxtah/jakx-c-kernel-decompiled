@@ -40,33 +40,29 @@ char* strend(char* str) {
 u32 ReadHufWord(u8** loc_ptr) {
   byte bVar1;
   byte *pbVar2;
-  uint uVar3;
-  byte *pbVar4;
-  uint uVar5;
   
   pbVar2 = *loc_ptr;
-  uVar3 = (uint)*pbVar2;
-  uVar5 = uVar3 & 3;
-  pbVar4 = pbVar2 + 1;
-  if (uVar5 == 2) {
-    bVar1 = *pbVar4;
-    pbVar4 = pbVar2 + 3;
-    uVar3 = uVar3 & 0xfc | (uint)bVar1 << 8 | (uint)pbVar2[2] << 0x10;
+  uint value = (uint)*pbVar2;
+  uint length = value & 3;
+  byte* next_loc = pbVar2 + 1;
+  if (length == 2) {
+    bVar1 = *next_loc;
+    next_loc = pbVar2 + 3;
+    value = value & 0xfc | (uint)bVar1 << 8 | (uint)pbVar2[2] << 0x10;
   }
-  else if (uVar5 < 3) {
-    if (uVar5 == 1) {
-      bVar1 = *pbVar4;
-      pbVar4 = pbVar2 + 2;
-      uVar3 = uVar3 & 0xfc | (uint)bVar1 << 8;
-    }
+  else if (length == 1) {
+    bVar1 = *next_loc;
+    next_loc = pbVar2 + 2;
+    value = value & 0xfc | (uint)bVar1 << 8;
   }
-  else if (uVar5 == 3) {
-    bVar1 = *pbVar4;
-    pbVar4 = pbVar2 + 4;
-    uVar3 = uVar3 & 0xfc | (uint)bVar1 << 8 | (uint)pbVar2[2] << 0x10 | (uint)pbVar2[3] << 0x18;
+  else if (length == 3) {
+    bVar1 = *next_loc;
+    next_loc = pbVar2 + 4;
+    value = value & 0xfc | (uint)bVar1 << 8 | (uint)pbVar2[2] << 0x10 | (uint)pbVar2[3] << 0x18;
   }
-  *loc_ptr = pbVar4;
-  return uVar3;
+
+  *loc_ptr = next_loc;
+  return value;
 }
 
 /*!
