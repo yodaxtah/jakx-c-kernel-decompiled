@@ -35,24 +35,31 @@ char* strend(char* str) {
  * In this limited decoder, your data must have lower two bits equal to zero.
  * @param loc_ptr pointer to pointer to data to read (will be modified to point to next word)
  * @return decoded word
- * TBD, UNUSED, EXACT
+ * DONE, UNUSED, EXACT
  */
 u32 ReadHufWord(u8** loc_ptr) {
-  byte* loc = *loc_ptr;
-  uint value = (uint)*loc;
-  uint length = value & 3;
-  byte* next_loc = loc + 1;
-  if (length == 1) {
-    value = value & 0xfc | (uint)*next_loc << 8;
-    next_loc = loc + 2;
-  }
-  else if (length == 2) {
-    value = value & 0xfc | (uint)*next_loc << 8 | (uint)loc[2] << 0x10;
-    next_loc = loc + 3;
-  }
-  else if (length == 3) {
-    value = value & 0xfc | (uint)*next_loc << 8 | (uint)loc[2] << 0x10 | (uint)loc[3] << 0x18;
-    next_loc = loc + 4;
+  u8* loc = *loc_ptr;
+  u32 value = (u32)*loc;
+  u8* next_loc = loc + 1;
+  u32 length = value & 3;
+  switch (length) {
+    case 1:
+      value = (value & 0xfc) | ((uint)loc[1] << 8);
+      next_loc = loc + 2;
+      break;
+
+    case 2:
+      value = (value & 0xfc) | ((uint)loc[1] << 8) | ((uint)loc[2] << 0x10);
+      next_loc = loc + 3;
+      break;
+
+    case 3:
+      value = (value & 0xfc) | ((uint)loc[1] << 8) | ((uint)loc[2] << 0x10) | ((uint)loc[3] << 0x18);
+      next_loc = loc + 4;
+      break;
+
+    default:
+      ;
   }
 
   *loc_ptr = next_loc;
