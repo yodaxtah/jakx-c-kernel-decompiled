@@ -38,27 +38,21 @@ char* strend(char* str) {
  * TBD, UNUSED, EXACT
  */
 u32 ReadHufWord(u8** loc_ptr) {
-  byte bVar1;
-  byte *pbVar2;
-  
-  pbVar2 = *loc_ptr;
-  uint value = (uint)*pbVar2;
+  byte* loc = *loc_ptr;
+  uint value = (uint)*loc;
   uint length = value & 3;
-  byte* next_loc = pbVar2 + 1;
-  if (length == 2) {
-    bVar1 = *next_loc;
-    next_loc = pbVar2 + 3;
-    value = value & 0xfc | (uint)bVar1 << 8 | (uint)pbVar2[2] << 0x10;
+  byte* next_loc = loc + 1;
+  if (length == 1) {
+    value = value & 0xfc | (uint)*next_loc << 8;
+    next_loc = loc + 2;
   }
-  else if (length == 1) {
-    bVar1 = *next_loc;
-    next_loc = pbVar2 + 2;
-    value = value & 0xfc | (uint)bVar1 << 8;
+  else if (length == 2) {
+    value = value & 0xfc | (uint)*next_loc << 8 | (uint)loc[2] << 0x10;
+    next_loc = loc + 3;
   }
   else if (length == 3) {
-    bVar1 = *next_loc;
-    next_loc = pbVar2 + 4;
-    value = value & 0xfc | (uint)bVar1 << 8 | (uint)pbVar2[2] << 0x10 | (uint)pbVar2[3] << 0x18;
+    value = value & 0xfc | (uint)*next_loc << 8 | (uint)loc[2] << 0x10 | (uint)loc[3] << 0x18;
+    next_loc = loc + 4;
   }
 
   *loc_ptr = next_loc;
