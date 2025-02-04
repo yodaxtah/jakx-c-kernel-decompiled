@@ -1226,7 +1226,7 @@ u64 call_method_of_type_arg2(u32 arg, Type* type, u32 method_id, u32 a1, u32 a2)
  */
 u64 print_object(u32 obj) {
   u64 obj_ = (u64)(int)obj;
-  if (obj_ & 7 == 0) {
+  if ((obj_ & 7) == 0) {
     return (u64)(int)print_binteger((ulong)obj);
   } else {
     if ((obj_ < (ulong)(long)SymbolTable2 || 0x7ffffff < obj_) &&
