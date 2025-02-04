@@ -714,7 +714,7 @@ u32* find_symbol_from_c(uint16_t sym_id, const char* name) {
     u32* sym = (u32 *)(unaff_s7_lo + extended_sym_id + -1);
     if (sym != (u32 *)(unaff_s7_lo - 7)) {
       int existing_name = = *(int *)((int)sym + (SymbolString - unaff_s7_lo));
-      if (existing_name != 0) && existing_name != UnknownName && strcmp((char *)(existing_name + 4), name) != 0) {
+      if (existing_name != 0 && existing_name != UnknownName && strcmp((char *)(existing_name + 4), name) != 0) {
         MsgWarn(
             "dkernel: WARNING: attempting to find symbol %s at id #x%x but symbol %s was "
             "already there.\n",
