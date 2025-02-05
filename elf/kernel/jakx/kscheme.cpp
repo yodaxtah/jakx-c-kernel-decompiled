@@ -626,7 +626,7 @@ u32* find_symbol_in_area(const char* name, u32 start, u32 end) {
   for (u32 i = start; i < end; i += 4) {
     int unaff_s7_lo;
     int str = *(int *)(i + (SymbolString - unaff_s7_lo));
-    if ((str != 0) && strcmp((char *)(iVar1 + 4), name) == 0) {
+    if ((str != 0) && !strcmp((char *)(iVar1 + 4), name)) {
       return (u32*)i;
     }
   }
@@ -714,7 +714,7 @@ u32* find_symbol_from_c(uint16_t sym_id, const char* name) {
     u32* sym = (u32 *)(unaff_s7_lo + extended_sym_id + -1);
     if (sym != (u32 *)(unaff_s7_lo - 7)) {
       int existing_name = = *(int *)((int)sym + (SymbolString - unaff_s7_lo));
-      if (existing_name != 0 && existing_name != UnknownName && strcmp((char *)(existing_name + 4), name) != 0) {
+      if (existing_name != 0 && existing_name != UnknownName && strcmp((char *)(existing_name + 4), name)) { // TODO: Why not !strcmp in Jak X like Jak 3?
         MsgWarn(
             "dkernel: WARNING: attempting to find symbol %s at id #x%x but symbol %s was "
             "already there.\n",

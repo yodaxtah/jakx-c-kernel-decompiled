@@ -287,7 +287,7 @@ s32 InitIOP() {
     }
     printf("dkernel: audio language mask = 0x%08x\n", AUDIO_LANGUAGE_MASK_G);
     if (RUN_AS_DEMO_W) {
-      if (strcmp(DebugBootMessage, "demo") == 0 || strcmp(DebugBootMessage,"demo-shared") == 0) {
+      if (!strcmp(DebugBootMessage, "demo") || !strcmp(DebugBootMessage,"demo-shared")) {
         masterConfig.aspect = 1;
       }
       else {
@@ -632,9 +632,9 @@ u64 kopen(u64 fs, u64 name, u64 mode) {
   }
   int unaff_s7_lo;
   undefined4 symbol_to_cstring_mode = *(int *)(((u32)mode - unaff_s7_lo) + SymbolString) + 4;
-  if (strcmp((char *)(symbol_to_cstring_mode), "read") == 0) {
+  if (!strcmp((char *)(symbol_to_cstring_mode), "read")) {
     file_stream->file = sceOpen(buffer,1);
-  } else if (strcmp((char *)(symbol_to_cstring_mode), "append") == 0) {
+  } else if (!strcmp((char *)(symbol_to_cstring_mode), "append")) {
     file_stream->file = sceOpen(buffer, 0x202);
   } else {
     file_stream->file = sceOpen(buffer, 0x602);

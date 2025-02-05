@@ -74,7 +74,7 @@ s32 goal_main(int argc, const char** argv) {
       masterConfig.language = 0;
       break;
   }
-  if ((strcmp(DebugBootMessage, "demo") == 0) || (strcmp(DebugBootMessage, "demo-shared") == 0)) {
+  if (!strcmp(DebugBootMessage, "demo") || !strcmp(DebugBootMessage, "demo-shared")) {
     masterConfig.aspect = 1;
   }
   DiskBoot = 1;
