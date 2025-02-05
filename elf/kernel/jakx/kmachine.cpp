@@ -42,132 +42,130 @@ using namespace ee;
  * Modified to use std::string, and removed call to fflush.
  */
 void InitParms(int argc, const char** argv) {  
-  if (argc != 0) {
-    for (int i = 1; i < argc; i++) {
-      const char* arg = argv[i];
+  for (int i = 1; i < argc; i++) {
+    std::string arg = argv[i];
 
-      if (strcmp(arg, "-cd") == 0) {
-        Msg(6, "dkernel: cd mode\n");
-        reboot_G_isodrv_G_overlord_S = 0;
-        modsrc_S = 0;
-        fs_S_FS_INITIALIZED_W = (char **)0x0;
-        isodrv_G_reboot_G = 0;
-      }
-      
-      else if (strcmp(arg, "-cd-local-overlord") == 0) {
-        Msg(6, "dkernel: cd local-overlord mode\n");
-        reboot_G_isodrv_G_overlord_S = 1;
-        modsrc_S = 0;
-        fs_S_FS_INITIALIZED_W = (char **)0x0;
-        isodrv_G_reboot_G = 0;
-      }
-      
-      else if (strcmp(arg, "-cddata") == 0) {
-        Msg(6, "dkernel: cddata mode\n");
-        fs_S_FS_INITIALIZED_W = (char **)0x0;
-        isodrv_G_reboot_G = 1;
-        modsrc_S = 1;
-        reboot_G_isodrv_G_overlord_S = 1;
-      }
-      
-      else if (strcmp(arg, "-demo") == 0) {
-        Msg(6, "dkernel: demo mode\n");
-        strcpy(DebugBootMessage, "demo");
-      }
-      
-      else if (strcmp(arg, "-kiosk") == 0) {
-        Msg(6, "dkernel: kiosk mode\n");
-        strcpy(DebugBootMessage, "kiosk");
-      }
+    if (arg == "-cd") {
+      Msg(6, "dkernel: cd mode\n");
+      reboot_G_isodrv_G_overlord_S = 0;
+      modsrc_S = 0;
+      fs_S_FS_INITIALIZED_W = (char **)0x0;
+      isodrv_G_reboot_G = 0;
+    }
 
-      else if (strcmp(arg, "-beta") == 0) {
-        Msg(6, "dkernel: beta mode\n");
-        strcpy(DebugBootMessage, "beta");
-      }
-      
-      else if (strcmp(arg, "-preview") == 0) {
-        Msg(6, "dkernel: preview mode\n");
-        strcpy(DebugBootMessage, "preview");
-      }
+    if (arg == "-cd-local-overlord") {
+      Msg(6, "dkernel: cd local-overlord mode\n");
+      reboot_G_isodrv_G_overlord_S = 1;
+      modsrc_S = 0;
+      fs_S_FS_INITIALIZED_W = (char **)0x0;
+      isodrv_G_reboot_G = 0;
+    }
 
-      else if (strcmp(arg, "-fakeiso") == 0) {
-        Msg(6, "dkernel: fakeiso mode\n");
-        fs_S_FS_INITIALIZED_W = (char **)0x1;
-        isodrv_G_reboot_G = 1;
-        modsrc_S = 1;
-        reboot_G_isodrv_G_overlord_S = 1;
-      }
-      
-      else if (strcmp(arg, "-boot") == 0) {
-        Msg(6, "dkernel: boot mode\n");
-        MasterDebug = 0;
-        DiskBoot = 1;
-        DebugSegment = 0;
-      }
-      
-      else if (strcmp(arg, "-debug-boot") == 0) {
-        Msg(6, "dkernel: debug-boot mode\n");
-        MasterDebug = 0;
-        DebugSegment = 1;
-        DiskBoot = 1;
-      }
-      
-      else if (strcmp(arg, "-debug") == 0) {
-        Msg(6, "dkernel: debug mode\n");
-        MasterDebug = 1;
-        DebugSegment = 1;
-      }
-      
-      else if (strcmp(arg, "-debug-mem") == 0) {
-        Msg(6, "dkernel: debug-mem mode\n");
-        MasterDebug = 1;
-        DebugSegment = 0;
-      }
-      
-      else if (strcmp(arg, "-overlord") == 0) {
-        Msg(6, "dkernel: overlord 1 mode\n");
-        _USE_OVERLORD2 = 0;
-      }
-      
-      else if (strcmp(arg, "-overlord2") == 0) {
-        Msg(6, "dkernel: overlord 2 mode\n");
-        _USE_OVERLORD2 = 1;
-      }
-      
-      else if (strcmp(arg, "-debug-symbols") == 0) {
-        Msg(6, "dkernel: debug-symbols on\n");
-        DebugSymbols = 1;
-      }
-      
-      else if (strcmp(arg, "-no-debug-symbols") == 0) {
-        Msg(6, "dkernel: debug-symbols off\n");
-        DebugSymbols = 0;
-      }
-      
-      else if ((strcmp(arg, "-level") == 0) && (1 < argc)) {
-        std::string levelName = argv[++i];
-        std::string symbolId = argv[++i];
-        Msg(6, "dkernel: level %s %s\n", levelName.c_str(), symbolId.c_str());
-        strcpy(DebugBootLevel, levelName.c_str());
-        DebugBootLevelID = DecodeSymbolId(atoi(argv[2])) + 1;
-      }
-      
-      else if ((strcmp(arg, "-user") == 0) && (1 < argc)) {
+    if (arg == "-cddata") {
+      Msg(6, "dkernel: cddata mode\n");
+      fs_S_FS_INITIALIZED_W = (char **)0x0;
+      isodrv_G_reboot_G = 1;
+      modsrc_S = 1;
+      reboot_G_isodrv_G_overlord_S = 1;
+    }
+
+    if (arg == "-demo") {
+      Msg(6, "dkernel: demo mode\n");
+      strcpy(DebugBootMessage, "demo");
+    }
+
+    if (arg == "-kiosk") {
+      Msg(6, "dkernel: kiosk mode\n");
+      strcpy(DebugBootMessage, "kiosk");
+    }
+
+    if (arg == "-beta") {
+      Msg(6, "dkernel: beta mode\n");
+      strcpy(DebugBootMessage, "beta");
+    }
+
+    if (arg == "-preview") {
+      Msg(6, "dkernel: preview mode\n");
+      strcpy(DebugBootMessage, "preview");
+    }
+
+    if (arg == "-fakeiso") {
+      Msg(6, "dkernel: fakeiso mode\n");
+      fs_S_FS_INITIALIZED_W = (char **)0x1;
+      isodrv_G_reboot_G = 1;
+      modsrc_S = 1;
+      reboot_G_isodrv_G_overlord_S = 1;
+    }
+
+    if (arg == "-boot") {
+      Msg(6, "dkernel: boot mode\n");
+      MasterDebug = 0;
+      DiskBoot = 1;
+      DebugSegment = 0;
+    }
+
+    if (arg == "-debug-boot") {
+      Msg(6, "dkernel: debug-boot mode\n");
+      MasterDebug = 0;
+      DebugSegment = 1;
+      DiskBoot = 1;
+    }
+
+    if (arg == "-debug") {
+      Msg(6, "dkernel: debug mode\n");
+      MasterDebug = 1;
+      DebugSegment = 1;
+    }
+
+    if (arg == "-debug-mem") {
+      Msg(6, "dkernel: debug-mem mode\n");
+      MasterDebug = 1;
+      DebugSegment = 0;
+    }
+
+    if (arg == "-overlord") {
+      Msg(6, "dkernel: overlord 1 mode\n");
+      _USE_OVERLORD2 = 0;
+    }
+
+    if (arg == "-overlord2") {
+      Msg(6, "dkernel: overlord 2 mode\n");
+      _USE_OVERLORD2 = 1;
+    }
+
+    if (arg == "-debug-symbols") {
+      Msg(6, "dkernel: debug-symbols on\n");
+      DebugSymbols = 1;
+    }
+
+    if (arg == "-no-debug-symbols") {
+      Msg(6, "dkernel: debug-symbols off\n");
+      DebugSymbols = 0;
+    }
+
+    if ((arg == "-level") && (1 < argc)) {
+      std::string levelName = argv[++i];
+      std::string symbolId = argv[++i];
+      Msg(6, "dkernel: level %s %s\n", levelName.c_str(), symbolId.c_str());
+      strcpy(DebugBootLevel, levelName.c_str());
+      DebugBootLevelID = DecodeSymbolId(atoi(argv[2])) + 1;
+    }
+
+    if ((arg == "-user") && (1 < argc)) {
+      i++;
+      std::string userName = argv[i];
+      Msg(6, "dkernel: user %s\n", userName.c_str());
+      strcpy(DebugBootUser, userName.c_str());
+    }
+
+    if (arg == "-art") {
+      if (1 < argc) { // FIXME
         i++;
-        std::string userName = argv[i];
-        Msg(6, "dkernel: user %s\n", userName.c_str());
-        strcpy(DebugBootUser, userName.c_str());
-      }
-      
-      else if (strcmp(arg, "-art") == 0) {
-        if (1 < argc) {
-          i++;
-          std::string artGroupName = argv[i];
-          Msg(6, "dkernel: art-group %s\n", artGroupName);
-          if (strlen(artGroupName) != 0) {
-            strcpy(DebugBootArtGroup, artGroupName);
-            strcpy(DebugBootMessage, "art-group");
-          }
+        std::string artGroupName = argv[i];
+        Msg(6, "dkernel: art-group %s\n", artGroupName);
+        if (strlen(artGroupName) != 0) {
+          strcpy(DebugBootArtGroup, artGroupName);
+          strcpy(DebugBootMessage, "art-group");
         }
       }
     }
