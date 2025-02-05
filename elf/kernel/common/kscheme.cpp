@@ -44,30 +44,30 @@ void kscheme_init_globals_common() {
  * Initialize CRC Table.
  * TBD
  */
-void __thiscall CCrc32.Init_T(void* this,uint* param_1) {
+void CCrc32.Init_T(uint *table_W) {
+  uint i;
+  int j;
   uint uVar1;
-  int iVar2;
-  uint uVar3;
-  uint uVar4;
-  uint uVar5;
+  uint n;
+  uint uVar2;
   
-  uVar1 = 0;
+  i = 0;
   do {
-    iVar2 = 7;
-    uVar4 = uVar1;
+    j = 7;
+    n = i;
     do {
-      uVar3 = uVar4 >> 1;
-      uVar5 = uVar4 & 1;
-      uVar4 = uVar3;
-      if (uVar5 != 0) {
-        uVar4 = uVar3 ^ 0xedb88320;
+      uVar1 = n >> 1;
+      uVar2 = n & 1;
+      n = uVar1;
+      if (uVar2 != 0) {
+        n = uVar1 ^ 0xedb88320;
       }
-      iVar2 = iVar2 + -1;
-    } while (-1 < iVar2);
-    *(uint *)this = uVar4;
-    uVar1 = uVar1 + 1;
-    this = (void *)((int)this + 4);
-  } while (uVar1 < 0x100);
+      j = j + -1;
+    } while (-1 < j);
+    *table_W = n;
+    i = i + 1;
+    table_W = table_W + 1;
+  } while (i < 0x100);
   return;
 }
 
