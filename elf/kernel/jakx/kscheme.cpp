@@ -849,43 +849,39 @@ static bool is_valid_type(u32 addr) {
 Type* alloc_and_init_type(undefined* sym,
                           u32 method_count,
                           bool force_global_type) {
-  Type **ppTVar1;
-  Type *pTVar2;
-  uint size;
-  Type *pTVar3;
   u32 type_mem;
   u32 type;
   u32 in_a3_lo;
   int unaff_s7_lo;
   
   kheaplogging = true;
-  size = method_count * 4 + 0x23 & 0xfffffff0;
+  uint type_size = method_count * 4 + 0x23 & 0xfffffff0;
   if ((force_global_type) || (*(int *)(unaff_s7_lo + 0xa7) == *(int *)(unaff_s7_lo + 0x9f))) {
     type = *(u32 *)(unaff_s7_lo + 0x17);
   }
   else {
-    ppTVar1 = *(Type ***)(LevelTypeList + -1);
-    if (ppTVar1 != (Type **)0x0) {
-      type_mem = alloc_heap_object(unaff_s7_lo + 0xa8,*(u32 *)(unaff_s7_lo + 0x17),size,in_a3_lo);
-      pTVar2 = *ppTVar1;
-      pTVar3 = (Type *)type_mem;
-      *ppTVar1 = pTVar3;
-      pTVar3->memusage_method = (Function *)pTVar2;
-      *(Type **)(sym + -1) = pTVar3;
-      pTVar3->padded_size = (u16)size;
-      pTVar3->allocated_size = (u16)size;
+    Type** type_list_ptr = *(Type ***)(LevelTypeList + -1);
+    if (type_list_ptr != nullptr) {
+      type_mem = alloc_heap_object(unaff_s7_lo + 0xa8, *(u32 *)(unaff_s7_lo + 0x17), type_size, in_a3_lo);
+      Type *old_head = *type_list_ptr;
+      Type *the_type = (Type *)type_mem;
+      *type_list_ptr = the_type;
+      the_type->memusage_method = (Function *)old_head;
+      *(Type **)(sym + -1) = the_type;
+      the_type->allocated_size = (u16)type_size;
+      the_type->padded_size = (u16)type_size;
       kheaplogging = false;
-      return pTVar3;
+      return the_type;
     }
     MsgErr("dkernel: trying to init loading level type \'%s\' while type-list is undefined\n",
            *(int *)(sym + (SymbolString - unaff_s7_lo)) + 4);
     type = *(u32 *)(unaff_s7_lo + 0x17);
   }
-  type_mem = alloc_heap_object(unaff_s7_lo + 0xa0,type,size,in_a3_lo);
+  type_mem = alloc_heap_object(unaff_s7_lo + 0xa0, type, type_size, in_a3_lo);
   Type* the_type = (Type *)type_mem;
   *(Type **)(sym + -1) = the_type;
-  the_type->allocated_size = (u16)size;
-  the_type->padded_size = (u16)size;
+  the_type->allocated_size = (u16)type_size;
+  the_type->padded_size = (u16)type_size;
   kheaplogging = false;
   return the_type;
 }
