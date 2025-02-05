@@ -42,16 +42,15 @@ void kscheme_init_globals_common() {
 
 /*!
  * Initialize CRC Table.
- * TBD
+ * DONE.
  */
 void CCrc32.Init_T(uint *table_W) {
-  for (uint i = 0; i < 0x100; i++) {
-    uint n = i;
-    for (int j = 7; j > -1; j--) {
+  for (u32 i = 0; i < 0x100; i++) {
+    u32 n = i;
+    for (u32 j = 0; j < 8; j++) {
       n = (n & 1 != 0) ? (n >> 1) ^ 0xedb88320 : (n >> 1);
     }
-    table_W[0] = n;
-    table_W++;
+    table_W[i] = n;
   }
 }
 
