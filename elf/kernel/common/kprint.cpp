@@ -137,127 +137,54 @@ void output_segment_load(const char* name, void* link_block, u32 flags) {
  * Print to the GOAL print buffer from C
  * seeks PrintPending to begining of what was just printed.
  * This is a different behavior from all the other prints!
- * TBD, EXACT
+ * DONE, EXACT
  */
 void cprintf(const char* format, ...) {
-  undefined8 in_a1;
-  undefined8 in_a2;
-  undefined8 in_a3;
-  undefined8 in_t0;
-  undefined8 in_t1;
-  undefined8 in_t2;
-  undefined8 in_t3;
-  undefined8 local_38;
-  undefined8 local_30;
-  undefined8 local_28;
-  undefined8 local_20;
-  undefined8 local_18;
-  undefined8 local_10;
-  undefined8 local_8;
-  
+  va_list args;
+  va_start(args, format);
   char* str = PrintPending;
-  if (PrintPending == nullptr) {
+  if (PrintPending == nullptr)
     str = PrintBufArea + 0x18;
-  }
-  local_38 = in_a1;
-  local_30 = in_a2;
-  local_28 = in_a3;
-  local_20 = in_t0;
-  local_18 = in_t1;
-  local_10 = in_t2;
-  local_8 = in_t3;
   PrintPending = strend(str);
-  vsprintf(PrintPending, format, &local_38);
+  vsprintf(PrintPending, format, args);
+
+  va_end(args);
 }
 
 /*!
  * Print directly to the C stdout
  * The "k" parameter is ignored, so this is just like printf
- * TBD, changed vprintf to lg::printstd
+ * DONE, changed vprintf to lg::printstd
  */
 void Msg(s32 k, const char* format, ...) {
-  undefined8 in_a2;
-  undefined8 in_a3;
-  undefined8 in_t0;
-  undefined8 in_t1;
-  undefined8 in_t2;
-  undefined8 in_t3;
-  undefined8 local_30;
-  undefined8 local_28;
-  undefined8 local_20;
-  undefined8 local_18;
-  undefined8 local_10;
-  undefined8 local_8;
-  
-  local_30 = in_a2;
-  local_28 = in_a3;
-  local_20 = in_t0;
-  local_18 = in_t1;
-  local_10 = in_t2;
-  local_8 = in_t3;
-  vprintf(format, &local_30);
+  va_list args;
+  va_start(args, format);
+  vprintf(format, args);
+  va_end(args);
 }
 
 /*!
  * Print directly to the C stdout
  * This is idential to Msg
- * TBD, changed vprintf to lg::printstd
+ * DONE, changed vprintf to lg::printstd
  */
 void MsgWarn(const char* format, ...) {
-  undefined8 in_a1;
-  undefined8 in_a2;
-  undefined8 in_a3;
-  undefined8 in_t0;
-  undefined8 in_t1;
-  undefined8 in_t2;
-  undefined8 in_t3;
-  undefined8 local_38;
-  undefined8 local_30;
-  undefined8 local_28;
-  undefined8 local_20;
-  undefined8 local_18;
-  undefined8 local_10;
-  undefined8 local_8;
-  
-  local_38 = in_a1;
-  local_30 = in_a2;
-  local_28 = in_a3;
-  local_20 = in_t0;
-  local_18 = in_t1;
-  local_10 = in_t2;
-  local_8 = in_t3;
-  vprintf(format, &local_38);
+  va_list args;
+  va_start(args, format);
+  vprintf(format, args);
+  va_end(args);
 }
 
 /*!
  * Print directly to the C stdout
  * This is idential to Msg
- * TBD, changed vprintf to lg::printstd
+ * DONE, changed vprintf to lg::printstd
  */
 void MsgErr(const char* format, ...) {
-  undefined8 in_a1;
-  undefined8 in_a2;
-  undefined8 in_a3;
-  undefined8 in_t0;
-  undefined8 in_t1;
-  undefined8 in_t2;
-  undefined8 in_t3;
-  undefined8 local_38;
-  undefined8 local_30;
-  undefined8 local_28;
-  undefined8 local_20;
-  undefined8 local_18;
-  undefined8 local_10;
-  undefined8 local_8;
-  
-  local_38 = in_a1;
-  local_30 = in_a2;
-  local_28 = in_a3;
-  local_20 = in_t0;
-  local_18 = in_t1;
-  local_10 = in_t2;
-  local_8 = in_t3;
-  vprintf(format, &local_38);
+  va_list args;
+  va_start(args, format);
+  vprintf(format, args);
+  va_end(args);
 }
 
 /*!
