@@ -58,18 +58,21 @@ void kprint_init_globals_common() {
  * Allocates buffers.
  */
 void init_output() {
-  if ((MasterDebug == 0) && (DebugSegment == 0)) {
-    MessBufArea = nullptr;
-    OutputBufArea = nullptr;
-    PrintBufArea =
-        kmalloc(kglobalheapinfo, 0x2000, 0x1100, "print-buf");
-  } else {
+  bool use_debug = (MasterDebug == 0) && (DebugSegment == 0);
+
+  if (use_debug) {
     MessBufArea = kmalloc(kdebugheap, 0x80000, 0x1100,
                           "mess-buf");
     OutputBufArea = kmalloc(kdebugheap, 0x80000,
-                          0x1100, "output-buf");
+                            0x1100, "output-buf");
     PrintBufArea = kmalloc(kdebugheap, 0x200000, 0x1100,
                           "print-buf");
+  } else {
+    MessBufArea = nullptr;
+    OutputBufArea = nullptr;
+
+    PrintBufArea =
+        kmalloc(kglobalheapinfo, 0x2000, 0x1100, "print-buf");
   }
 }
 
@@ -99,6 +102,7 @@ void reset_output() {
   if (MasterDebug != 0) {
     undefined *unaff_s7_lo;
     sprintf((char *)(OutputBufArea + 0x18), "reset #x%x\n", unaff_s7_lo);
+
     OutputPending = OutputBufArea + 0x18;
   }
 }
