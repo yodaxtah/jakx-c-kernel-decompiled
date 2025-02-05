@@ -850,21 +850,31 @@ Type* alloc_and_init_type(undefined* sym,
                           u32 method_count,
                           bool force_global_type) {
   u32 type_mem;
-  u32 type;
+  u32 u32_in_fixed_sym_FIX_SYM_TYPE_TYPE_ = *(u32 *)(unaff_s7_lo + 0x17);
   u32 in_a3_lo;
   int unaff_s7_lo;
   
   kheaplogging = true;
   uint type_size = method_count * 4 + 0x23 & 0xfffffff0;
   if ((force_global_type) || (*(int *)(unaff_s7_lo + 0xa7) == *(int *)(unaff_s7_lo + 0x9f))) {
-    type = *(u32 *)(unaff_s7_lo + 0x17);
   }
   else {
     Type** type_list_ptr = *(Type ***)(LevelTypeList + -1);
-    if (type_list_ptr != nullptr) {
-      type_mem = alloc_heap_object(unaff_s7_lo + 0xa8, *(u32 *)(unaff_s7_lo + 0x17), type_size, in_a3_lo);
-      Type *old_head = *type_list_ptr;
-      Type *the_type = (Type *)type_mem;
+    if (type_list_ptr == nullptr) {
+      MsgErr("dkernel: trying to init loading level type \'%s\' while type-list is undefined\n",
+             *(int *)(sym + (SymbolString - unaff_s7_lo)) + 4);
+      type_mem = alloc_heap_object(unaff_s7_lo + 0xa0, u32_in_fixed_sym_FIX_SYM_TYPE_TYPE_, type_size, in_a3_lo);
+      Type* the_type = (Type *)type_mem;
+      *(Type **)(sym + -1) = the_type;
+      the_type->allocated_size = (u16)type_size;
+      the_type->padded_size = (u16)type_size;
+      kheaplogging = false;
+      return the_type;
+    } else {
+      type_mem = alloc_heap_object(unaff_s7_lo + 0xa8,
+                                   u32_in_fixed_sym_FIX_SYM_TYPE_TYPE_, type_size, in_a3_lo);
+      Type* old_head = *type_list_ptr;
+      Type* the_type = (Type *)type_mem;
       *type_list_ptr = the_type;
       the_type->memusage_method = (Function *)old_head;
       *(Type **)(sym + -1) = the_type;
@@ -873,11 +883,9 @@ Type* alloc_and_init_type(undefined* sym,
       kheaplogging = false;
       return the_type;
     }
-    MsgErr("dkernel: trying to init loading level type \'%s\' while type-list is undefined\n",
-           *(int *)(sym + (SymbolString - unaff_s7_lo)) + 4);
-    type = *(u32 *)(unaff_s7_lo + 0x17);
   }
-  type_mem = alloc_heap_object(unaff_s7_lo + 0xa0, type, type_size, in_a3_lo);
+  type_mem = alloc_heap_object(unaff_s7_lo + 0xa0,
+                               u32_in_fixed_sym_FIX_SYM_TYPE_TYPE_, type_size, in_a3_lo);
   Type* the_type = (Type *)type_mem;
   *(Type **)(sym + -1) = the_type;
   the_type->allocated_size = (u16)type_size;
