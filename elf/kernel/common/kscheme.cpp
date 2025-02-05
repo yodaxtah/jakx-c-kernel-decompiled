@@ -56,30 +56,19 @@ void CCrc32.Init_T(uint *table_W) {
 
 /*!
  * Take the CRC32 hash of some data
- * TBD
+ * DONE.
  */
-uint Crc32_WT(const_uchar* data_W,int size) {
-  bool bVar1;
-  byte bVar2;
-  uint uVar3;
-  int iVar4;
-  
+uint Crc32_WT(const_uchar* data, int size) {
   if (!Crc32_Initialized_W) {
-    CCrc32.Init_T(crc_table_WG,(uint *)size);
+    CCrc32.Init_T(crc_table_WG);
     Crc32_Initialized_W = true;
   }
-  uVar3 = 0xffffffff;
-  iVar4 = size + -1;
-  if (0 < size) {
-    do {
-      bVar2 = *data_W;
-      data_W = data_W + 1;
-      bVar1 = 0 < iVar4;
-      uVar3 = crc_table_WG[uVar3 & 0xff ^ (uint)bVar2] ^ uVar3 >> 8;
-      iVar4 = iVar4 + -1;
-    } while (bVar1);
+  uint crc = 0xffffffff;
+  for (int i = size; i > 0; i--, data++) {
+    crc = crc_table_WG[crc & 0xff ^ (uint)*data] ^ (crc >> 8);
   }
-  return ~uVar3;
+
+  return ~crc;
 }
 
 /*!
