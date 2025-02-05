@@ -80,40 +80,32 @@ void InitCD() {
  * TBD
  */
 void InitVideo() {
-  bool bVar1;
-  int iVar2;
   undefined auStack_b0 [96];
+  sceGsResetGraph(0, 1, 3, 0);
+  sceGsSetDefLoadImage(auStack_b0, 0x2c00, 8, 0, 0, 0, 0x200, 0xe0);
+  FlushCache(0);
+  sceGsExecLoadImage(auStack_b0, 0x1000000);
+  sceGsSetDefLoadImage(auStack_b0, 0x2c00, 8, 0, 0, 0xe0, 0x200, 0xe0);
+  FlushCache(0);
+  sceGsExecLoadImage(auStack_b0, 0x1070000);
+
   DisplayEnv display_W;
-  
-  sceGsResetGraph(0,1,3,0);
-  sceGsSetDefLoadImage(auStack_b0,0x2c00,8,0,0,0,0x200,0xe0);
-  FlushCache(0);
-  sceGsExecLoadImage(auStack_b0,0x1000000);
-  sceGsSetDefLoadImage(auStack_b0,0x2c00,8,0,0,0xe0,0x200,0xe0);
-  FlushCache(0);
-  sceGsExecLoadImage(auStack_b0,0x1070000);
-  memset(&display_W,0,0x28);
+  memset(&display_W, 0, 0x28);
   display_W.gs_pmode2 = display_W.gs_pmode2 & 0xfffffffffffffffd | 1;
   display_W.gs_pmode = display_W.gs_pmode & 0xfffffffffffffffd | 0x60;
   display_W.gs_display_fb = display_W.gs_display_fb & 0xffc00000fff00000 | 0x1160;
-  if (false) {
-    trap(7);
-  }
   display_W.gs_display = display_W.gs_display & 0xff800000e0000000 | 0x1bf9ff0204a28c;
   display_W.gs_bgcolor._0_1_ = 0;
   display_W.gs_bgcolor._1_1_ = 0;
   display_W.gs_bgcolor._2_1_ = 0;
+
   sceGsSyncV(0);
   sceGsPutDispEnv(&display_W);
-  iVar2 = 4;
-  do {
+  for (int i = 0; i < 4; i++) {
     sceGsSyncV(0);
-    bVar1 = -1 < iVar2;
-    iVar2 = iVar2 + -1;
-  } while (bVar1);
+  }
   display_W.gs_pmode = display_W.gs_pmode | 2;
   sceGsPutDispEnv(&display_W);
-  return;
 }
 
 /*!
