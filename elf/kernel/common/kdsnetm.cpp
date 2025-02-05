@@ -123,7 +123,7 @@ void GoalProtoHandler(int event, int param, void* opt) {
 /*!
  * Low level DECI2 send
  * Will block until send is complete.
- * TBD, original version used an uncached address and had a FlushCache call, which were both
+ * DONE, original version used an uncached address and had a FlushCache call, which were both
  * removed
  */
 s32 SendFromBufferD(s32 msg_kind, u64 msg_id, char* data, s32 size) {

@@ -9,7 +9,7 @@
  * Return the size of the message in bytes (not including DECI or GOAL headers)
  * Return -1 on error.
  * The buffer parameter is unused.
- * TBD, removed call to FlushCache(0);
+ * DONE, removed call to FlushCache(0);
  */
 u32 ReceiveToBuffer(char* buff) {
   if (0x17 >= protoBlock.last_receive_size) {

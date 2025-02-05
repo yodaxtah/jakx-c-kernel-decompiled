@@ -43,6 +43,7 @@ void kmalloc_init_globals_common() {
 u8* ksmalloc(kheapinfo* heap, s32 size, u32 flags, char const* name) {
   u32 align = flags & 0xfff;
   u8 *mem;
+
   if ((flags & 0x1000) == 0) {
     // mem = (u8 *)malloc((long)(int)(size + align));
   } else {
@@ -105,9 +106,9 @@ kheapinfo* kinitheap(kheapinfo* heap, u8* mem, s32 size) {
 
 /*!
  * Return how much of the bottom (non-temp) allocator is used.
- * TBD, EXACT
+ * DONE, EXACT
  */
-u32 kheapused(kheapinfo *heap) {
+u32 kheapused(kheapinfo* heap) {
   return (int)heap->current - (int)heap->base;
 }
 
@@ -118,7 +119,7 @@ u32 kheapused(kheapinfo *heap) {
  * @param flags   : flags for alignment, top/bottom allocation, set to zero
  * @param name    : name of allocation (printed if things go wrong)
  * @return        : memory.  0 if we run out of room
- * TBD, PRINT ADDED
+ * DONE, PRINT ADDED
  */
 u8* kmalloc(kheapinfo* heap, s32 size, u32 flags, char const* name) {
   uint alignment_flag = flags & 0xfff;
@@ -132,13 +133,12 @@ u8* kmalloc(kheapinfo* heap, s32 size, u32 flags, char const* name) {
   u8* memstart;
 
   if ((flags & 0x2000) == 0) {
-    if (alignment_flag == 0x40) {
+    if (alignment_flag == 0x40)
       memstart = 0xffffffc0 & (uint)(heap->current + 0x3f);
-    } else if (alignment_flag == 0x100) {
+    else if (alignment_flag == 0x100)
       memstart = 0xffffff00 & (uint)(heap->current + 0xff);
-    } else {
+    else
       memstart = 0xfffffff0 & (uint)(heap->current + 0xf);
-    }
 
     if (size == 0) {
       return memstart;
@@ -206,6 +206,6 @@ u8* kmalloc(kheapinfo* heap, s32 size, u32 flags, char const* name) {
 /*!
  * GOAL does not support automatic freeing of memory. This function does nothing.
  * Programmers wishing to free memory must do it themselves.
- * TBD, PRINT ADDED
+ * DONE, PRINT ADDED
  */
 void kfree(u8* a) {}
