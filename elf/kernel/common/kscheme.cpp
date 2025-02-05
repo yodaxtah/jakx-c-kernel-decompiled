@@ -45,28 +45,21 @@ void kscheme_init_globals_common() {
  * TBD
  */
 void CCrc32.Init_T(uint *table_W) {
-  uint i;
-  int j;
-  uint uVar1;
-  uint n;
-  uint uVar2;
-  
-  i = 0;
+  uint i = 0;
   do {
-    j = 7;
-    n = i;
+    int j = 7;
+    uint n = i;
     do {
-      uVar1 = n >> 1;
-      uVar2 = n & 1;
-      n = uVar1;
-      if (uVar2 != 0) {
-        n = uVar1 ^ 0xedb88320;
+      if (n & 1 != 0) {
+        n = (n >> 1) ^ 0xedb88320;
+      } else {
+        n = (n >> 1);
       }
-      j = j + -1;
+      j--;
     } while (-1 < j);
     *table_W = n;
-    i = i + 1;
-    table_W = table_W + 1;
+    i++;
+    table_W++;
   } while (i < 0x100);
   return;
 }
