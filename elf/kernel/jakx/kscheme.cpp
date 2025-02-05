@@ -844,9 +844,9 @@ static bool is_valid_type(u32 addr) {
 /*!
  * Given a symbol for the type name, allocate memory for a type and add it to the symbol table.
  * New: in Jak 2, there's a level type list
- * TBD
+ * DONE
  */
-Type* alloc_and_init_type(undefined* sym,
+Type* alloc_and_init_type(Type** sym,
                           u32 method_count,
                           bool force_global_type) {
   u32 in_a3_lo;
@@ -863,24 +863,12 @@ Type* alloc_and_init_type(undefined* sym,
       MsgErr("dkernel: trying to init loading level type \'%s\' while type-list is undefined\n",
              *(int *)(sym + (SymbolString - unaff_s7_lo)) + 4);
       type_mem = alloc_heap_object(unaff_s7_lo + 0xa0, u32_in_fixed_sym_FIX_SYM_TYPE_TYPE_, type_size, in_a3_lo);
-      Type* the_type = (Type *)type_mem;
-      *(Type **)(sym + -1) = the_type;
-      the_type->allocated_size = (u16)type_size;
-      the_type->padded_size = (u16)type_size;
-      kheaplogging = false;
-      return the_type;
     } else {
       type_mem = alloc_heap_object(unaff_s7_lo + 0xa8,
                                    u32_in_fixed_sym_FIX_SYM_TYPE_TYPE_, type_size, in_a3_lo);
       Type* old_head = *type_list_ptr;
       *type_list_ptr = (Type *)type_mem;
       type_mem->memusage_method = (Function *)old_head;
-      Type* the_type = (Type *)type_mem;
-      *(Type **)(sym + -1) = the_type;
-      the_type->allocated_size = (u16)type_size;
-      the_type->padded_size = (u16)type_size;
-      kheaplogging = false;
-      return the_type;
     }
   } else {
     type_mem = alloc_heap_object(unaff_s7_lo + 0xa0,
@@ -908,7 +896,7 @@ Type* intern_type_from_c(int a, int b, const char* name, u64 methods) {
     } else if (methods == 1) {
       methods = 0x2c;
     }
-    Type* type = alloc_and_init_type((undefined *)symbol,(u32)methods,false);
+    Type* type = alloc_and_init_type(symbol,(u32)methods,false);
     type->symbol = symbol;
     type->num_methods = (u16)methods;
     return type;
@@ -950,7 +938,7 @@ Type* set_fixed_type(FixedSymbolTypeOffset offset,
   NumSymbols++;
 
   if (symbol_value == nullptr) {
-    symbol_value = alloc_and_init_type((undefined *)type_symbol, (uint)(flags >> 0x20) & 0xffff, true);
+    symbol_value = alloc_and_init_type(type_symbol, (uint)(flags >> 0x20) & 0xffff, true);
   }
 
   symbol_value->symbol = type_symbol;
@@ -1606,10 +1594,10 @@ int InitHeapAndSymbol() {
   *(u8 **)(symbol_table + 0x7ffc) = symbol_table + 0x7ffa;
 
   UnknownName = (undefined4)make_string_from_c("*unknown-symbol-name*");
-  alloc_and_init_type(symbol_table + 0x8019, 9, true);
-  alloc_and_init_type(symbol_table + 0x8015, 9, true);
-  alloc_and_init_type(symbol_table + 0x8011, 9, true);
-  alloc_and_init_type(symbol_table + 0x8009, 9, true);
+  alloc_and_init_type((Type **)(symbol_table + 0x8019), 9, true);
+  alloc_and_init_type((Type **)(symbol_table + 0x8015), 9, true);
+  alloc_and_init_type((Type **)(symbol_table + 0x8011), 9, true);
+  alloc_and_init_type((Type **)(symbol_table + 0x8009), 9, true);
 
   set_fixed_symbol(FIX_SYM_FALSE, "#f", (u32)value);
   set_fixed_symbol(FIX_SYM_TRUE, "#t", (u32)(symbol_table + 0x8005));
