@@ -1038,68 +1038,66 @@ u64 type_typep(Type* t1, Type* t2) {
 }
 
 // TBD
-u64 method_set(u32 type_, u32 method_id, u32 method) {
+u64 method_set(Type* type_, u32 method_id, u32 method) {
   Type *pTVar2;
   u64 uVar4;
   int unaff_s7_lo;
   undefined4 unaff_s7_hi;
   
   u64 method_ = (u64)(int)method;
-  int iVar7 = method_id * 4;
-  Function* pFVar1 = *(Function **)(iVar7 + type_ + 0x10);
-  ulong uVar8 = CONCAT44(unaff_s7_hi,unaff_s7_lo);
+  Function* pFVar1 = (&type_->new_method)[method_id];
+  ulong uVar7 = CONCAT44(unaff_s7_hi,unaff_s7_lo);
   if (method_ == 1) {
     method_ = 0;
   } else if (method_ == 0) {
     return 0;
   }
   else if (method_ == 2) {
-    method_ = (u64)*(int *)(iVar7 + *(int *)(type_ + 4) + 0x10);
+    method_ = (u64)(int)(&type_->parent->new_method)[method_id];
   }
   Function* pFVar5 = (Function *)method_;
-  *(Function **)(iVar7 + type_ + 0x10) = pFVar5;
-  if (*EnableMethodSet != 0 || (FastLink == false && MasterDebug != 0 && DiskBoot == 0)) {
-    if (uVar8 < (ulong)(long)LastSymbol) {
+  (&type_->new_method)[method_id] = pFVar5;
+  if ((*EnableMethodSet != 0) || (((FastLink == false && (MasterDebug != 0)) && (DiskBoot == 0)))) {
+    if (uVar7 < (ulong)(long)LastSymbol) {
       do {
-        iVar7 = (int)uVar8;
-        pTVar2 = *(Type **)(iVar7 + -1);
+        int iVar6 = (int)uVar7;
+        pTVar2 = *(Type **)(iVar6 + -1);
         if (((((SymbolTable2 <= pTVar2) && (pTVar2 < (Type *)0x8000000)) ||
              (&pTVar2[-0x289e].print_method < (Function **)0x7c000)) &&
             ((((uint)pTVar2 & 7) == 4 &&
              (pTVar2[-1].memusage_method == *(Function **)(unaff_s7_lo + 0x17))))) &&
            (((int)method_id < (int)(uint)pTVar2->num_methods &&
             (((&pTVar2->new_method)[method_id] == pFVar1 &&
-             (uVar4 = type_typep(pTVar2,(Type *)type_), uVar4 != CONCAT44(unaff_s7_hi,unaff_s7_lo)))
-            )))) {
+             (uVar4 = type_typep(pTVar2,type_), uVar4 != CONCAT44(unaff_s7_hi,unaff_s7_lo))))))) {
           if (FastLink != false) {
             printf("************ WARNING **************\n");
             printf("method %d of %s redefined - you must define class heirarchies in order now\n",
-                   method_id,*(int *)((iVar7 - unaff_s7_lo) + SymbolString) + 4);
+                   method_id,*(int *)((iVar6 - unaff_s7_lo) + SymbolString) + 4);
             printf("***********************************\n");
           }
           (&pTVar2->new_method)[method_id] = pFVar5;
         }
-        uVar8 = (ulong)(iVar7 + 4);
-      } while (uVar8 < (ulong)(long)LastSymbol);
+        uVar7 = (ulong)(iVar6 + 4);
+      } while (uVar7 < (ulong)(long)LastSymbol);
     }
     
-    uVar8 = (ulong)(int)SymbolTable2;
-    if (uVar8 < CONCAT44(unaff_s7_hi,unaff_s7_lo)) {
+    uVar7 = (ulong)(int)SymbolTable2;
+    if (uVar7 < CONCAT44(unaff_s7_hi,unaff_s7_lo)) {
       do {
-        iVar7 = (int)uVar8;
-        pTVar2 = *(Type **)(iVar7 + -1);
+        int iVar6 = (int)uVar7;
+        pTVar2 = *(Type **)(iVar6 + -1);
         if (((pTVar2 < SymbolTable2) || ((Type *)0x7ffffff < pTVar2)) &&
            ((Function **)0x7bfff < &pTVar2[-0x289e].print_method)) {
-          uVar8 = (ulong)(iVar7 + 4);
+          uVar7 = (ulong)(iVar6 + 4);
         }
         else if (((uint)pTVar2 & 7) == 4) {
           if (pTVar2[-1].memusage_method == *(Function **)(unaff_s7_lo + 0x17)) {
             if ((int)method_id < (int)(uint)pTVar2->num_methods) {
               if ((&pTVar2->new_method)[method_id] != pFVar1) {
-                uVar8 = (ulong)(iVar7 + 4);
+                uVar7 = (ulong)(iVar6 + 4);
                 goto LAB_0026c6c8;
               }
-              uVar4 = type_typep(pTVar2,(Type *)type_);
+              uVar4 = type_typep(pTVar2,type_);
               if (uVar4 != CONCAT44(unaff_s7_hi,unaff_s7_lo)) {
                 if (FastLink == false) {
                   (&pTVar2->new_method)[method_id] = pFVar5;
@@ -1107,23 +1105,23 @@ u64 method_set(u32 type_, u32 method_id, u32 method) {
                 else {
                   printf("************ WARNING **************\n");
                   printf("method %d of %s redefined - you must define class heirarchies in order now\n"
-                         ,method_id,*(int *)((iVar7 - unaff_s7_lo) + SymbolString) + 4);
+                         ,method_id,*(int *)((iVar6 - unaff_s7_lo) + SymbolString) + 4);
                   printf("***********************************\n");
                   (&pTVar2->new_method)[method_id] = pFVar5;
                 }
               }
             }
-            uVar8 = (ulong)(iVar7 + 4);
+            uVar7 = (ulong)(iVar6 + 4);
           }
           else {
-            uVar8 = (ulong)(iVar7 + 4);
+            uVar7 = (ulong)(iVar6 + 4);
           }
         }
         else {
-          uVar8 = (ulong)(iVar7 + 4);
+          uVar7 = (ulong)(iVar6 + 4);
         }
 LAB_0026c6c8:
-      } while (uVar8 < CONCAT44(unaff_s7_hi,unaff_s7_lo));
+      } while (uVar7 < CONCAT44(unaff_s7_hi,unaff_s7_lo));
     }
   }
   return method_;
