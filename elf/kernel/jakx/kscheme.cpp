@@ -969,67 +969,59 @@ Type* set_fixed_type(FixedSymbolTypeOffset offset,
 }
 
 // TBD
-Type * new_type(u32 symbol, u32 parent, u64 flags) {
-  ushort uVar1;
-  Function *pFVar2;
-  Type *pTVar3;
-  const char* name;
-  long lVar4;
-  int iVar5;
-  ulong uVar6;
-  Function **ppFVar7;
-  ulong methods;
-  int iVar8;
+Type* new_type(u32 symbol, u32 parent, u64 flags) {
   int unaff_s7_lo;
-  undefined4 unaff_s7_hi;
-  
-  methods = (long)flags >> 0x20 & 0xffff;
-  iVar8 = symbol - unaff_s7_lo;
-  uVar1 = *(ushort *)(parent + 0xe);
-  name = (const char* )(*(int *)(iVar8 + SymbolString) + 4);
-  if (*(int *)(iVar8 + SymbolString) == 0) {
-    name = (const char* )0x0;
+  ulong n_methods = ((long)flags >> 32) & 0xffff;
+  int symbol_ = symbol - unaff_s7_lo;
+  ushort parent_num_methods = *(ushort *)(parent + 0xe);
+  const char* sym_string_c = (const char* )(*(int *)(symbol_ + SymbolString) + 4);
+  if (*(int *)(symbol_ + SymbolString) == 0) {
+    sym_string_c = nullptr;
   }
-  if (methods == 0) {
-    methods = 0xc;
+  if (n_methods == 0) {
+    n_methods = 12;
   }
-  pTVar3 = intern_type_from_c((iVar8 + 1) * 0x10000 >> 0x10,0x80,name,methods);
-  pFVar2 = pTVar3->memusage_method;
-  uVar6 = (ulong)(int)pFVar2;
-  if (methods != 0) {
-    lVar4 = 0;
-    ppFVar7 = &pTVar3->new_method;
-    iVar5 = 0;
+
+  Type *new_type_obj = intern_type_from_c((symbol_ + 1) * 0x10000 >> 0x10,0x80,sym_string_c,n_methods);
+  Function *original_type_list_value = new_type_obj->memusage_method;
+  ulong original_type_list_value_ = (ulong)(int)original_type_list_value;
+  Function **child_slots;
+  if (n_methods != 0) {
+    long i = 0;
+    child_slots = &new_type_obj->new_method;
+    int iOffset = 0;
     do {
-      if (lVar4 < (long)(ulong)uVar1) {
-        *ppFVar7 = *(Function **)(iVar5 + parent + 0x10);
+      if (i < (long)(ulong)parent_num_methods) {
+        *child_slots = *(Function **)(iOffset + parent + 0x10);
+      } else {
+        *child_slots = nullptr;
       }
-      else {
-        *ppFVar7 = (Function *)0x0;
-      }
-      lVar4 = (long)((int)lVar4 + 1);
-      ppFVar7 = ppFVar7 + 1;
-      iVar5 = iVar5 + 4;
-    } while (lVar4 < (long)methods);
+      i = (long)((int)i + 1);
+      child_slots = child_slots + 1;
+      iOffset = iOffset + 4;
+    } while (i < (long)n_methods);
   }
+
+  undefined4 unaff_s7_hi;
   if (*(int *)(unaff_s7_lo + 0xa7) == *(int *)(unaff_s7_lo + 0x9f)) {
-    if (uVar6 != 0) {
-      if (uVar6 == CONCAT44(unaff_s7_hi,unaff_s7_lo)) {
-        pTVar3->memusage_method = pFVar2;
+    if (original_type_list_value_ != 0) {
+      if (original_type_list_value_ == CONCAT44(unaff_s7_hi,unaff_s7_lo)) {
+        new_type_obj->memusage_method = original_type_list_value;
       }
-      else if (((((ulong)(long)SymbolTable2 <= uVar6) && (uVar6 < 0x8000000)) ||
-               (pFVar2 + -0x84000 < (Function *)0x7c000)) &&
-              (((uVar6 & 7) == 4 && (*(int *)(pFVar2 + -4) == *(int *)(unaff_s7_lo + 0x17))))) {
-        pTVar3->memusage_method = pFVar2;
+      else if (((((ulong)(long)SymbolTable2 <= original_type_list_value_) && (original_type_list_value_ < 0x8000000)) ||
+               (original_type_list_value + -0x84000 < (Function *)0x7c000)) &&
+              (((original_type_list_value_ & 7) == 4 && (*(int *)(original_type_list_value + -4) == *(int *)(unaff_s7_lo + 0x17))))) {
+        new_type_obj->memusage_method = original_type_list_value;
       }
     }
-  } else if (uVar6 == 0) {
+  } else if (original_type_list_value_ == 0) {
     MsgWarn("dkernel: loading-level init of type %s, but was interned global (this is okay)\n",
-            *(int *)(iVar8 + SymbolString) + 4);
+            *(int *)(symbol_ + SymbolString) + 4);
   } else {
-    pTVar3->memusage_method = pFVar2;
+    new_type_obj->memusage_method = original_type_list_value;
   }
-  Type* ret = set_type_values(pTVar3, (Type *)parent, flags);
+  Type* ret = set_type_values(new_type_obj, (Type *)parent, flags);
+  ;
   return ret;
 }
 
