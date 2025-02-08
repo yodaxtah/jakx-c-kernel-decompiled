@@ -1275,8 +1275,7 @@ u64 print_symbol(u32 obj) {
       cprintf("#<invalid symbol #x%x>", obj_);
       return obj_;
     } else if (obj_ < (ulong)(long)LastSymbol) {
-      ulong str = obj_;
-      str = (ulong)(*(int *)((obj - unaff_s7_lo) + SymbolString) + 4);
+      ulong str = (ulong)(*(int *)((obj - unaff_s7_lo) + SymbolString) + 4);
       cprintf("%s", str);
       return obj_;
     }
