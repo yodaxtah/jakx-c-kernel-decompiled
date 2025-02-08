@@ -175,7 +175,7 @@ void InitParms(int argc, const char** argv) {
 
 /*!
  * This is mostly copy-pasted from jak2 and very simplified until we have overlord 2.
- * TBD.
+ * DONE.
  */
 s32 InitIOP() {
   FUN_0027c260_usb();
@@ -231,7 +231,7 @@ s32 InitIOP() {
   int result = cdvdModule;
   if (cdvdModule >= 0) {
     undefined auStack_30 [4];
-    result = sceSifStopModule(cdvdModule,0,0,auStack_30)
+    result = sceSifStopModule(cdvdModule, 0, 0, auStack_30)
     if (result >= 0) {
       result = sceSifUnloadModule(cdvdModule)
     }
@@ -247,20 +247,20 @@ s32 InitIOP() {
       FUN_0027c2a4_usb();
       return -1;
     }
-    if (FUN_0027483c_implicit_dkernel(&DAT_282fd8) == 0) {
-      DAT_00282fe6 = 0;
-      memset(&DAT_00282fd8,0x30,0xe);
-      CHAR_J_00282fdc = CHAR_J_00282fdc ^ 0x71;
-      s_C20121227_00282fdd[0] = s_C20121227_00282fdd[0] ^ 0x73;
+    if (FUN_0027483c_implicit_dkernel(s__00282fd8) == 0) {
+      s__00282fd8[15] = '\0';
+      memset(s__00282fd8, L'0', 0xe);
+      s__00282fd8[4] ^= 0x71; // 0x51
+      s__00282fd8[5] ^= 0x73; // 0x53
     }
-    RUN_AS_DEMO_W = CHAR_J_00282fdc == 'T';
-    while (loadModuleByString_G(&DAT_00282fe8_arg_for_module,s_BOOT2___cdrom0__SCES_532_86_1_VE_00282ff0) == 0) {
+    RUN_AS_DEMO_W = s__00282fd8[4] == 0x54
+    while (loadModuleByString_G_underlordRpcCall3_W(&DAT_00282fe8_arg_for_module, s_BOOT2___cdrom0__SCES_532_86_1_VE_00282ff0) == 0) {
       ;
     }
     char acStack_5b0 [1024];
-    MakeDriverPath_S(acStack_5b0,"overlay.bin",(long)modsrc_S,false);
+    MakeDriverPath_S(acStack_5b0, "overlay.bin", (long)modsrc_S, false);
     undefined auStack_1b0 [8];
-    while (FUN_00274684_implicit_dkernel(acStack_5b0,auStack_1b0) < 0) {
+    while (underlordRpcCall0_W(acStack_5b0, auStack_1b0) < 0) {
       ;
     }
     undefined* local_1a8;
@@ -279,30 +279,31 @@ s32 InitIOP() {
 
     for (int i = 0; i < 12; i++) {
       MakeVagwadPath_S(acStack_5b0, fs_S_FS_INITIALIZED_W != nullptr, i);
-      if (FUN_00274684_implicit_dkernel(acStack_5b0, auStack_1b0) == 0) {
+      if (underlordRpcCall0_W(acStack_5b0, auStack_1b0) == 0) {
         AUDIO_LANGUAGE_MASK_G |= (&local_170[0].value1)[i]; // treat array of 3 structs as array of 12 elements
       }
     }
     printf("dkernel: audio language mask = 0x%08x\n", AUDIO_LANGUAGE_MASK_G);
     if (RUN_AS_DEMO_W) {
-      if (!strcmp(DebugBootMessage, "demo") || !strcmp(DebugBootMessage,"demo-shared")) {
+      if (!strcmp(DebugBootMessage, "demo") || !strcmp(DebugBootMessage, "demo-shared")) {
         masterConfig.aspect = 1;
       }
       else {
         masterConfig.aspect = 0;
       }
-      undefined local_139 = 1;
-      undefined local_13a = 0;
-      undefined local_13b = 0;
-      undefined local_13c = 1;
-      undefined local_13d = 1;
-      undefined local_13e = (undefined)masterConfig.aspect;
-      undefined2 local_140 = 0xfe20;
+      sceScfConfig_W T10kConfig_W;
+      T10kConfig_W.field0_0x0 = -0x1e0;
+      T10kConfig_W.aspect_W = (byte)masterConfig.aspect;
+      T10kConfig_W.field2_0x3 = 1;
+      T10kConfig_W.field3_0x4 = 1;
+      T10kConfig_W.field4_0x5 = 0;
+      T10kConfig_W.field5_0x6 = 0;
+      T10kConfig_W.field6_0x7 = 1;
       masterConfig.language = 0;
       masterConfig.inactive_timeout = 0;
       masterConfig.volume = 100;
       masterConfig.timeout = 0;
-      sceScfSetT10kConfig(&local_140);
+      sceScfSetT10kConfig(&T10kConfig_W);
     }
 
     int local_2c [3];
@@ -333,7 +334,7 @@ s32 InitIOP() {
 
     char cStack_130;
     char acStack_12f [255];
-    strcpy(&cStack_130,*(char **)((int)fs_S_FS_INITIALIZED_W * 4 + 0x283410));
+    strcpy(&cStack_130, ISO_TYPE_STRINGS_W[(int)fs_S_FS_INITIALIZED_W]);
     size_t length = strlen(&cStack_130);
     char* pcVar7 = acStack_12f + (int)length;
     char *moduleName_W;
@@ -342,7 +343,6 @@ s32 InitIOP() {
       moduleName_W = "SCREEN1.EUR";
     }
     else {
-      // if (false) goto switchD_00269d84_caseD_5;
       switch(masterConfig.language) {
       case 1:
         moduleName_W = "SCREEN1.FRE";
@@ -356,15 +356,15 @@ s32 InitIOP() {
       case 4:
         moduleName_W = "SCREEN1.ITA";
         break;
-      default:
-        moduleName_W = "SCREEN1.EUR";
-        break;
       case 9:
         moduleName_W = "SCREEN1.POR";
         break;
+      default:
+        moduleName_W = "SCREEN1.EUR";
+        break;
       }
     }
-    strcpy(pcVar7,moduleName_W);
+    strcpy(pcVar7, moduleName_W);
     size_t length = strlen(pcVar7);
     if (loadIOPModuleAndStuff_W((_USE_OVERLORD2 == 0) ? "overlord.irx" : "overlrd2.irx", (long)(int)(pcVar7 + (((int)length + 1) - (int)&cStack_130)), &cStack_130, 0, (long)reboot_G_isodrv_G_overlord_S) < 0) {
       FUN_0027c2a4_usb();
