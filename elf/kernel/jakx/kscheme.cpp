@@ -1263,18 +1263,17 @@ u64 print_pair(u32 obj) {
 
 /*!
  * Print method for symbol.  Just prints the name without quotes or anything fancy.
- * TBD
  */
 u64 print_symbol(u32 obj) {
   int unaff_s7_lo;
   ulong obj_ = (ulong)(int)obj;
-  if (((((ulong)(long)SymbolTable2 <= obj_ && obj_ < 0x8000000)
+  // FIXME: why is this negated here?
+  if ((((ulong)(long)SymbolTable2 <= obj_ && obj_ < 0x8000000)
         || obj - 0x84000 < 0x7c000)
-      && ((obj_ ^ 1) & 1) == 0)
-      && (obj_ < (ulong)(long)SymbolTable2 || !(obj_ < (ulong)(long)LastSymbol))) {
+      && ((obj_ ^ 1) & 1) == 0 && (obj_ < (ulong)(long)SymbolTable2 || obj_ >= (ulong)(long)LastSymbol)) {
     cprintf("#<invalid symbol #x%x>", obj_);
   } else {
-    ulong str = (ulong)(*(int *)((obj - unaff_s7_lo) + SymbolString) + 4);
+    char* str = (char*)*(int*)((obj - unaff_s7_lo) + SymbolString) + 4;
     cprintf("%s", str);
   }
   return obj_;
