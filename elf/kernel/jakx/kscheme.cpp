@@ -1022,15 +1022,19 @@ Type* new_type(u32 symbol, Type* parent, u64 flags) {
  */
 u64 type_typep(Type* t1, Type* t2) {
   int unaff_s7_lo;
-  if (t1 != t2) {
-    for (Type *t1_ = t1->parent; t1_ != t2; t1_ = t1_->parent) {
-      if (t1_ == nullptr || t1_ == *(Type **)(unaff_s7_lo + 0x1b)) {
-        undefined4 unaff_s7_hi;
-        return CONCAT44(unaff_s7_hi, unaff_s7_lo);
-      }
+  if (t1 == t2) {
+    return (long)(unaff_s7_lo + 4);
+  }
+
+  for (Type *t1_ = t1->parent; true; t1_ = t1_->parent) {
+    if (t1 == t2) {
+      return (long)(unaff_s7_lo + 4);
+    }
+    if (t1_ == nullptr || t1_ == *(Type **)(unaff_s7_lo + 0x1b)) {
+      undefined4 unaff_s7_hi;
+      return CONCAT44(unaff_s7_hi, unaff_s7_lo);
     }
   }
-  return (long)(unaff_s7_lo + 4);
 }
 
 // TBD
