@@ -1057,71 +1057,52 @@ u64 method_set(Type* type_, u32 method_id, u32 method) {
   
   if ((*EnableMethodSet != 0) || (FastLink == false && MasterDebug != 0 && DiskBoot == 0)) {
     ulong sym = CONCAT44(unaff_s7_hi, unaff_s7_lo);
-    if (sym < (ulong)(long)LastSymbol) {
-      do {
-        int prevSym = (int)sym;
-        Type* sym_value = *(Type **)(prevSym + -1);
-        if (((((SymbolTable2 <= sym_value) && (sym_value < (Type *)0x8000000)) ||
-             (&sym_value[-0x289e].print_method < (Function **)0x7c000)) &&
-            ((((uint)sym_value & 7) == 4 &&
-             (sym_value[-1].memusage_method == *(Function **)(unaff_s7_lo + 0x17))))) &&
-           (((int)method_id < (int)(uint)sym_value->num_methods &&
-            (((&sym_value->new_method)[method_id] == existing_method &&
-             (type_typep(sym_value, type_) != CONCAT44(unaff_s7_hi, unaff_s7_lo))))))) {
-          if (FastLink != false) {
-            printf("************ WARNING **************\n");
-            printf("method %d of %s redefined - you must define class heirarchies in order now\n",
-                   method_id, *(int *)((prevSym - unaff_s7_lo) + SymbolString) + 4);
-            printf("***********************************\n");
-          }
-          (&sym_value->new_method)[method_id] = (Function *)method_;
+    for (; sym < (ulong)(long)LastSymbol; sym += 4) {
+      Type* sym_value = *(Type **)(sym + -1);
+      if (((((SymbolTable2 <= sym_value) && (sym_value < (Type *)0x8000000)) ||
+            (&sym_value[-0x289e].print_method < (Function **)0x7c000)) &&
+          ((((uint)sym_value & 7) == 4 &&
+            (sym_value[-1].memusage_method == *(Function **)(unaff_s7_lo + 0x17))))) &&
+          (((int)method_id < (int)(uint)sym_value->num_methods &&
+          (((&sym_value->new_method)[method_id] == existing_method &&
+            (type_typep(sym_value, type_) != CONCAT44(unaff_s7_hi, unaff_s7_lo))))))) {
+        if (FastLink != false) {
+          printf("************ WARNING **************\n");
+          printf("method %d of %s redefined - you must define class heirarchies in order now\n",
+                 method_id, *(int *)((sym - unaff_s7_lo) + SymbolString) + 4);
+          printf("***********************************\n");
         }
-        sym = (ulong)(prevSym + 4);
-      } while (sym < (ulong)(long)LastSymbol);
+        (&sym_value->new_method)[method_id] = (Function *)method_;
+      }
     }
-    
+
     sym = (ulong)(int)SymbolTable2;
-    if (sym < CONCAT44(unaff_s7_hi, unaff_s7_lo)) {
-      do {
-        int prevSym = (int)sym;
-        Type* sym_value = *(Type **)(prevSym + -1);
-        if (((sym_value < SymbolTable2) || ((Type *)0x7ffffff < sym_value)) &&
-           ((Function **)0x7bfff < &sym_value[-0x289e].print_method)) {
-          sym = (ulong)(prevSym + 4);
-        }
-        else if (((uint)sym_value & 7) == 4) {
-          if (sym_value[-1].memusage_method == *(Function **)(unaff_s7_lo + 0x17)) {
-            if ((int)method_id < (int)(uint)sym_value->num_methods) {
-              if ((&sym_value->new_method)[method_id] != existing_method) {
-                sym = (ulong)(prevSym + 4);
-                goto LAB_0026c6c8;
+    for (; sym < CONCAT44(unaff_s7_hi, unaff_s7_lo); sym += 4) {
+      int prevSym = (int)sym;
+      Type* sym_value = *(Type **)(prevSym + -1);
+      if (((sym_value < SymbolTable2) || ((Type *)0x7ffffff < sym_value)) &&
+          ((Function **)0x7bfff < &sym_value[-0x289e].print_method)) {
+        ;
+      }
+      else if (((uint)sym_value & 7) == 4) {
+        if (sym_value[-1].memusage_method == *(Function **)(unaff_s7_lo + 0x17)) {
+          if ((int)method_id < (int)(uint)sym_value->num_methods) {
+            if ((&sym_value->new_method)[method_id] == existing_method &&
+                type_typep(sym_value, type_) != CONCAT44(unaff_s7_hi, unaff_s7_lo)) {
+              if (FastLink != false) {
+                printf("************ WARNING **************\n");
+                printf("method %d of %s redefined - you must define class heirarchies in order now\n",
+                       method_id, *(int *)((prevSym - unaff_s7_lo) + SymbolString) + 4);
+                printf("***********************************\n");
               }
-              if (type_typep(sym_value, type_) != CONCAT44(unaff_s7_hi, unaff_s7_lo)) {
-                if (FastLink == false) {
-                  (&sym_value->new_method)[method_id] = (Function *)method_;
-                }
-                else {
-                  printf("************ WARNING **************\n");
-                  printf("method %d of %s redefined - you must define class heirarchies in order now\n",
-                         method_id, *(int *)((prevSym - unaff_s7_lo) + SymbolString) + 4);
-                  printf("***********************************\n");
-                  (&sym_value->new_method)[method_id] = (Function *)method_;
-                }
-              }
+              (&sym_value->new_method)[method_id] = (Function *)method_;
             }
-            sym = (ulong)(prevSym + 4);
-          }
-          else {
-            sym = (ulong)(prevSym + 4);
           }
         }
-        else {
-          sym = (ulong)(prevSym + 4);
-        }
-LAB_0026c6c8:
-      } while (sym < CONCAT44(unaff_s7_hi, unaff_s7_lo));
+      }
     }
   }
+
   return method_;
 }
 
