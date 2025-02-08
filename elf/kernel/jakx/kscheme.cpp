@@ -1268,19 +1268,15 @@ u64 print_pair(u32 obj) {
 u64 print_symbol(u32 obj) {
   int unaff_s7_lo;
   ulong obj_ = (ulong)(int)obj;
-  if ((((ulong)(long)SymbolTable2 <= obj_ && obj_ < 0x8000000)
+  if (((((ulong)(long)SymbolTable2 <= obj_ && obj_ < 0x8000000)
         || obj - 0x84000 < 0x7c000)
-      && ((obj_ ^ 1) & 1) == 0) {
-    if (obj_ < (ulong)(long)SymbolTable2) {
-      cprintf("#<invalid symbol #x%x>", obj_);
-      return obj_;
-    } else if (obj_ < (ulong)(long)LastSymbol) {
-      ulong str = (ulong)(*(int *)((obj - unaff_s7_lo) + SymbolString) + 4);
-      cprintf("%s", str);
-      return obj_;
-    }
+      && ((obj_ ^ 1) & 1) == 0)
+      && (obj_ < (ulong)(long)SymbolTable2 || !(obj_ < (ulong)(long)LastSymbol))) {
+    cprintf("#<invalid symbol #x%x>", obj_);
+  } else {
+    ulong str = (ulong)(*(int *)((obj - unaff_s7_lo) + SymbolString) + 4);
+    cprintf("%s", str);
   }
-  cprintf("#<invalid symbol #x%x>", obj_);
   return obj_;
 }
 
