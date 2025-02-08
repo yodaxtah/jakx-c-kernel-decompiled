@@ -1218,16 +1218,14 @@ u64 print_basic(u32 obj) {
 /*!
  * Print a pair as a LISP list.  Don't try to print circular lists or it will get stuck
  * Can print improper lists
- * TBD
  */
 u64 print_pair(u32 obj) {
   int unaff_s7_lo;
-  undefined4 unaff_s7_hi;
-  
   ulong obj_ = (ulong)(int)obj;
   if (obj_ == (long)(unaff_s7_lo + -7)) {
     cprintf("()");
   } else {
+    undefined4 unaff_s7_hi;
     if ((long)*(int *)(CollapseQuote + -1) == CONCAT44(unaff_s7_hi,unaff_s7_lo)
         || ((obj_ & 7) != 2)
         || *(int *)(obj - 2) != unaff_s7_lo + 0xe8
@@ -1235,22 +1233,26 @@ u64 print_pair(u32 obj) {
         || (long)*(int *)(*(uint *)(obj + 2) + 2) != (long)(unaff_s7_lo + -7)
         ) {
       cprintf("(");
-      ulong obj__ = obj_;
-      u32 toPrint;
-      while (toPrint = (u32)obj__, (obj__ & 7) == 2) {
-        print_object(*(u32 *)(toPrint - 2));
+      u32 toPrint = (u32)obj_;
+      for (;;) {
+        if ((toPrint & 7) == 2) {
+          print_object(*(u32 *)(toPrint - 2));
 
-        obj__ = (ulong)*(int *)(toPrint + 2);
-        if (obj__ == (long)(unaff_s7_lo + -7)) {        
+          ulong cdr = (ulong)*(int *)(toPrint + 2);
+          toPrint = (u32)cdr;
+          if (cdr == (long)(unaff_s7_lo + -7)) {        
+            cprintf(")");
+            return obj_;
+          } else {
+            cprintf(" ");
+          }
+        } else {
+          cprintf(". ");
+          print_object(toPrint);
           cprintf(")");
           return obj_;
-        } else {
-          cprintf(" ");
         }
       }
-      cprintf(". ");
-      print_object(toPrint);
-      cprintf(")");
     } else {
       cprintf("\'");
       print_object(*(u32 *)(*(uint *)(obj + 2) - 2));
