@@ -388,15 +388,14 @@ LAB_002676b0:
  * @param precision
  * @param flags
  *
- * TBD
  * Not checked super closely in jak 2.
  */
 void ftoa(char* out_str, float x, s32 desired_len, char pad_char, s32 precision, u32 flags) {
   char buff_130;       // 256
   char buff_12f [126]; // 256
   char buff_b1 [129];  // 256
+  char* current_buff = buff_12f;
   s32 lead_char;
-  // int local_30 [4];
 
   s32 count = cvt_float(x, precision, &lead_char, &buff_130, buff_b1, flags);
 
@@ -406,7 +405,6 @@ void ftoa(char* out_str, float x, s32 desired_len, char pad_char, s32 precision,
     lead_char = 0;
   }
 
-  char* current_buff = buff_12f;
   if (buff_130 != '\0') {
     current_buff = &buff_130;
   }
@@ -415,13 +413,11 @@ void ftoa(char* out_str, float x, s32 desired_len, char pad_char, s32 precision,
 
   char* out_ptr = out_str;
 
-  s32 i = desired_len - real_count;
   if ((desired_len > 0) && (desired_len > real_count) && 0 < i) {
-    do {
+    for (s32 i = 0; i < desired_len - real_count; i++) {
       *out_ptr = pad_char;
-      i--;
       out_ptr++;
-    } while (i != 0);
+    }
   }
 
   if (lead_char != 0) {
@@ -429,8 +425,7 @@ void ftoa(char* out_str, float x, s32 desired_len, char pad_char, s32 precision,
     out_ptr++;
   }
 
-  while (count != 0) {
-    count--;
+  for (s32 i = 0; i < count; i++) {
     *out_ptr = *current_buff;
     out_ptr++;
     current_buff++;
