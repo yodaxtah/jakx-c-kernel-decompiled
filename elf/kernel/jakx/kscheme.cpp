@@ -1228,23 +1228,20 @@ u64 print_pair(u32 obj) {
   if (obj_ == (long)(unaff_s7_lo + -7)) {
     cprintf("()");
   } else {
-    uint uVar1 = *(uint *)(obj + 2);
-    if ((long)*(int *)(CollapseQuote + -1) != CONCAT44(unaff_s7_hi,unaff_s7_lo)
-        && ((obj_ & 7) == 2)
-        && *(int *)(obj - 2) == unaff_s7_lo + 0xe8
-        && (uVar1 & 7) == 2
-        && (long)*(int *)(uVar1 + 2) == (long)(unaff_s7_lo + -7)) {
-      cprintf("\'");
-      print_object(*(u32 *)(uVar1 - 2));
-      return obj_;
-    } else {
+    if ((long)*(int *)(CollapseQuote + -1) == CONCAT44(unaff_s7_hi,unaff_s7_lo)
+        || ((obj_ & 7) != 2)
+        || *(int *)(obj - 2) != unaff_s7_lo + 0xe8
+        || (*(uint *)(obj + 2) & 7) != 2
+        || (long)*(int *)(*(uint *)(obj + 2) + 2) != (long)(unaff_s7_lo + -7)
+        ) {
       cprintf("(");
-      ulong uVar3 = obj_;
-      u32 obj_00;
-      while (obj_00 = (u32)uVar3, (uVar3 & 7) == 2) {
-        print_object(*(u32 *)(obj_00 - 2));
-        uVar3 = (ulong)*(int *)(obj_00 + 2);
-        if (uVar3 == (long)(unaff_s7_lo + -7)) {        
+      ulong obj__ = obj_;
+      u32 toPrint;
+      while (toPrint = (u32)obj__, (obj__ & 7) == 2) {
+        print_object(*(u32 *)(toPrint - 2));
+
+        obj__ = (ulong)*(int *)(toPrint + 2);
+        if (obj__ == (long)(unaff_s7_lo + -7)) {        
           cprintf(")");
           return obj_;
         } else {
@@ -1252,8 +1249,11 @@ u64 print_pair(u32 obj) {
         }
       }
       cprintf(". ");
-      print_object(obj_00);
+      print_object(toPrint);
       cprintf(")");
+    } else {
+      cprintf("\'");
+      print_object(*(u32 *)(*(uint *)(obj + 2) - 2));
     }
   }
   return obj_;
