@@ -392,55 +392,51 @@ LAB_002676b0:
  * Not checked super closely in jak 2.
  */
 void ftoa(char* out_str, float x, s32 desired_len, char pad_char, s32 precision, u32 flags) {
-  char* pcVar3;
-  char local_130;         // 256
-  char acStack_12f [126]; // 256
-  char acStack_b1 [129];  // 256
+  char buff_130;       // 256
+  char buff_12f [126]; // 256
+  char buff_b1 [129];  // 256
   s32 lead_char;
   // int local_30 [4];
 
-  s32 count = cvt_float(x, precision, &lead_char, &local_130, acStack_b1, flags);
+  s32 count = cvt_float(x, precision, &lead_char, &buff_130, buff_b1, flags);
 
   if (count > 0x3f) {
-    strcpy(&local_130, "NaN");
+    strcpy(&buff_130, "NaN");
     count = 3;
     lead_char = 0;
   }
 
-  pcVar3 = acStack_12f;
-  if (local_130 != '\0') {
-    pcVar3 = &local_130;
+  char* current_buff = buff_12f;
+  if (buff_130 != '\0') {
+    current_buff = &buff_130;
   }
 
   s32 real_count = (uint)(lead_char != 0) + count;
 
   char* out_ptr = out_str;
 
-  if (((desired_len > 0) && (desired_len > real_count)) && (real_count = desired_len - real_count, 0 < real_count)) {
+  s32 i = desired_len - real_count;
+  if ((desired_len > 0) && (desired_len > real_count) && 0 < i) {
     do {
       *out_ptr = pad_char;
-      real_count--;
+      i--;
       out_ptr++;
-    } while (real_count != 0);
+    } while (i != 0);
   }
+
   if (lead_char != 0) {
     *out_ptr = (char)lead_char;
     out_ptr++;
   }
 
-  if (count < 1) {
-    *out_ptr = '\0';
+  while (count != 0) {
+    count--;
+    *out_ptr = *current_buff;
+    out_ptr++;
+    current_buff++;
   }
-  else {
-    do {
-      count--;
-      *out_ptr = *pcVar3;
-      pcVar3++;
-      out_ptr++;
-    } while (count != 0);
 
-    *out_ptr = '\0';
-  }
+  *out_ptr = '\0';
 }
 
 /*!
