@@ -969,37 +969,36 @@ Type* set_fixed_type(FixedSymbolTypeOffset offset,
 }
 
 // TBD
-Type* new_type(u32 symbol, u32 parent, u64 flags) {
-  int unaff_s7_lo;
+Type* new_type(u32 symbol, Type* parent, u64 flags) {
   ulong n_methods = ((long)flags >> 32) & 0xffff;
-  int symbol_ = symbol - unaff_s7_lo;
-  ushort parent_num_methods = *(ushort *)(parent + 0xe);
-  const char* sym_string_c = (const char* )(*(int *)(symbol_ + SymbolString) + 4);
-  if (*(int *)(symbol_ + SymbolString) == 0) {
-    sym_string_c = nullptr;
-  }
   if (n_methods == 0) {
     n_methods = 12;
   }
 
-  Type *new_type_obj = intern_type_from_c((symbol_ + 1) * 0x10000 >> 0x10,0x80,sym_string_c,n_methods);
-  Function *original_type_list_value = new_type_obj->memusage_method;
+  int unaff_s7_lo;
+  int symbol_ = symbol - unaff_s7_lo;
+  const char* sym_string_c = (const char* )(*(int *)(symbol_ + SymbolString) + 4);
+  if (*(int *)(symbol_ + SymbolString) == 0) {
+    sym_string_c = nullptr;
+  }
+
+  ushort parent_num_methods = parent->num_methods;
+
+  Type* new_type_obj = intern_type_from_c((symbol_ + 1) * 0x10000 >> 0x10, 0x80, sym_string_c, n_methods);
+  Function* original_type_list_value = new_type_obj->memusage_method;
   ulong original_type_list_value_ = (ulong)(int)original_type_list_value;
-  Function **child_slots;
+  Function** child_slots;
   if (n_methods != 0) {
-    long i = 0;
     child_slots = &new_type_obj->new_method;
     int iOffset = 0;
-    do {
+    for (long i = 0; i < (long)n_methods; i++) {
       if (i < (long)(ulong)parent_num_methods) {
-        *child_slots = *(Function **)(iOffset + parent + 0x10);
+        child_slots[i] = *(Function **)((int)&parent->new_method + iOffset);
       } else {
-        *child_slots = nullptr;
+        child_slots[i] = nullptr;
       }
-      i = (long)((int)i + 1);
-      child_slots = child_slots + 1;
       iOffset = iOffset + 4;
-    } while (i < (long)n_methods);
+    }
   }
 
   undefined4 unaff_s7_hi;
@@ -1014,11 +1013,13 @@ Type* new_type(u32 symbol, u32 parent, u64 flags) {
         new_type_obj->memusage_method = original_type_list_value;
       }
     }
-  } else if (original_type_list_value_ == 0) {
-    MsgWarn("dkernel: loading-level init of type %s, but was interned global (this is okay)\n",
-            *(int *)(symbol_ + SymbolString) + 4);
   } else {
-    new_type_obj->memusage_method = original_type_list_value;
+    if (original_type_list_value_ == 0) {
+      MsgWarn("dkernel: loading-level init of type %s, but was interned global (this is okay)\n",
+              *(int *)(symbol_ + SymbolString) + 4);
+    } else {
+      new_type_obj->memusage_method = original_type_list_value;
+    }
   }
   Type* ret = set_type_values(new_type_obj, (Type *)parent, flags);
   ;
