@@ -357,9 +357,11 @@ s32 InitIOP() {
         moduleName_W = "SCREEN1.ITA";
         break;
       default:
-        moduleName_W = "SCREEN1.EUR"
+        moduleName_W = "SCREEN1.EUR";
+        break;
       case 9:
         moduleName_W = "SCREEN1.POR";
+        break;
       }
     }
     strcpy(pcVar7,moduleName_W);
