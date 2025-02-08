@@ -968,7 +968,6 @@ Type* set_fixed_type(FixedSymbolTypeOffset offset,
   return symbol_value;
 }
 
-// TBD
 Type* new_type(u32 symbol, Type* parent, u64 flags) {
   ulong n_methods = ((long)flags >> 32) & 0xffff;
   if (n_methods == 0) {
@@ -987,31 +986,23 @@ Type* new_type(u32 symbol, Type* parent, u64 flags) {
   Type* new_type_obj = intern_type_from_c((symbol_ + 1) * 0x10000 >> 0x10, 0x80, sym_string_c, n_methods);
   Function* original_type_list_value = new_type_obj->memusage_method;
   ulong original_type_list_value_ = (ulong)(int)original_type_list_value;
-  Function** child_slots;
-  if (n_methods != 0) {
-    child_slots = &new_type_obj->new_method;
-    int iOffset = 0;
-    for (long i = 0; i < (long)n_methods; i++) {
-      if (i < (long)(ulong)parent_num_methods) {
-        child_slots[i] = *(Function **)((int)&parent->new_method + iOffset);
-      } else {
-        child_slots[i] = nullptr;
-      }
-      iOffset = iOffset + 4;
+  Function** child_slots = &new_type_obj->new_method;
+  Function** parent_slots = &parent->new_method;
+  for (long i = 0; i < (long)n_methods; i++) {
+    if (i < (long)(ulong)parent_num_methods) {
+      child_slots[i] = parent_slots[i];
+    } else {
+      child_slots[i] = nullptr;
     }
   }
 
-  undefined4 unaff_s7_hi;
   if (*(int *)(unaff_s7_lo + 0xa7) == *(int *)(unaff_s7_lo + 0x9f)) {
-    if (original_type_list_value_ != 0) {
-      if (original_type_list_value_ == CONCAT44(unaff_s7_hi,unaff_s7_lo)) {
-        new_type_obj->memusage_method = original_type_list_value;
-      }
-      else if (((((ulong)(long)SymbolTable2 <= original_type_list_value_) && (original_type_list_value_ < 0x8000000)) ||
-               (original_type_list_value + -0x84000 < (Function *)0x7c000)) &&
-              (((original_type_list_value_ & 7) == 4 && (*(int *)(original_type_list_value + -4) == *(int *)(unaff_s7_lo + 0x17))))) {
-        new_type_obj->memusage_method = original_type_list_value;
-      }
+
+    undefined4 unaff_s7_hi;
+    if (original_type_list_value_ != 0 && (original_type_list_value_ == CONCAT44(unaff_s7_hi,unaff_s7_lo) ||
+                                           (((ulong)(long)SymbolTable2 <= original_type_list_value_ && original_type_list_value_ < 0x8000000 || original_type_list_value + -0x84000 < (Function *)0x7c000) &&
+                                            ((original_type_list_value_ & 7) == 4 && *(int *)(original_type_list_value + -4) == *(int *)(unaff_s7_lo + 0x17))))) {
+      new_type_obj->memusage_method = original_type_list_value;
     }
   } else {
     if (original_type_list_value_ == 0) {
@@ -1021,7 +1012,7 @@ Type* new_type(u32 symbol, Type* parent, u64 flags) {
       new_type_obj->memusage_method = original_type_list_value;
     }
   }
-  Type* ret = set_type_values(new_type_obj, (Type *)parent, flags);
+  Type* ret = set_type_values(new_type_obj, (Type*)parent, flags);
   ;
   return ret;
 }
