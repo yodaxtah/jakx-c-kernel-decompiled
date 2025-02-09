@@ -110,22 +110,23 @@ void jak3_begin(link_control* this, uint8_t* object_file,
   }
 }
 
-uint32_t jak3_work(link_control *this) {
-  uint32_t rv;
-  int unaff_s7_lo;
-  uint16_t m_version;
-  int old_debug_segment;
-  
-  old_debug_segment = DebugSegment;
+uint32_t jak3_work(link_control* this) {
+  int old_debug_segment = DebugSegment;
   if (this->m_keep_debug != 0) {
     DebugSegment = unaff_s7_lo + 4;
   }
-  m_version = this->m_link_hdr->version;
+
+  uint32_t rv;
+
+  int unaff_s7_lo;
+  uint16_t m_version = this->m_link_hdr->version;
   *(undefined4 *)(this->m_link_hdr[-1].name + 0x37) = *(undefined4 *)(unaff_s7_lo + 0x1f);
-  rv = 0;
   if (m_version == 5) {
     rv = jak3_work_opengoal(this);
+  } else {
+    rv = 0;
   }
+
   DebugSegment = old_debug_segment;
   return rv;
 }
