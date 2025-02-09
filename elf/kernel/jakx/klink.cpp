@@ -445,46 +445,34 @@ uint32_t jak3_work_opengoal(link_control* this) {
   byte bVar2;
   u8 **ppuVar3;
   short sVar4;
-  int iVar5;
   u8 *code_infos[1|2].offset;
   int iVar6;
   int iVar7;
   Type *pTVar8;
   code *pcVar9;
   size_t sVar10;
-  kheapinfo *m_heap;
-  void *dst;
-  char *format;
-  void *src;
   uint uVar11;
   uint uVar12;
   u64 methods;
   uint *puVar13;
-  undefined4 *puVar14;
   byte *pbVar15;
   short *name;
-  uint8_t *puVar17;
   uint32_t __code_infos[segId].size__;
   SegmentInfo *code_infos;
-  LinkHeaderV5Core *m_link_hdr;
   
-  iVar5 = (*(code *)PTR_read_clock_code_002836d0)();
+  int iVar5 = (*(code *)PTR_read_clock_code_002836d0)();
+  ObjectFileHeader* ofh = (ObjectFileHeader *)this->m_link_block_ptr;
   if (this->m_state == 0) {
-    m_link_hdr = this->m_link_hdr;
-    __code_infos[segId].size__ = m_link_hdr->length_to_get_to_link;
-    this->m_code_start = (uint8_t *)(uint)m_link_hdr->n_segments;
-    m_link_hdr->length_to_get_to_link =
-         (uint32_t)(m_link_hdr->name + (__code_infos[segId].size__ - 0x15));
-    this->m_link_block_ptr = (uint8_t *)(m_link_hdr->name + (__code_infos[segId].size__ - 0x15));
+    uint32_t prev_length = this->m_link_hdr->length_to_get_to_link;
+    this->m_code_start = (uint8_t *)(uint)this->m_link_hdr->n_segments;
+    this->m_link_hdr->length_to_get_to_link = (uint32_t)(this->m_link_hdr->name + (prev_length - 0x15));
+    this->m_link_block_ptr = (uint8_t *)(this->m_link_hdr->name + (prev_length - 0x15));
 LAB_0026f70c_for_loop:
     for (s32 seg_id = (s32)(uint8_t *)(uint)m_link_hdr->n_segments + -1; seg_id >= 0; seg_id -= 1) {
-      ObjectFileHeader* ofh = (ObjectFileHeader *)this->m_link_block_ptr;
-      uint8_t* puVar17 = this->m_object_data;
-      puVar14 = &ofh->code_infos[seg_id + -1].unknown_0xc;
-      *puVar14 = (int)ofh->code_infos + *puVar14 + -4;
-      puVar14[1] = puVar17 + puVar14[1];
+      (&ofh->code_infos[seg_id - 1].unknown_0xc)[0] += ((int)ofh->code_infos - 4);
+      (&ofh->code_infos[seg_id - 1].unknown_0xc)[1] += this->m_object_data;
+
       if (seg_id == 1) {
-        code_infos = ofh->code_infos;
         if (DebugSegment == 0) {
           ofh->code_infos[seg_id].offset = 0;
           ofh->code_infos[seg_id].size = 0;
@@ -492,73 +480,60 @@ LAB_0026f70c_for_loop:
           if (ofh->code_infos[seg_id].size == 0) {
             (&code_infos->unknown_0xc)[seg_id] = 0;
           } else {
-            src = (void *)ofh->code_infos[seg_id].offset;
+            void* src = (void *)ofh->code_infos[seg_id].offset;
             ofh->code_infos[seg_id].offset =
-                 (uint32_t)kmalloc(kdebugheap, ofh->code_infos[seg_id].size, 0, "debug-segment");
-            ObjectFileHeader* m_link_block_ptr = (ObjectFileHeader *)this->m_link_block_ptr;
-            if ((void *)m_link_block_ptr->code_infos[seg_id].offset == (void *)0x0) {
+                (uint32_t)kmalloc(kdebugheap, ofh->code_infos[seg_id].size, 0, "debug-segment");
+            if ((void *)ofh->code_infos[seg_id].offset == (void *)0x0) {
               MsgErr("dkernel: unable to malloc %d bytes for debug-segment~%",
-                     m_link_block_ptr->code_infos[seg_id].size);
+                     ofh->code_infos[seg_id].size);
               return 1;
             }
-            ultimate_memcpy_G(dst, src, m_link_block_ptr->code_infos[seg_id].size);
-            continue;
+            ultimate_memcpy_G(ofh->code_infos[seg_id].offset, src, ofh->code_infos[seg_id].size);
           }
         }
-        continue;
-      } else if (1 < seg_id) {
-        if (seg_id == 2) {
-          code_infos = ofh->code_infos + 1;
-          code_info_size = ofh->code_infos[2].size;
-          if (ofh->code_infos[seg_id].size == 0) {
-            (&code_infos->unknown_0xc)[1] = 0;
-            continue;
-          } else {
-            src = (void *)ofh->code_infos[seg_id].offset;
-            ofh->code_infos[seg_id].offset =
-                (uint32_t)kmalloc(this->m_heap, ofh->code_infos[seg_id].size, 0x2000, "top-level-segment");
-            ObjectFileHeader* m_link_block_ptr = (ObjectFileHeader *)this->m_link_block_ptr;
-            if ((void *)m_link_block_ptr->code_infos[seg_id].offset == (void *)0x0) {
-              MsgErr("dkernel: unable to malloc %d bytes for top-level-segment~%",
-                     m_link_block_ptr->code_infos[seg_id].size);
-              return 1;
-            }
-            ultimate_memcpy_G((void *)m_link_block_ptr->code_infos[seg_id].offset, src,
-                              m_link_block_ptr->code_infos[seg_id].size);
+      } else if (seg_id == 2) {
+        if (ofh->code_infos[seg_id].size == 0) {
+          (&code_infos->unknown_0xc)[1] = 0;
+        } else {
+          void* src = (void *)ofh->code_infos[seg_id].offset;
+          ofh->code_infos[seg_id].offset =
+              (uint32_t)kmalloc(this->m_heap, ofh->code_infos[seg_id].size, 0x2000, "top-level-segment");
+          if ((void *)ofh->code_infos[seg_id].offset == (void *)0x0) {
+            MsgErr("dkernel: unable to malloc %d bytes for top-level-segment~%",
+                    ofh->code_infos[seg_id].size);
+            return 1;
           }
+          ultimate_memcpy_G((void *)ofh->code_infos[seg_id].offset, src,
+                            ofh->code_infos[seg_id].size);
         }
-        continue;
       } else if (seg_id == 0) {
         if (ofh->code_infos[seg_id].size == 0) {
           ofh->code_infos[seg_id].offset = 0;
           continue;
         } else if (this->m_moved_link_block == false) {
           do {
-            src = (void *)ofh->code_infos[seg_id].offset;
+            void* src = (void *)ofh->code_infos[seg_id].offset;
             ofh->code_infos[seg_id].offset =
                 (uint32_t)kmalloc(this->m_heap, ofh->code_infos[seg_id].size, 0, "main-segment");
-            ObjectFileHeader* m_link_block_ptr = (ObjectFileHeader *)this->m_link_block_ptr;
-            if ((void *)m_link_block_ptr->code_infos[seg_id].offset == (void *)0x0) {
+            if ((void *)ofh->code_infos[seg_id].offset == (void *)0x0) {
               MsgErr("dkernel: unable to malloc %d bytes for main-segment~%",
-                     m_link_block_ptr->code_infos[seg_id].size);
+                     ofh->code_infos[seg_id].size);
               return 1;
             }
-            ultimate_memcpy_G((void *)m_link_block_ptr->code_infos[seg_id].offset, src,
-                              m_link_block_ptr->code_infos[seg_id].size);
+            ultimate_memcpy_G((void *)ofh->code_infos[seg_id].offset, src,
+                              ofh->code_infos[seg_id].size);
             goto LAB_0026f70c_for_loop;
           } while ((int)(m_link_hdr->link_length + 0x50) <= (int)m_link_hdr->length_to_get_to_code);
         }
         // m_heap = this->m_heap; // TODO: Why is this assigned?
-        puVar17 = puVar17 + this->m_code_size;
-        m_heap->current = puVar17;
+        m_heap->current = this->m_object_data + this->m_code_size;
         seg_id = -1;
-        if (puVar17 < m_heap->top) {
+        if (m_heap->current < m_heap->top) {
           MsgErr("dkernel: heap overflow~%");
           return 1;
         }
       } else {
-LAB_0026f754:
-        continue;
+        ;
       }
     }
     this->m_state = 1;
