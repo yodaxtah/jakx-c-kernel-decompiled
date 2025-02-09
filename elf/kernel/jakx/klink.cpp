@@ -70,42 +70,43 @@ void jak3_begin(link_control* this, uint8_t* object_file,
     this->m_code_size = size___;
     if ((int)this->m_link_hdr >= (int)m_heap->base) {
       if ((int)this->m_link_hdr < (int)m_heap->top) {
-        version = m_link_hdr->version;
         this->m_moved_link_block = true;
         char* old_link_block_G;
         LinkHeaderV5* new_link_block_mem;
-        if (version == 5) {
+
+        if (m_link_hdr->version == 5) {
           old_link_block_G = (char *)(object_file + m_link_hdr->length_to_get_to_link);
-          new_link_block_mem =
-               (LinkHeaderV5 *)kmalloc(this->m_heap, m_link_hdr->link_length + 0x50, 0x2000, "link-block");
+
+          new_link_block_mem = (LinkHeaderV5 *)kmalloc(this->m_heap, m_link_hdr->link_length + 0x50,
+                                                       0x2000, "link-block");
+
           m_link_hdr->length_to_get_to_link = 0x50;
+
           memcpy(new_link_block_mem_temp, object_file, 0x50);
           ultimate_memcpy_G(new_link_block_mem + 1, old_link_block_G, m_link_hdr->link_length);
           memcpy(new_link_block_mem, new_link_block_mem_temp, 0x50);
         } else {
-          new_link_block_mem =
-               (LinkHeaderV5 *)kmalloc(this->m_heap, m_link_hdr->length_to_get_to_code, 0x2000, "link-block")
-          ;
+          new_link_block_mem = (LinkHeaderV5 *)kmalloc(this->m_heap, m_link_hdr->length_to_get_to_code,
+                                                       0x2000, "link-block");
           old_link_block_G = this->m_link_hdr[-1].name + 0x37;
           ultimate_memcpy_G(new_link_block_mem, old_link_block_G,
                             this->m_link_hdr->length_to_get_to_code);
         }
+
         this->m_link_hdr = &new_link_block_mem->core;
+
         if ((int)old_link_block_G < (int)this->m_heap->current) {
           this->m_heap->current = (u8 *)old_link_block_G;
         }
         goto LAB_0026f55c;
       }
     }
-    u8* puVar1 = this->m_object_data;
-    if ((int)puVar1 < (int)m_heap->base) {
-      goto LAB_0026f55c;
-    } else if ((int)m_heap->top <= (int)puVar1) {
-      goto LAB_0026f55c;
-    } else if ((int)m_heap->current <= (int)puVar1) {
+    if ((int)this->m_object_data < (int)m_heap->base ||
+      (int)m_heap->top <= (int)this->m_object_data ||
+      (int)m_heap->current <= (int)this->m_object_data) {
       goto LAB_0026f55c;
     }
-    m_heap->current = puVar1;
+    m_heap->current = this->m_object_data;
   }
 LAB_0026f55c:
   if ((this->m_flags & 0x10) != 0 && MasterDebug != 0 && DiskBoot == 0) {
