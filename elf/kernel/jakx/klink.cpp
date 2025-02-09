@@ -464,7 +464,6 @@ uint32_t jak3_work_opengoal(link_control* this) {
   byte *pbVar15;
   short *name;
   uint8_t *puVar17;
-  int seg_id_W;
   ObjectFileHeader *ofh_W;
   ObjectFileHeader *m_link_block_ptr;
   ObjectFileHeader *m_link_block_ptr__;
@@ -478,23 +477,12 @@ uint32_t jak3_work_opengoal(link_control* this) {
   if (this->m_state == 0) {
     m_link_hdr = this->m_link_hdr;
     __code_infos[segId].size__ = m_link_hdr->length_to_get_to_link;
-    bVar1 = m_link_hdr->n_segments;
-    this->m_code_start = (uint8_t *)(uint)bVar1;
+    this->m_code_start = (uint8_t *)(uint)m_link_hdr->n_segments;
     m_link_hdr->length_to_get_to_link =
          (uint32_t)(m_link_hdr->name + (__code_infos[segId].size__ - 0x15));
-    seg_id_W = (int)(uint8_t *)(uint)bVar1 + -1;
     this->m_link_block_ptr = (uint8_t *)(m_link_hdr->name + (__code_infos[segId].size__ - 0x15));
 LAB_0026f70c_for_loop:
-    for (;;) {
-      if (seg_id_W < 0) {
-        this->m_segment_process = 0;
-        this->m_state = 1;
-        iVar6 = (*(code *)PTR_read_clock_code_002836d0)();
-        if (200000 < (uint)(iVar6 - iVar5)) {
-          return 0;
-        }
-        goto LAB_0026f94c;
-      }
+    for (int seg_id_W = (int)(uint8_t *)(uint)m_link_hdr->n_segments + -1; seg_id_W >= 0; seg_id_W -= 1) {
       ofh_W = (ObjectFileHeader *)this->m_link_block_ptr;
       uint8_t* puVar17 = this->m_object_data;
       puVar14 = &ofh_W->code_infos[seg_id_W + -1].unknown_0xc;
@@ -521,21 +509,21 @@ LAB_0026f70c_for_loop:
               return 1;
             }
             __code_infos[segId].size__ = m_link_block_ptr__->code_infos[1].size;
-            seg_id_W = seg_id_W + -1;
             ultimate_memcpy_G(dst,src,__code_infos[segId].size__);
-            goto LAB_0026f70c_for_loop;
+            continue;
           }
-LAB_0026f8a4:
           (&code_infos->unknown_0xc)[1] = 0;
         }
-        seg_id_W = seg_id_W + -1;
-        goto LAB_0026f70c_for_loop;
+        continue;
       }
       if (1 < seg_id_W) {
         if (seg_id_W == 2) {
           code_infos = ofh_W->code_infos + 1;
           __code_infos[segId].size__ = ofh_W->code_infos[2].size;
-          if (__code_infos[segId].size__ == 0) goto LAB_0026f8a4;
+          if (__code_infos[segId].size__ == 0) {
+            (&code_infos->unknown_0xc)[1] = 0;
+            continue;
+          }
           src = (void *)ofh_W->code_infos[2].offset;
           code_infos[1|2].offset =
                kmalloc(this->m_heap,__code_infos[segId].size__,0x2000,"top-level-segment");
@@ -548,26 +536,19 @@ LAB_0026f8a4:
             return 1;
           }
           __code_infos[segId].size__ = m_link_block_ptr_->code_infos[2].size;
-          seg_id_W = seg_id_W + -1;
           ultimate_memcpy_G(dst,src,__code_infos[segId].size__);
         }
-        else {
-          seg_id_W = seg_id_W + -1;
-        }
-        goto LAB_0026f70c_for_loop;
+        continue;
       }
       if (seg_id_W != 0) {
 LAB_0026f754:
-        seg_id_W = seg_id_W + -1;
-        goto LAB_0026f70c_for_loop;
+        continue;
       }
 
       if (ofh_W->code_infos[0].size == 0) {
         ofh_W->code_infos[0].offset = 0;
-        seg_id_W = seg_id_W + -1;
-        goto LAB_0026f70c_for_loop;
-      }
-      if (this->m_moved_link_block == false) {
+        continue;
+      } else if (this->m_moved_link_block == false) {
         do {
           m_heap = this->m_heap;
           src = (void *)ofh_W->code_infos[0].offset;
@@ -581,7 +562,6 @@ LAB_0026f754:
             return 1;
           } else {
             __code_infos[segId].size__ = puVar16->code_infos[0].size;
-            seg_id_W = seg_id_W + -1;
             ultimate_memcpy_G(dst,src,__code_infos[segId].size__);
             goto LAB_0026f70c_for_loop;
           }
@@ -596,6 +576,13 @@ LAB_0026f754:
         return 1;
       }
     }
+    this->m_segment_process = 0;
+    this->m_state = 1;
+    iVar6 = (*(code *)PTR_read_clock_code_002836d0)();
+    if (200000 < (uint)(iVar6 - iVar5)) {
+      return 0;
+    }
+    goto LAB_0026f94c;
   }
   else {
 LAB_0026f94c:
