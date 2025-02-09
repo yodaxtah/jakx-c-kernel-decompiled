@@ -441,25 +441,6 @@ uint32_t symlink_v3(Ptr<uint8_t> link, Ptr<uint8_t> data) {
 }  // namespace
 
 uint32_t jak3_work_opengoal(link_control* this) {
-  byte bVar1;
-  byte bVar2;
-  u8 **ppuVar3;
-  short sVar4;
-  u8 *code_infos[1|2].offset;
-  int iVar6;
-  int iVar7;
-  Type *pTVar8;
-  code *pcVar9;
-  size_t sVar10;
-  uint uVar11;
-  uint uVar12;
-  u64 methods;
-  uint *puVar13;
-  byte *pbVar15;
-  short *name;
-  uint32_t __code_infos[segId].size__;
-  SegmentInfo *code_infos;
-  
   int iVar5 = (*(code *)PTR_read_clock_code_002836d0)();
   ObjectFileHeader* ofh = (ObjectFileHeader *)this->m_link_block_ptr;
   if (this->m_state == 0) {
@@ -491,21 +472,6 @@ LAB_0026f70c_for_loop:
             ultimate_memcpy_G(ofh->code_infos[seg_id].offset, src, ofh->code_infos[seg_id].size);
           }
         }
-      } else if (seg_id == 2) {
-        if (ofh->code_infos[seg_id].size == 0) {
-          (&code_infos->unknown_0xc)[1] = 0;
-        } else {
-          void* src = (void *)ofh->code_infos[seg_id].offset;
-          ofh->code_infos[seg_id].offset =
-              (uint32_t)kmalloc(this->m_heap, ofh->code_infos[seg_id].size, 0x2000, "top-level-segment");
-          if ((void *)ofh->code_infos[seg_id].offset == (void *)0x0) {
-            MsgErr("dkernel: unable to malloc %d bytes for top-level-segment~%",
-                    ofh->code_infos[seg_id].size);
-            return 1;
-          }
-          ultimate_memcpy_G((void *)ofh->code_infos[seg_id].offset, src,
-                            ofh->code_infos[seg_id].size);
-        }
       } else if (seg_id == 0) {
         if (ofh->code_infos[seg_id].size == 0) {
           ofh->code_infos[seg_id].offset = 0;
@@ -532,165 +498,187 @@ LAB_0026f70c_for_loop:
           MsgErr("dkernel: heap overflow~%");
           return 1;
         }
+      } else if (seg_id == 2) {
+        if (ofh->code_infos[seg_id].size == 0) {
+          (&code_infos->unknown_0xc)[1] = 0;
+        } else {
+          void* src = (void *)ofh->code_infos[seg_id].offset;
+          ofh->code_infos[seg_id].offset =
+              (uint32_t)kmalloc(this->m_heap, ofh->code_infos[seg_id].size, 0x2000, "top-level-segment")
+                  ;
+          if ((void *)ofh->code_infos[seg_id].offset == (void *)0x0) {
+            MsgErr("dkernel: unable to malloc %d bytes for top-level-segment~%",
+                    ofh->code_infos[seg_id].size);
+            return 1;
+          }
+          ultimate_memcpy_G((void *)ofh->code_infos[seg_id].offset, src,
+                            ofh->code_infos[seg_id].size);
+        }
       } else {
         ;
       }
     }
     this->m_state = 1;
     this->m_segment_process = 0;
-    iVar6 = (*(code *)PTR_read_clock_code_002836d0)();
+    int iVar6 = (*(code *)PTR_read_clock_code_002836d0)();
     if (200000 < (uint)(iVar6 - iVar5)) {
       return 0;
     }
-    goto LAB_0026f94c;
   }
-  else {
+
+  u8 *pVar___;
+  uint uVar11;
+  uint uVar12;
+  byte *pbVar15;
+  uint32_t state_W;
+
 LAB_0026f94c:
-    while ((int)this->m_state < (int)(this->m_code_start + 1) &&
-       this->m_segment_process == 0) {
-      __code_infos[segId].size__ = this->m_state;
-      ObjectFileHeader* m_link_block_ptr = (ObjectFileHeader *)this->m_link_block_ptr;
-      if ((m_link_block_ptr->code_infos[__code_infos[segId].size__ - 1].offset != 0) &&
-         (m_link_block_ptr->code_infos[__code_infos[segId].size__ - 1].size != 0)) {
-        puVar17 = (uint8_t *)
-                  m_link_block_ptr->code_infos[__code_infos[segId].size__ - 2].unknown_0xc;
-        this->m_segment_process = 1;
-        this->m_original_object_location = puVar17;
-        *(undefined *)&this->m_loc_ptr = 0;
-        puVar17 = (uint8_t *)m_link_block_ptr->code_infos[__code_infos[segId].size__ - 1].offset;
-        this->m_object_data = puVar17;
-        this->m_base_ptr = puVar17 + -4;
-        this->m_reloc_ptr = puVar17;
-        break;
-      }
-      this->m_segment_process = 0;
-      this->m_state = __code_infos[segId].size__ + 1;
+  while ((int)this->m_state < (int)(this->m_code_start + 1) && this->m_segment_process == 0) {
+    state_W = this->m_state;
+    ObjectFileHeader* m_link_block_ptr = (ObjectFileHeader *)this->m_link_block_ptr;
+    if ((m_link_block_ptr->code_infos[state_W - 1].offset != 0) &&
+        (m_link_block_ptr->code_infos[state_W - 1].size != 0)) {
+      puVar17 = (uint8_t *)
+                m_link_block_ptr->code_infos[state_W - 2].unknown_0xc;
+      this->m_segment_process = 1;
+      this->m_original_object_location = puVar17;
+      *(undefined *)&this->m_loc_ptr = 0;
+      puVar17 = (uint8_t *)m_link_block_ptr->code_infos[state_W - 1].offset;
+      this->m_object_data = puVar17;
+      this->m_base_ptr = puVar17 + -4;
+      this->m_reloc_ptr = puVar17;
+      break;
     }
-    if ((int)__code_infos[segId].size__ < (int)(this->m_code_start + 1)) {
-      __code_infos[segId].size__ = this->m_segment_process;
-      if (__code_infos[segId].size__ == 1) {
-        iVar6 = 0x400;
-        if (*this->m_original_object_location != '\0') {
+    this->m_segment_process = 0;
+    this->m_state = state_W + 1;
+  }
+  if ((int)state_W < (int)(this->m_code_start + 1)) {
+    state_W = this->m_segment_process;
+    if (state_W == 1) {
+      int iVar6 = 0x400;
+      if (*this->m_original_object_location != '\0') {
 LAB_0026f9e8:
-          do {
-            bVar1 = *(byte *)&this->m_loc_ptr;
-            while( true ) {
-              iVar7 = 0;
-              if (bVar1 == 0) {
-                this->m_base_ptr = this->m_base_ptr + (uint)*this->m_original_object_location * 4;
-                puVar17 = this->m_original_object_location;
-              }
-              else {
-                pbVar15 = this->m_original_object_location;
-                bVar2 = *pbVar15;
-                while (bVar2 != 0) {
-                  ppuVar3 = (u8 **)this->m_base_ptr;
-                  code_infos[1|2].offset = *ppuVar3;
-                  uVar12 = (uint)code_infos[1|2].offset >> 8 & 0xf;
-                  puVar13 = (uint *)(((uint)code_infos[1|2].offset >> 10 & 0x3c) + (int)ppuVar3);
-                  if ((uint)code_infos[1|2].offset >> 0x18 == 0) {
-                    *ppuVar3 = code_infos[1|2].offset + (int)this->m_reloc_ptr;
-                  }
-                  else {
-                    uVar11 = *(int *)(this->m_link_block_ptr + uVar12 * 0x10 + 4) +
-                             (((uint)code_infos[1|2].offset & 0xff) << 0x10 |
-                             (uint)*(ushort *)puVar13);
-                    if ((DebugSegment == 0) && (uVar12 == 1)) {
-                      uVar11 = 0;
-                    }
-                    *ppuVar3 = (u8 *)((uint)code_infos[1|2].offset & 0xffff0000 | uVar11 >> 0x10);
-                    *puVar13 = *puVar13 & 0xffff0000 | uVar11 & 0xffff;
-                  }
-                  iVar7 = iVar7 + 1;
-                  this->m_base_ptr = (u8 *)(ppuVar3 + 1);
-                  bVar2 = iVar7 < (int)(uint)*pbVar15;
+        do {
+          byte bVar1 = *(byte *)&this->m_loc_ptr;
+          while( true ) {
+            int iVar7 = 0;
+            if (bVar1 == 0) {
+              this->m_base_ptr = this->m_base_ptr + (uint)*this->m_original_object_location * 4;
+              puVar17 = this->m_original_object_location;
+            }
+            else {
+              pbVar15 = this->m_original_object_location;
+              byte bVar2 = *pbVar15;
+              while (bVar2 != 0) {
+                u8** ppuVar3 = (u8 **)this->m_base_ptr;
+                pVar___ = *ppuVar3;
+                uVar12 = (uint)pVar___ >> 8 & 0xf;
+                uint* puVar13 = (uint *)(((uint)pVar___ >> 10 & 0x3c) + (int)ppuVar3);
+                if ((uint)pVar___ >> 0x18 == 0) {
+                  *ppuVar3 = pVar___ + (int)this->m_reloc_ptr;
                 }
-                puVar17 = this->m_original_object_location;
+                else {
+                  uVar11 = *(int *)(this->m_link_block_ptr + uVar12 * 0x10 + 4) +
+                            (((uint)pVar___ & 0xff) << 0x10 |
+                            (uint)*(ushort *)puVar13);
+                  if ((DebugSegment == 0) && (uVar12 == 1)) {
+                    uVar11 = 0;
+                  }
+                  *ppuVar3 = (u8 *)((uint)pVar___ & 0xffff0000 | uVar11 >> 0x10);
+                  *puVar13 = *puVar13 & 0xffff0000 | uVar11 & 0xffff;
+                }
+                iVar7 = iVar7 + 1;
+                this->m_base_ptr = (u8 *)(ppuVar3 + 1);
+                bVar2 = iVar7 < (int)(uint)*pbVar15;
               }
-              if (*puVar17 == 0xff) {
-                this->m_original_object_location = puVar17 + 1;
-                goto LAB_0026f9e8;
-              }
+              puVar17 = this->m_original_object_location;
+            }
+            if (*puVar17 == 0xff) {
               this->m_original_object_location = puVar17 + 1;
-              *(byte *)&this->m_loc_ptr = bVar1 ^ 1;
-              iVar6 = iVar6 + -1;
-              if (puVar17[1] == '\0') goto LAB_0026fb20;
-              if (iVar6 == 0) break;
-              bVar1 = *(byte *)&this->m_loc_ptr;
+              goto LAB_0026f9e8;
             }
-            iVar7 = (*(code *)PTR_read_clock_code_002836d0)();
-            iVar6 = 0x400;
-            if (200000 < (uint)(iVar7 - iVar5)) {
-              return 0;
-            }
-          } while( true );
-        }
-LAB_0026fb20:
-        this->m_original_object_location = this->m_original_object_location + 1;
-        this->m_segment_process = this->m_segment_process + 1;
-        __code_infos[segId].size__ = this->m_segment_process;
+            this->m_original_object_location = puVar17 + 1;
+            *(byte *)&this->m_loc_ptr = bVar1 ^ 1;
+            iVar6 = iVar6 + -1;
+            if (puVar17[1] == '\0') goto LAB_0026fb20;
+            if (iVar6 == 0) break;
+            bVar1 = *(byte *)&this->m_loc_ptr;
+          }
+          int iVar7 = (*(code *)PTR_read_clock_code_002836d0)();
+          iVar6 = 0x400;
+          if (200000 < (uint)(iVar7 - iVar5)) {
+            return 0;
+          }
+        } while( true );
       }
-      if (__code_infos[segId].size__ != 2) {
-        update_goal_fns();
-        return 1;
+LAB_0026fb20:
+      this->m_original_object_location++;
+      this->m_segment_process++;
+      state_W = this->m_segment_process;
+    }
+    if (state_W != 2) {
+      update_goal_fns();
+      return 1;
+    }
+    pbVar15 = this->m_original_object_location;
+    uVar12 = *(uint *)(this->m_link_block_ptr + this->m_state * 0x10 + -4);
+    while( true ) {
+      bVar1 = *pbVar15;
+      uVar11 = (uint)bVar1;
+      if (uVar11 == 0) break;
+      this->m_original_object_location = pbVar15 + 1;
+      Type *pTVar8;
+      if ((bVar1 & 0x80) == 0) {
+        short sVar4 = *(short *)(pbVar15 + 1);
+        this->m_original_object_location = pbVar15 + 3;
+        pTVar8 = (Type *)intern_from_c((int)sVar4,uVar11,(const char *)(pbVar15 + 3));
+        puVar17 = this->m_original_object_location;
+      }
+      else {
+        u64 methods;
+        int iVar6 = (uVar11 & 0x3f) * 4;
+        if ((uVar11 & 0x3f) == 0x3f) {
+          bVar1 = pbVar15[1];
+          this->m_original_object_location = pbVar15 + 2;
+          methods = (long)(int)((uint)bVar1 * 4 + 3);
+        }
+        else {
+          methods = (long)iVar6;
+          if ((long)iVar6 != 0) {
+            methods = (long)(iVar6 + 3);
+          }
+        }
+        short* name = (short *)((int)this->m_original_object_location + 2);
+        short sVar4 = *(short *)this->m_original_object_location;
+        this->m_original_object_location = (uint8_t *)name;
+        pTVar8 = intern_type_from_c((int)sVar4,uVar11,(const char *)name,methods);
+        puVar17 = this->m_original_object_location;
+      }
+      size_t sVar10 = strlen((char *)puVar17);
+      this->m_original_object_location = this->m_original_object_location + (int)sVar10 + 1;
+      code* pcVar9;
+      if ((uVar12 & 1) == 0) {
+        puVar17 = this->m_object_data;
+        pcVar9 = (code *)symlink3_G;
+      }
+      else {
+        puVar17 = this->m_object_data;
+        pcVar9 = (code *)symlink2_G;
+      }
+      puVar17 = (uint8_t *)(*pcVar9)(puVar17,pTVar8);
+      this->m_original_object_location = puVar17;
+      int iVar6 = (*(code *)PTR_read_clock_code_002836d0)();
+      if (200000 < (uint)(iVar6 - iVar5)) {
+        return 0;
       }
       pbVar15 = this->m_original_object_location;
-      uVar12 = *(uint *)(this->m_link_block_ptr + this->m_state * 0x10 + -4);
-      while( true ) {
-        bVar1 = *pbVar15;
-        uVar11 = (uint)bVar1;
-        if (uVar11 == 0) break;
-        this->m_original_object_location = pbVar15 + 1;
-        if ((bVar1 & 0x80) == 0) {
-          sVar4 = *(short *)(pbVar15 + 1);
-          this->m_original_object_location = pbVar15 + 3;
-          pTVar8 = (Type *)intern_from_c((int)sVar4,uVar11,(const char *)(pbVar15 + 3));
-          puVar17 = this->m_original_object_location;
-        }
-        else {
-          iVar6 = (uVar11 & 0x3f) * 4;
-          if ((uVar11 & 0x3f) == 0x3f) {
-            bVar1 = pbVar15[1];
-            this->m_original_object_location = pbVar15 + 2;
-            methods = (long)(int)((uint)bVar1 * 4 + 3);
-          }
-          else {
-            methods = (long)iVar6;
-            if ((long)iVar6 != 0) {
-              methods = (long)(iVar6 + 3);
-            }
-          }
-          name = (short *)((int)this->m_original_object_location + 2);
-          sVar4 = *(short *)this->m_original_object_location;
-          this->m_original_object_location = (uint8_t *)name;
-          pTVar8 = intern_type_from_c((int)sVar4,uVar11,(const char *)name,methods);
-          puVar17 = this->m_original_object_location;
-        }
-        sVar10 = strlen((char *)puVar17);
-        this->m_original_object_location = this->m_original_object_location + (int)sVar10 + 1;
-        if ((uVar12 & 1) == 0) {
-          puVar17 = this->m_object_data;
-          pcVar9 = (code *)symlink3_G;
-        }
-        else {
-          puVar17 = this->m_object_data;
-          pcVar9 = (code *)symlink2_G;
-        }
-        puVar17 = (uint8_t *)(*pcVar9)(puVar17,pTVar8);
-        this->m_original_object_location = puVar17;
-        iVar6 = (*(code *)PTR_read_clock_code_002836d0)();
-        if (200000 < (uint)(iVar6 - iVar5)) {
-          return 0;
-        }
-        pbVar15 = this->m_original_object_location;
-      }
-      this->m_segment_process = 0;
-      this->m_state = this->m_state + 1;
-      this->m_entry = this->m_object_data + 4;
-      goto LAB_0026f94c;
-    } else {
-      update_goal_fns();
     }
+    this->m_segment_process = 0;
+    this->m_state++;
+    this->m_entry = this->m_object_data + 4;
+    goto LAB_0026f94c;
+  } else {
+    update_goal_fns();
   }
   return 1;
 }
