@@ -773,18 +773,15 @@ void link_reset() {
   saved_link_control_WG.m_busy = 0;
 }
 uint64_t link_begin(u64 *args) {
-  uint32_t work_result;
-  undefined jump_from_c_to_goal;
-  const_char *in_a1_lo;
+  const char *in_a1_lo;
   int32_t in_a2_lo;
   kheapinfo *in_a3_lo;
   uint32_t in_t0_lo;
-  
-  jump_from_c_to_goal = SUB41(args,0);
-  jak3_begin(&saved_link_control_WG,(uint8_t *)args,in_a1_lo,in_a2_lo,in_a3_lo,in_t0_lo);
-  work_result = jak3_work(&saved_link_control_WG);
+  jak3_begin(&saved_link_control_WG, (uint8_t *)args, in_a1_lo, in_a2_lo,
+             in_a3_lo, in_t0_lo);
+  uint32_t work_result = jak3_work(&saved_link_control_WG);
   if (work_result != 0) {
-    jak3_finish(&saved_link_control_WG,(bool)jump_from_c_to_goal);
+    jak3_finish(&saved_link_control_WG,(bool)SUB41(args,0));
   }
   return (ulong)(work_result != 0);
 }
