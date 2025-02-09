@@ -740,22 +740,23 @@ void jak3_finish(link_control* this, bool jump_from_c_to_goal) {
 
 namespace jak3 {
 
-uint8_t * link_and_exec(uint8_t *data, const_char *name, int32_t size, kheapinfo *heap, uint32_t flags, bool jump_from_c_to_goal) {
-  uint32_t done;
-  long link_busy_result;
-  long lVar1;
-  uint8_t *lc.m_entry;
-  
-  lVar1 = (long)(int)data;
-  link_busy_result = link_busy();
-  if (link_busy_result != 0) {
+uint8_t* link_and_exec(uint8_t* data,
+                        const char* name,
+                        int32_t size,
+                        kheapinfo* heap,
+                        uint32_t flags,
+                        bool jump_from_c_to_goal) {
+  if (link_busy() != 0) {
     printf("-------------> saved link is busy\n");
   }
-  jak3_begin((link_control *)&stack0xffffff30,data,name,size,heap,flags);
+  jak3_begin((link_control *)&stack0xffffff30, data, name, size, heap, flags);
+  uint32_t done;
   do {
     done = jak3_work((link_control *)&stack0xffffff30);
   } while (done == 0);
+  long lVar1 = (long)(int)data;
   jak3_finish((link_control *)&stack0xffffff30,SUB81(lVar1,0));
+  uint8_t *lc.m_entry;
   return lc.m_entry;
 }
 
