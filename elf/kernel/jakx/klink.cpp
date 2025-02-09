@@ -802,31 +802,27 @@ uint64_t link_resume() {
  * but it may use the scratchpad.  It is implemented in GOAL, and falls back to normal C memcpy
  * if GOAL isn't loaded, or if the alignment isn't good enough.
  */
-void ultimate_memcpy_G(void *dst,void *src,uint32_t size) {
+void ultimate_memcpy_G(void* dst, void* src, uint32_t size) {
   code *pcVar1;
-  int iVar2;
-  ulong __n;
   int unaff_s7_lo;
   
-  __n = (ulong)(int)size;
   if ((src < dst) && ((int)((int)dst - size) < (int)src)) {
-    for (iVar2 = size - 1; iVar2 != -1; iVar2 = iVar2 + -1) {
-      *(undefined *)((int)dst + iVar2) = *(undefined *)((int)src + iVar2);
+    for (int i = size - 1; i != -1; i--) {
+      *(undefined *)((int)dst + i) = *(undefined *)((int)src + i);
     }
   }
   else {
-    if ((((((uint)src & 0xf) != 0) || (((uint)dst & 0xf) != 0)) || ((__n & 0xf) != 0)) ||
-       ((__n < 0x1000 ||
+    if ((((((uint)src & 0xf) != 0) || (((uint)dst & 0xf) != 0)) || (((ulong)(int)size & 0xf) != 0)) ||
+       (((ulong)(int)size < 0x1000 ||
         ((pcVar1 = DAT_002836f8, DAT_002836f8 == (code *)0x0 &&
          (pcVar1 = *(code **)(unaff_s7_lo + 0x283), *(code **)(unaff_s7_lo + 0x283) == (code *)0x0))
         )))) {
-      memcpy(dst,src,__n);
+      memcpy(dst, src, (ulong)(int)size);
       return;
     }
     DAT_002836f8 = pcVar1;
     (*DAT_002836f8)();
   }
-  return;
 }
 
 }  // namespace jak3
