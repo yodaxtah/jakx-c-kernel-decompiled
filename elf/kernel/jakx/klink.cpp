@@ -771,7 +771,6 @@ u32 link_busy() {
 }
 void link_reset() {
   saved_link_control_WG.m_busy = 0;
-  return;
 }
 uint64_t link_begin(u64 *args) {
   uint32_t work_result;
