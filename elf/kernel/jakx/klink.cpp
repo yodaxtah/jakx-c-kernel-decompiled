@@ -23,15 +23,12 @@ bool is_opengoal_object(void* data) {
 constexpr bool link_debug_printfs = false;
 }  // namespace
 
-void jak3_begin(link_control *this, uint8_t *object_file, const_char *name, int32_t size, kheapinfo *heap, uint32_t flags) {
-  LinkHeaderV5 *new_link_block_mem;
-  u8 *puVar1;
-  uint32_t size&m_flags;
-  char *old_link_block_G;
-  LinkHeaderV5 *l_hdr;
-  kheapinfo *m_heap;
-  LinkHeaderV5Core *m_link_hdr;
-  uint16_t version;
+void jak3_begin(link_control* this, uint8_t* object_file,
+                const char* name,
+                int32_t size,
+                kheapinfo* heap,
+                uint32_t flags) {
+  uint32_t flags___;
   
   if (heap == &kglobalheapinfo) {
     kmemopen_from_c(&kglobalheapinfo,name);
@@ -42,7 +39,7 @@ void jak3_begin(link_control *this, uint8_t *object_file, const_char *name, int3
   }
   this->m_object_data = object_file;
   strcpy(this->m_object_name,name);
-  l_hdr = (LinkHeaderV5 *)this->m_object_data;
+  LinkHeaderV5 *l_hdr = (LinkHeaderV5 *)this->m_object_data;
   this->m_heap_top = heap->top;
   this->m_flags = flags;
   this->m_object_size = size;
@@ -56,45 +53,47 @@ void jak3_begin(link_control *this, uint8_t *object_file, const_char *name, int3
   this->m_state = 0;
   this->m_segment_process = 0;
   this->m_moved_link_block = false;
-  version = (l_hdr->core).version;
+  uint16_t version = (l_hdr->core).version;
   if (version == 4) {
-    size&m_flags = (l_hdr->core).length_to_get_to_link;
+    uint32_t size___ = (l_hdr->core).length_to_get_to_link;
     this->m_object_data = (uint8_t *)&(l_hdr->core).link_length;
-    this->m_code_size = size&m_flags;
-    this->m_link_hdr = (LinkHeaderV5Core *)((l_hdr->core).name + (size&m_flags - 1));
+    this->m_code_size = size___;
+    this->m_link_hdr = (LinkHeaderV5Core *)((l_hdr->core).name + (size___ - 1));
   }
   else {
-    size&m_flags = (l_hdr->core).length_to_get_to_code;
-    this->m_object_data = (uint8_t *)((l_hdr->core).name + (size&m_flags - 0x15));
-    size&m_flags = size - size&m_flags;
+    uint32_t size___ = (l_hdr->core).length_to_get_to_code;
+    this->m_object_data = (uint8_t *)((l_hdr->core).name + (size___ - 0x15));
+    size___ = size - size___;
     if (version == 5) {
-      size&m_flags = (size - (l_hdr->core).link_length) - 0x50;
+      size___ = (size - (l_hdr->core).link_length) - 0x50;
     }
-    this->m_code_size = size&m_flags;
-    m_heap = this->m_heap;
-    m_link_hdr = this->m_link_hdr;
+    this->m_code_size = size___;
+    kheapinfo* m_heap = this->m_heap;
+    LinkHeaderV5Core* m_link_hdr = this->m_link_hdr;
     if ((int)m_link_hdr < (int)m_heap->base) {
-      puVar1 = this->m_object_data;
+      ;
     }
     else {
       if ((int)m_link_hdr < (int)m_heap->top) {
         version = m_link_hdr->version;
         this->m_moved_link_block = true;
+        char* old_link_block_G;
+        LinkHeaderV5* new_link_block_mem;
         if (version == 5) {
           old_link_block_G = (char *)(object_file + m_link_hdr->length_to_get_to_link);
           new_link_block_mem =
-               (LinkHeaderV5 *)kmalloc(m_heap,m_link_hdr->link_length + 0x50,0x2000,"link-block");
+               (LinkHeaderV5 *)kmalloc(m_heap, m_link_hdr->link_length + 0x50, 0x2000, "link-block");
           m_link_hdr->length_to_get_to_link = 0x50;
-          memcpy(new_link_block_mem_temp,object_file,0x50);
-          ultimate_memcpy_G(new_link_block_mem + 1,old_link_block_G,m_link_hdr->link_length);
-          memcpy(new_link_block_mem,new_link_block_mem_temp,0x50);
+          memcpy(new_link_block_mem_temp, object_file, 0x50);
+          ultimate_memcpy_G(new_link_block_mem + 1, old_link_block_G, m_link_hdr->link_length);
+          memcpy(new_link_block_mem, new_link_block_mem_temp, 0x50);
         }
         else {
           new_link_block_mem =
-               (LinkHeaderV5 *)kmalloc(m_heap,m_link_hdr->length_to_get_to_code,0x2000,"link-block")
+               (LinkHeaderV5 *)kmalloc(m_heap, m_link_hdr->length_to_get_to_code, 0x2000, "link-block")
           ;
           old_link_block_G = this->m_link_hdr[-1].name + 0x37;
-          ultimate_memcpy_G(new_link_block_mem,old_link_block_G,
+          ultimate_memcpy_G(new_link_block_mem, old_link_block_G,
                             this->m_link_hdr->length_to_get_to_code);
         }
         this->m_link_hdr = &new_link_block_mem->core;
@@ -103,29 +102,28 @@ void jak3_begin(link_control *this, uint8_t *object_file, const_char *name, int3
         }
         goto LAB_0026f558;
       }
-      puVar1 = this->m_object_data;
     }
+    u8* puVar1 = this->m_object_data;
     if ((int)puVar1 < (int)m_heap->base) {
-      size&m_flags = this->m_flags;
+      flags___ = this->m_flags;
       goto LAB_0026f55c;
     }
     if ((int)m_heap->top <= (int)puVar1) {
-      size&m_flags = this->m_flags;
+      flags___ = this->m_flags;
       goto LAB_0026f55c;
     }
     if ((int)m_heap->current <= (int)puVar1) {
-      size&m_flags = this->m_flags;
+      flags___ = this->m_flags;
       goto LAB_0026f55c;
     }
     m_heap->current = puVar1;
   }
 LAB_0026f558:
-  size&m_flags = this->m_flags;
+  flags___ = this->m_flags;
 LAB_0026f55c:
-  if ((((size&m_flags & 0x10) != 0) && (MasterDebug != 0)) && (DiskBoot == 0)) {
+  if ((((flags___ & 0x10) != 0) && (MasterDebug != 0)) && (DiskBoot == 0)) {
     this->m_keep_debug = 1;
   }
-  return;
 }
 
 uint32_t jak3_work(link_control *this) {
