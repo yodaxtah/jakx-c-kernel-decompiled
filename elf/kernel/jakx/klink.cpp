@@ -786,14 +786,11 @@ uint64_t link_begin(u64 *args) {
   return (ulong)(work_result != 0);
 }
 uint64_t link_resume() {
-  uint32_t uVar1;
-  undefined in_a1_lo;
-  
-  uVar1 = jak3_work(&saved_link_control_WG);
-  if (uVar1 != 0) {
-    jak3_finish(&saved_link_control_WG,(bool)in_a1_lo);
+  uint32_t work_result = jak3_work(&saved_link_control_WG);
+  if (work_result != 0) {
+    jak3_finish(&saved_link_control_WG, false);
   }
-  return (ulong)(uVar1 != 0);
+  return (ulong)(work_result != 0);
 }
 
 // Note: update_goal_fns changed to skip the hashtable lookup since symlink2/symlink3 are now fixed
