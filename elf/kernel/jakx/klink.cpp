@@ -440,7 +440,7 @@ uint32_t symlink_v3(Ptr<uint8_t> link, Ptr<uint8_t> data) {
 }
 }  // namespace
 
-uint32_t jak3_work_opengoal(link_control *this) {
+uint32_t jak3_work_opengoal(link_control* this) {
   byte bVar1;
   byte bVar2;
   u8 **ppuVar3;
@@ -517,11 +517,13 @@ LAB_0026f70c:
             dst = (void *)m_link_block_ptr__->code_infos[1].offset;
             if (dst == (void *)0x0) {
               __code_infos[segId].size__ = m_link_block_ptr__->code_infos[1].size;
-              format = "dkernel: unable to malloc %d bytes for debug-segment~%";
-              goto LAB_0026f838;
+              MsgErr("dkernel: unable to malloc %d bytes for debug-segment~%",__code_infos[segId].size__);
+              return 1;
             }
             __code_infos[segId].size__ = m_link_block_ptr__->code_infos[1].size;
-            goto LAB_0026f81c;
+            segId_W = segId_W + -1;
+            ultimate_memcpy_G(dst,src,__code_infos[segId].size__);
+            goto LAB_0026f70c;
           }
 LAB_0026f8a4:
           (&code_infos->unknown_0xc)[1] = 0;
@@ -541,11 +543,10 @@ LAB_0026f8a4:
           dst = (void *)m_link_block_ptr_->code_infos[2].offset;
           if (dst == (void *)0x0) {
             __code_infos[segId].size__ = m_link_block_ptr_->code_infos[2].size;
-            format = "dkernel: unable to malloc %d bytes for top-level-segment~%";
-            goto LAB_0026f838;
+            MsgErr("dkernel: unable to malloc %d bytes for top-level-segment~%",__code_infos[segId].size__);
+            return 1;
           }
           __code_infos[segId].size__ = m_link_block_ptr_->code_infos[2].size;
-LAB_0026f81c:
           segId_W = segId_W + -1;
           ultimate_memcpy_G(dst,src,__code_infos[segId].size__);
         }
@@ -573,17 +574,17 @@ LAB_0026f7e8:
         dst = (void *)puVar16->code_infos[0].offset;
         if (dst == (void *)0x0) {
           __code_infos[segId].size__ = puVar16->code_infos[0].size;
-          format = "dkernel: unable to malloc %d bytes for main-segment~%";
-LAB_0026f838:
-          MsgErr(format,__code_infos[segId].size__);
+          MsgErr("dkernel: unable to malloc %d bytes for main-segment~%",__code_infos[segId].size__);
           return 1;
         }
         __code_infos[segId].size__ = puVar16->code_infos[0].size;
-        goto LAB_0026f81c;
+        segId_W = segId_W + -1;
+        ultimate_memcpy_G(dst,src,__code_infos[segId].size__);
+        goto LAB_0026f70c;
       }
       if ((int)(m_link_hdr->link_length + 0x50) <= (int)m_link_hdr->length_to_get_to_code) {
         m_heap = this->m_heap;
-        goto LAB_0026f7e8;
+        goto LAB_0026f7e8; // do while
       }
       m_heap = this->m_heap;
       puVar17 = puVar17 + this->m_code_size;
@@ -594,9 +595,9 @@ LAB_0026f838:
   }
   else {
 LAB_0026f94c:
-    __code_infos[segId].size__ = this->m_state;
-    if (((int)__code_infos[segId].size__ < (int)(this->m_code_start + 1)) &&
-       (this->m_segment_process == 0)) {
+    if ((int)this->m_state < (int)(this->m_code_start + 1) &&
+       this->m_segment_process == 0) {
+      __code_infos[segId].size__ = this->m_state;
       m_link_block_ptr = (ObjectFileHeader *)this->m_link_block_ptr;
       if ((m_link_block_ptr->code_infos[__code_infos[segId].size__ - 1].offset != 0) &&
          (m_link_block_ptr->code_infos[__code_infos[segId].size__ - 1].size != 0)) {
@@ -613,7 +614,7 @@ LAB_0026f94c:
       }
       this->m_segment_process = 0;
       this->m_state = __code_infos[segId].size__ + 1;
-      goto LAB_0026f94c;
+      goto LAB_0026f94c; // while
     }
 LAB_0026f9c0:
     if ((int)__code_infos[segId].size__ < (int)(this->m_code_start + 1)) {
@@ -680,7 +681,10 @@ LAB_0026fb20:
         this->m_segment_process = this->m_segment_process + 1;
         __code_infos[segId].size__ = this->m_segment_process;
       }
-      if (__code_infos[segId].size__ != 2) goto LAB_0026fcac;
+      if (__code_infos[segId].size__ != 2) {
+        update_goal_fns();
+        return 1;
+      }
       pbVar15 = this->m_original_object_location;
       uVar12 = *(uint *)(this->m_link_block_ptr + this->m_state * 0x10 + -4);
       while( true ) {
@@ -691,7 +695,7 @@ LAB_0026fb20:
         if ((bVar1 & 0x80) == 0) {
           sVar4 = *(short *)(pbVar15 + 1);
           this->m_original_object_location = pbVar15 + 3;
-          pTVar8 = (Type *)intern_from_c((int)sVar4,uVar11,(const_char *)(pbVar15 + 3));
+          pTVar8 = (Type *)intern_from_c((int)sVar4,uVar11,(const char *)(pbVar15 + 3));
           segId_W = this->m_original_object_location;
         }
         else {
@@ -710,7 +714,7 @@ LAB_0026fb20:
           name = (short *)((int)this->m_original_object_location + 2);
           sVar4 = *(short *)this->m_original_object_location;
           this->m_original_object_location = (uint8_t *)name;
-          pTVar8 = intern_type_from_c((int)sVar4,uVar11,(const_char *)name,methods);
+          pTVar8 = intern_type_from_c((int)sVar4,uVar11,(const char *)name,methods);
           segId_W = this->m_original_object_location;
         }
         sVar10 = strlen((char *)segId_W);
@@ -735,9 +739,9 @@ LAB_0026fb20:
       this->m_state = this->m_state + 1;
       this->m_entry = this->m_object_data + 4;
       goto LAB_0026f94c;
+    } else {
+      update_goal_fns();
     }
-LAB_0026fcac:
-    update_goal_fns();
   }
   return 1;
 }
