@@ -28,20 +28,21 @@ void jak3_begin(link_control* this, uint8_t* object_file,
                 int32_t size,
                 kheapinfo* heap,
                 uint32_t flags) {
-  
   if (heap == &kglobalheapinfo) {
-    kmemopen_from_c(&kglobalheapinfo,name);
+    kmemopen_from_c(&kglobalheapinfo, name);
     this->m_on_global_heap = true;
   }
   else {
     this->m_on_global_heap = false;
   }
   this->m_object_data = object_file;
-  strcpy(this->m_object_name,name);
-  LinkHeaderV5 *l_hdr = (LinkHeaderV5 *)this->m_object_data;
-  this->m_heap_top = heap->top;
-  this->m_flags = flags;
+  strcpy(this->m_object_name, name);
   this->m_object_size = size;
+  LinkHeaderV5 *l_hdr = (LinkHeaderV5 *)this->m_object_data;
+  this->m_flags = flags;
+  uint16_t version = l_hdr->core.version;
+  this->m_heap_top = heap->top;
+  // TODO: where is unk_init1?
   this->m_busy = 1;
   this->m_heap = heap;
   this->m_entry = (uint8_t *)0x0;
@@ -52,7 +53,6 @@ void jak3_begin(link_control* this, uint8_t* object_file,
   this->m_state = 0;
   this->m_segment_process = 0;
   this->m_moved_link_block = false;
-  uint16_t version = l_hdr->core.version;
   if (version == 4) {
     uint32_t size___ = l_hdr->core.length_to_get_to_link;
     this->m_object_data = (uint8_t *)&l_hdr->core.link_length;
@@ -68,7 +68,13 @@ void jak3_begin(link_control* this, uint8_t* object_file,
       ;
     }
     this->m_code_size = size___;
-    if ((int)this->m_link_hdr >= (int)m_heap->base && (int)this->m_link_hdr < (int)m_heap->top) {
+    if ((int)this->m_link_hdr < (int)m_heap->base || (int)this->m_link_hdr >= (int)m_heap->top) {
+      if ((int)m_heap->base <= (int)this->m_object_data &&
+          (int)this->m_object_data < (int)m_heap->top &&
+          (int)this->m_object_data < (int)m_heap->current) {
+        m_heap->current = this->m_object_data;
+      }
+    } else {
       this->m_moved_link_block = true;
       LinkHeaderV5* new_link_block_mem;
       char* old_link_block_G;
@@ -97,17 +103,8 @@ void jak3_begin(link_control* this, uint8_t* object_file,
       if ((int)old_link_block_G < (int)this->m_heap->current) {
         this->m_heap->current = (u8 *)old_link_block_G;
       }
-      goto LAB_0026f55c;
-    }
-    if ((int)m_heap->base <= (int)this->m_object_data &&
-        (int)this->m_object_data < (int)m_heap->top &&
-        (int)this->m_object_data < (int)m_heap->current) {
-      m_heap->current = this->m_object_data;
-    } else {
-      goto LAB_0026f55c;
     }
   }
-LAB_0026f55c:
   if ((this->m_flags & 0x10) != 0 && MasterDebug != 0 && DiskBoot == 0) {
     this->m_keep_debug = 1;
   }
