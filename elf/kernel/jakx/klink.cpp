@@ -441,7 +441,7 @@ uint32_t symlink_v3(Ptr<uint8_t> link, Ptr<uint8_t> data) {
 }  // namespace
 
 uint32_t jak3_work_opengoal(link_control* this) {
-  int iVar5 = (*(code *)PTR_read_clock_code_002836d0)();
+  int startCycle = (*(code *)kernel.read_clock_G)();
   ObjectFileHeader* ofh = (ObjectFileHeader *)this->m_link_block_ptr;
   if (this->m_state == 0) {
     uint32_t prev_length = this->m_link_hdr->length_to_get_to_link;
@@ -520,8 +520,8 @@ LAB_0026f70c_for_loop:
     }
     this->m_state = 1;
     this->m_segment_process = 0;
-    int iVar6 = (*(code *)PTR_read_clock_code_002836d0)();
-    if (200000 < (uint)(iVar6 - iVar5)) {
+    int currentCycle = (*(code *)kernel.read_clock_G)();
+    if (200000 < (uint)(currentCycle - startCycle)) {
       return 0;
     }
   }
@@ -555,7 +555,7 @@ LAB_0026f94c:
   if ((int)state_W < (int)(this->m_code_start + 1)) {
     state_W = this->m_segment_process;
     if (state_W == 1) {
-      int iVar6 = 0x400;
+      int relocCounter = 0x400;
       if (*this->m_original_object_location != '\0') {
 LAB_0026f9e8:
         do {
@@ -599,14 +599,14 @@ LAB_0026f9e8:
             }
             this->m_original_object_location = puVar17 + 1;
             *(byte *)&this->m_loc_ptr = bVar1 ^ 1;
-            iVar6 = iVar6 + -1;
+            relocCounter = relocCounter + -1;
             if (puVar17[1] == '\0') goto LAB_0026fb20;
-            if (iVar6 == 0) break;
+            if (relocCounter == 0) break;
             bVar1 = *(byte *)&this->m_loc_ptr;
           }
-          int iVar7 = (*(code *)PTR_read_clock_code_002836d0)();
-          iVar6 = 0x400;
-          if (200000 < (uint)(iVar7 - iVar5)) {
+          relocCounter = 0x400;
+          int currentCycle = (*(code *)kernel.read_clock_G)();
+          if (200000 < (uint)(currentCycle - startCycle)) {
             return 0;
           }
         } while( true );
@@ -667,8 +667,8 @@ LAB_0026fb20:
       }
       puVar17 = (uint8_t *)(*pcVar9)(puVar17,pTVar8);
       this->m_original_object_location = puVar17;
-      int iVar6 = (*(code *)PTR_read_clock_code_002836d0)();
-      if (200000 < (uint)(iVar6 - iVar5)) {
+      int currentCycle = (*(code *)kernel.read_clock_G)();
+      if (200000 < (uint)(currentCycle - startCycle)) {
         return 0;
       }
       pbVar15 = this->m_original_object_location;
