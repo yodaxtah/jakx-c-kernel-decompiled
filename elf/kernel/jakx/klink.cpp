@@ -683,66 +683,60 @@ LAB_0026fb20:
   return 1;
 }
 
-void jak3_finish(link_control *this,bool jump_from_c_to_goal) {
-  char *a2;
+void jak3_finish(link_control* this, bool jump_from_c_to_goal) {
   int unaff_s7_lo;
-  code *m_entry;
-  kheapinfo *m_heap;
-  LinkHeaderV5Core *m_link_hdr;
-  int old_debug_segment;
-  uint16_t version;
   
-  FlushCache(0);
-  FlushCache(2);
-  old_debug_segment = DebugSegment;
+  // FlushCache(0);
+  // FlushCache(2);
+  int old_debug_segment = DebugSegment;
   if (this->m_keep_debug != 0) {
     DebugSegment = unaff_s7_lo + 4;
   }
   if ((this->m_flags & 0x20) != 0) {
     FastLink = true;
   }
-  m_link_hdr = this->m_link_hdr;
-  version = m_link_hdr->version;
+
   *EnableMethodSet = *EnableMethodSet + this->m_keep_debug;
+  
+  LinkHeaderV5Core* m_link_hdr = this->m_link_hdr;
+  uint16_t version = m_link_hdr->version;
   if (version == 5) {
-    m_entry = (code *)this->m_entry;
-    if (m_entry != (code *)0x0) {
-      if ((*(int *)(m_entry + -4) == *(int *)(unaff_s7_lo + 7)) && ((this->m_flags & 5) != 0)) {
+    code* m_entry = (code *)this->m_entry;
+    if (this->m_entry != (code *)0x0) {
+
+      if (*(int *)(this->m_entry + -4) == *(int *)(unaff_s7_lo + 7) && (this->m_flags & 5) != 0) {
         if ((this->m_flags & 4) == 0) {
-          m_entry = *(code **)(unaff_s7_lo + 0x93);
+          (**(code **)(unaff_s7_lo + 0x93))();
+        } else {
+          (*this->m_entry)();
+          (**(code **)(unaff_s7_lo + 0x93))();
         }
-        else {
-          (*m_entry)();
-          m_entry = *(code **)(unaff_s7_lo + 0x93);
-        }
-        (*m_entry)();
+
         if ((this->m_flags & 1) != 0) {
-          output_segment_load(m_link_hdr->name,(ObjectFileHeader *)m_link_hdr->length_to_get_to_link
-                              ,this->m_flags);
+          output_segment_load(m_link_hdr->name, (ObjectFileHeader *)m_link_hdr->length_to_get_to_link, this->m_flags);
         }
-      }
-      else if ((m_entry != (code *)0x0) && ((this->m_flags & 4) != 0)) {
-        a2 = basename(this->m_object_name);
-        call_method_of_type_arg2
-                  ((u32)this->m_entry,*(Type **)(this->m_entry + -4),7,(u32)this->m_heap,(u32)a2);
+      } else if ((this->m_flags & 4) != 0) {
+        char* name = basename(this->m_object_name);
+        call_method_of_type_arg2((u32)this->m_entry, *(Type **)(this->m_entry + -4), 7, (u32)this->m_heap,
+                                 (u32)name);
       }
     }
   }
   else {
-    MsgErr("dkernel: FATAL ERROR: unknown goal file version %d~%",version);
+    MsgErr("dkernel: FATAL ERROR: unknown goal file version %d~%", version);
   }
-  m_heap = this->m_heap;
-  FastLink = false;
+
+  // kheapinfo *m_heap = this->m_heap; // TODO: Why is this variable created?
   *EnableMethodSet = *EnableMethodSet - this->m_keep_debug;
-  DebugSegment = old_debug_segment;
+  FastLink = false;
   m_heap->top = this->m_heap_top;
+  DebugSegment = old_debug_segment;
   this->m_busy = 0;
   if (this->m_on_global_heap != false) {
     kmemclose();
   }
   return;
 }
-
 
 namespace jak3 {
 
