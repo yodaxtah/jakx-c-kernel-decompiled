@@ -63,15 +63,16 @@ s32 format_impl_jak3(uint64_t *args) {
   s64 local_30 [6];
   
   uVar6 = (ulong)(int)args;
-  pcVar5 = PrintPending;
+  char* print_temp = PrintPending;
   if (PrintPending == (char *)0x0) {
-    pcVar5 = PrintBufArea + 0x18;
+    print_temp = PrintBufArea + 0x18;
   }
-  __src = (byte *)strend(pcVar5);
-  pbVar7 = (byte *)(in_a1_lo + 4);
-  local_80 = *(uint *)(print_column + -1) >> 3;
+  __src = (byte *)strend(print_temp);
   PrintPending = (char *)__src;
   __s = __src;
+
+  pbVar7 = (byte *)(in_a1_lo + 4);
+  local_80 = *(uint *)(print_column + -1) >> 3;
   if ((local_80 != 0) && (uVar11 = local_80, __src[-1] == 10)) {
     for (; uVar11 != 0; uVar11 = uVar11 - 1) {
       *__s = 0x20;
@@ -79,7 +80,7 @@ s32 format_impl_jak3(uint64_t *args) {
     }
   }
   psVar16 = local_30;
-LAB_00267b8c:
+LAB_loop_over_format_string:
   while (bVar14 = *pbVar7, bVar14 != 0) {
     if (bVar14 == 0x7e) {
       local_17f = '\0';
@@ -154,11 +155,20 @@ LAB_002682dc:
     *__s = bVar14;
     __s = __s + 1;
     pbVar9 = (char *)pbVar7;
-    if (2 < *pbVar7 - 1) goto LAB_00267bd8;
+    if (2 < *pbVar7 - 1) {
+      pbVar7 = (byte *)pbVar9 + 1;
+      goto LAB_loop_over_format_string;
+    }
     pbVar15 = pbVar7 + 1;
     pbVar7 = pbVar7 + 1;
     pbVar9 = (char *)pbVar7;
-    if (*pbVar15 != 0) goto LAB_00267bcc;
+    if (*pbVar15 != 0) {
+      bVar14 = *pbVar9;
+      *__s = bVar14;
+      __s = __s + 1;
+      pbVar7 = (byte *)pbVar9 + 1;
+      goto LAB_loop_over_format_string;
+    }
   }
   *__s = 0;
   if (uVar6 == (long)(unaff_s7_lo + 4)) {
@@ -187,22 +197,22 @@ LAB_002682dc:
         sVar4 = strlen((char *)__src);
         sceWrite((long)*(int *)((int)args + 0xc),(char *)__src,(int)sVar4);
       }
-      goto LAB_002683dc;
+      PrintPending = (char *)__src;
+      *__src = 0;
+      return 0;
     }
   }
   printf("%s",__src);
   fflush(*(FILE **)(_impure_ptr + 8));
-LAB_002683dc:
   PrintPending = (char *)__src;
   *__src = 0;
   return 0;
 LAB_00267c50:
   pbVar9 = (char *)(pbVar15 + 1);
   if (false) {
-switchD_00267c7c_caseD_26:
     MsgErr("format: unknown code 0x%02x\n",*pbVar9);
     pbVar7 = pbVar15 + 2;
-    goto LAB_00267b8c;
+    goto LAB_loop_over_format_string;
   }
   switch(*pbVar9) {
   case '%':
@@ -215,11 +225,14 @@ switchD_00267c7c_caseD_26:
         __s = __s + 1;
       } while (iVar12 < (int)local_80);
       pbVar7 = pbVar15 + 2;
-      goto LAB_00267b8c;
+      goto LAB_loop_over_format_string;
     }
-    goto LAB_00267bd8;
+    pbVar7 = (byte *)pbVar9 + 1;
+    goto LAB_loop_over_format_string;
   default:
-    goto switchD_00267c7c_caseD_26;
+    MsgErr("format: unknown code 0x%02x\n",*pbVar9);
+    pbVar7 = pbVar15 + 2;
+    goto LAB_loop_over_format_string;
   case 'A':
   case 'a':
     psVar17 = psVar16 + 1;
@@ -231,13 +244,13 @@ switchD_00267c7c_caseD_26:
         if ((long)sVar4 < -1) {
           iVar12 = (int)sVar4;
           if (local_17f == '\0') {
-LAB_00267e08:
             bVar14 = 0x20;
             if (local_140 != 0xff) {
               bVar14 = local_140;
             }
             kstrinsert((char *)__s,bVar14,-1 - iVar12);
             psVar17 = psVar16 + 1;
+            break;
           }
           else {
             __s = (byte *)strend((char *)__s);
@@ -266,7 +279,6 @@ LAB_00267e08:
         if (false) {
           __s[-2] = 0x7e;
         }
-LAB_00267d94:
         __s[-1] = 0;
         psVar17 = psVar16 + 1;
       }
@@ -280,13 +292,16 @@ LAB_00267d94:
       cVar8 = -1;
     }
     base = 2;
-    goto LAB_00267e40;
+    kitoa((char *)__s,value,base,-1,cVar8,0);
+    psVar17 = psVar16 + 1;
+    break;
   case 'C':
   case 'c':
     *__s = *(byte *)psVar16;
     psVar16 = psVar16 + 1;
     __s = __s + 1;
-    goto LAB_00267bd8;
+    pbVar7 = (byte *)pbVar9 + 1;
+    goto LAB_loop_over_format_string;
   case 'D':
   case 'd':
     value = *psVar16;
@@ -295,7 +310,9 @@ LAB_00267d94:
       cVar8 = -1;
     }
     base = 10;
-    goto LAB_00267e40;
+    kitoa((char *)__s,value,base,-1,cVar8,0);
+    psVar17 = psVar16 + 1;
+    break;
   case 'E':
   case 'e':
     pcVar5 = *(char **)psVar16;
@@ -316,13 +333,17 @@ LAB_00267d94:
     if (false) {
       precision = -1;
     }
-    goto LAB_00267cec;
+    ftoa((char *)__s,(float)pcVar5,desired_len,cVar8,precision,0);
+    psVar17 = psVar16 + 1;
+    break;
   case 'F':
     pcVar5 = *(char **)psVar16;
     desired_len = 0xc;
     cVar8 = ' ';
     precision = 4;
-    goto LAB_00267cec;
+    ftoa((char *)__s,(float)pcVar5,desired_len,cVar8,precision,0);
+    psVar17 = psVar16 + 1;
+    break;
   case 'G':
   case 'g':
     *__s = 0;
@@ -360,10 +381,12 @@ LAB_00267d94:
       bVar14 = *pbVar9;
     }
     else {
-LAB_00267bcc:
       bVar14 = *pbVar9;
     }
-    goto LAB_00267bd0;
+    *__s = bVar14;
+    __s = __s + 1;
+    pbVar7 = (byte *)pbVar9 + 1;
+    goto LAB_loop_over_format_string;
   case 'I':
   case 'i':
     *__s = 0;
@@ -377,7 +400,6 @@ LAB_00267bcc:
         method_id = 3;
         if (type != (Type *)0x0) {
           pcVar5 = *(char **)psVar16;
-LAB_00267f90:
           psVar17 = psVar16 + 1;
           call_method_of_type((u32)pcVar5,type,method_id);
           break;
@@ -402,7 +424,10 @@ LAB_00267f90:
     if (false) {
       precision = -1;
     }
-    goto LAB_00267f30;
+    desired_len = -1;
+    ftoa((char *)__s,(float)pcVar5,desired_len,cVar8,precision,0);
+    psVar17 = psVar16 + 1;
+    break;
   case 'O':
   case 'o':
     *__s = 0x7e;
@@ -410,7 +435,10 @@ LAB_00267f90:
     psVar16 = psVar16 + 1;
     __s = (byte *)strend((char *)(__s + 1));
     bVar14 = 0x75;
-    goto LAB_00267bd0;
+    *__s = bVar14;
+    __s = __s + 1;
+    pbVar7 = (byte *)pbVar9 + 1;
+    goto LAB_loop_over_format_string;
   case 'P':
   case 'p':
     *__s = 0;
@@ -424,7 +452,9 @@ LAB_00267f90:
         method_id = 2;
         if (type != (Type *)0x0) {
           pcVar5 = *(char **)psVar16;
-          goto LAB_00267f90;
+          psVar17 = psVar16 + 1;
+          call_method_of_type((u32)pcVar5,type,method_id);
+          break;
         }
         pcVar5 = *(char **)psVar16;
       }
@@ -452,7 +482,9 @@ LAB_00267f90:
       precision = -1;
     }
     pcVar5 = (char *)((float)*(char **)psVar16 * 360.0 * 1.525879e-05);
-    goto LAB_00267cec;
+    ftoa((char *)__s,(float)pcVar5,desired_len,cVar8,precision,0);
+    psVar17 = psVar16 + 1;
+    break;
   case 'S':
   case 's':
     pcVar5 = *(char **)psVar16;
@@ -470,11 +502,21 @@ LAB_00267f90:
         if (false) {
           __s[-2] = 0x7e;
         }
-        goto LAB_00267d94;
+        __s[-1] = 0;
+        psVar17 = psVar16 + 1;
+        break;
       }
       if ((long)sVar4 < -1) {
         iVar12 = (int)sVar4;
-        if (local_17f == '\0') goto LAB_00267e08;
+        if (local_17f == '\0') goto {
+          bVar14 = 0x20;
+          if (local_140 != 0xff) {
+            bVar14 = local_140;
+          }
+          kstrinsert((char *)__s,bVar14,-1 - iVar12);
+          psVar17 = psVar16 + 1;
+          break;
+        };
         __s = (byte *)strend((char *)__s);
         iVar12 = -1 - iVar12;
         pbVar7 = __s;
@@ -510,9 +552,10 @@ LAB_00267f90:
         __s = __s + 1;
       } while (iVar13 < iVar12);
       pbVar7 = pbVar15 + 2;
-      goto LAB_00267b8c;
+      goto LAB_loop_over_format_string;
     }
-    goto LAB_00267bd8;
+    pbVar7 = (byte *)pbVar9 + 1;
+    goto LAB_loop_over_format_string;
   case 'X':
   case 'x':
     value = *psVar16;
@@ -535,9 +578,7 @@ LAB_00267e40:
     if (false) {
       precision = -1;
     }
-LAB_00267f30:
     desired_len = -1;
-LAB_00267cec:
     ftoa((char *)__s,(float)pcVar5,desired_len,cVar8,precision,0);
     psVar17 = psVar16 + 1;
     break;
@@ -554,19 +595,19 @@ LAB_00267cec:
         __s = __s + 1;
       } while (iVar13 < iVar12);
       pbVar7 = pbVar15 + 2;
-      goto LAB_00267b8c;
+      goto LAB_loop_over_format_string;
     }
-    goto LAB_00267bd8;
+    pbVar7 = (byte *)pbVar9 + 1;
+    goto LAB_loop_over_format_string;
   case '~':
     bVar14 = 0x7e;
-LAB_00267bd0:
     *__s = bVar14;
     __s = __s + 1;
-    goto LAB_00267bd8;
+    pbVar7 = (byte *)pbVar9 + 1;
+    goto LAB_loop_over_format_string;
   }
   __s = (byte *)strend((char *)__s);
   psVar16 = psVar17;
-LAB_00267bd8:
   pbVar7 = (byte *)pbVar9 + 1;
-  goto LAB_00267b8c;
+  goto LAB_loop_over_format_string;
 }
