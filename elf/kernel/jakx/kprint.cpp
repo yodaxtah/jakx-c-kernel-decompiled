@@ -123,12 +123,12 @@ LAB_002682b0:
         }
         else {
           bVar1 = *pbVar10;
-LAB_002682dc:
           if (bVar1 == 0xff) {
             *pbVar10 = 0;
           }
           pbVar15 = pbVar15 + 1;
           *pbVar10 = (bVar14 + *pbVar10 * '\n') - 0x30;
+          goto LAB_00267bfc;
         }
       }
       else if (iVar13 == 0x2d) {
@@ -138,7 +138,12 @@ LAB_002682dc:
       else {
         if (iVar13 != 0x60) {
           bVar1 = *pbVar10;
-          goto LAB_002682dc;
+          if (bVar1 == 0xff) {
+            *pbVar10 = 0;
+          }
+          pbVar15 = pbVar15 + 1;
+          *pbVar10 = (bVar14 + *pbVar10 * '\n') - 0x30;
+          goto LAB_00267bfc;
         }
         iVar12 = 0;
         bVar14 = pbVar15[2];
