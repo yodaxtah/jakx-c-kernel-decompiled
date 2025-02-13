@@ -40,8 +40,7 @@ s32 format_impl_jak3(uint64_t* args) {
   u32 method_id;
   u64 base;
   s32 precision;
-  byte *pbVar10;
-  uint uVar11;
+  byte *argument_data;
   int iVar12;
   byte format_ptr_asterisk;
   char *pbVar9;
@@ -56,7 +55,6 @@ s32 format_impl_jak3(uint64_t* args) {
   byte local_140;
   undefined local_100;
   undefined local_c0;
-  uint local_80;
   s64 local_30 [6];
   
   uVar6 = (ulong)(int)args;
@@ -67,17 +65,20 @@ s32 format_impl_jak3(uint64_t* args) {
   __src = (byte *)strend(print_temp);
   PrintPending = (char *)__src;
   byte* output_ptr = __src;
-
+  
   pbVar7 = (byte *)(in_a1_lo + 4);
-  local_80 = *(uint *)(print_column + -1) >> 3;
-  if ((local_80 != 0) && (uVar11 = local_80, __src[-1] == 10)) {
-    for (; uVar11 != 0; uVar11 = uVar11 - 1) {
+
+  uint indentation = 0;
+
+  indentation = *(uint *)(print_column + -1) >> 3;
+  if (indentation != 0 && __src[-1] == '\n') {
+    for (uint i = indentation; i != 0; i--) {
       *output_ptr = ' ';
       output_ptr++;
     }
   }
   psVar16 = local_30;
-LAB_loop_over_format_string:
+LAB_while:
   while (format_ptr_asterisk = *pbVar7, format_ptr_asterisk != 0) {
     if (format_ptr_asterisk == '~') {
       int arg_char;
@@ -86,9 +87,9 @@ LAB_loop_over_format_string:
       local_180 = 0xff;
       local_140 = 0xff;
       local_100 = 0xff;
-      pbVar10 = &local_180;
+      argument_data = &local_180;
       format_ptr = pbVar7;
-LAB_00267bfc:
+LAB_continue_noinit:
       format_ptr_asterisk = format_ptr[1];
       int iVar12 = (int)(char)format_ptr_asterisk;
       if (iVar12 - 0x30U < 10) {
@@ -96,7 +97,7 @@ LAB_00267bfc:
       }
       else {
         if (((iVar12 != ',') && (iVar12 != '\'')) && (iVar12 != '`')) {
-          if (*pbVar10 != 0xff) goto LAB_00267c50;
+          if (*argument_data != 0xff) goto LAB_00267c50;
           if (iVar12 != '-') {
             arg_char = (uint)format_ptr_asterisk << 0x18;
             if (iVar12 == '+') goto LAB_002682b0;
@@ -108,59 +109,69 @@ LAB_00267bfc:
 LAB_002682b0:
       arg_char = arg_char >> 0x18;
       if (arg_char == ',') {
-        pbVar10 = pbVar10 + '@';
+        argument_data = argument_data + '@';
         format_ptr++;
+        goto LAB_continue_noinit;
       }
-      else if (arg_char < '-') {
-        if (arg_char == '\'') {  // 0x27
-          *pbVar10 = format_ptr[2];
-          format_ptr += 2;
-        }
+      
+      if (arg_char == '\'') {  // 0x27
+        *argument_data = format_ptr[2];
+        format_ptr += 2;
+        goto LAB_continue_noinit;
+      }
 
-        else if (arg_char == '+') {  // 0x2b
-          format_ptr++;
-        }
-        else {
-          bVar1 = *pbVar10;
-          if (bVar1 == 0xff) {
-            *pbVar10 = 0;
-          }
-          format_ptr++;
-          *pbVar10 = (format_ptr_asterisk + *pbVar10 * '\n') - '0';
-          goto LAB_00267bfc;
-        }
-      }
-      else if (arg_char == '-') {  // 0x2d
-        pbVar10[1] = 1;
+      if (arg_char == '+') {  // 0x2b
         format_ptr++;
+        goto LAB_continue_noinit;
       }
-      else if (arg_char != '`') {  // else
-        bVar1 = *pbVar10;
+      
+      if (arg_char < '-') {
+        bVar1 = *argument_data;
         if (bVar1 == 0xff) {
-          *pbVar10 = 0;
+          *argument_data = 0;
         }
         format_ptr++;
-        *pbVar10 = (format_ptr_asterisk + *pbVar10 * '\n') - '0';
-        goto LAB_00267bfc;
-      } else if (arg_char == '`') {  // 0x60
-        int i = 0;
+        *argument_data = (format_ptr_asterisk + *argument_data * '\n') - '0';
+        goto LAB_continue_noinit;
+      }
+
+      if (arg_char == '-') {  // 0x2d
+        argument_data[1] = 1;
+        format_ptr++;
+        goto LAB_continue_noinit;
+      }
+
+      if (arg_char != '`' && arg_char >= '-' && arg_char != ',') {  // else
+        bVar1 = *argument_data;
+        if (bVar1 == 0xff) {
+          *argument_data = 0;
+        }
+        format_ptr++;
+        *argument_data = (format_ptr_asterisk + *argument_data * '\n') - '0';
+        goto LAB_continue_noinit;
+      }
+
+      if (arg_char == '`') {  // 0x60
+        s32 i = 0;
         format_ptr_asterisk = format_ptr[2];
-        while (format_ptr++, format_ptr_asterisk != '`') {
-          pbVar10[i] = format_ptr_asterisk;
-          i = i + 1;
+        format_ptr++;
+        while (format_ptr_asterisk != '`') {
+          argument_data[i] = format_ptr_asterisk;
+          i++;
+          format_ptr++;
           format_ptr_asterisk = format_ptr[2];
         }
         format_ptr++;
-        pbVar10[i] = 0;
+        argument_data[i] = 0;
+        goto LAB_continue_noinit;
       }
-      goto LAB_00267bfc;
     }
     *output_ptr = format_ptr_asterisk;
     output_ptr++;
     pbVar9 = (char *)pbVar7;
     if (2 < *pbVar7 - 1) {
       pbVar7 = (byte *)pbVar9 + 1;
-      goto LAB_loop_over_format_string;
+      goto LAB_while;
     }
     format_ptr = pbVar7 + 1;
     pbVar7 = pbVar7 + 1;
@@ -170,7 +181,7 @@ LAB_002682b0:
       *output_ptr = format_ptr_asterisk___;
       output_ptr++;
       pbVar7 = (byte *)pbVar9 + 1;
-      goto LAB_loop_over_format_string;
+      goto LAB_while;
     }
   }
   *output_ptr = 0;
@@ -215,26 +226,26 @@ LAB_00267c50:
   if (false) {
     MsgErr("format: unknown code 0x%02x\n",*format_ptr_plus1);
     pbVar7 = format_ptr + 2;
-    goto LAB_loop_over_format_string;
+    goto LAB_while;
   }
   switch (*format_ptr_plus1) {
   case '%':
     *output_ptr = 10;
     output_ptr++;
-    if (((local_80 != 0) && (format_ptr[2] != 0)) && (local_80 != 0)) {
-      for (int i = 0; i < (int)local_80; i++) {
+    if (((indentation != 0) && (format_ptr[2] != 0)) && (indentation != 0)) {
+      for (int i = 0; i < (int)indentation; i++) {
         *output_ptr = ' ';
         output_ptr++;
       }
       pbVar7 = format_ptr + 2;
-      goto LAB_loop_over_format_string;
+      goto LAB_while;
     }
     pbVar7 = (byte *)format_ptr_plus1 + 1;
-    goto LAB_loop_over_format_string;
+    goto LAB_while;
   default:
     MsgErr("format: unknown code 0x%02x\n",*format_ptr_plus1);
     pbVar7 = format_ptr + 2;
-    goto LAB_loop_over_format_string;
+    goto LAB_while;
   case 'A':
   case 'a':
     psVar17 = psVar16 + 1;
@@ -252,7 +263,10 @@ LAB_00267c50:
             }
             kstrinsert((char *)output_ptr,format_ptr_asterisk___,-1 - iVar12);
             psVar17 = psVar16 + 1;
-            break;
+            output_ptr = (byte *)strend((char *)output_ptr);
+            psVar16 = psVar17;
+            pbVar7 = (byte *)format_ptr_plus1 + 1;
+            goto LAB_while;
           }
           else {
             output_ptr = (byte *)strend((char *)output_ptr);
@@ -285,7 +299,10 @@ LAB_00267c50:
         psVar17 = psVar16 + 1;
       }
     }
-    break;
+    output_ptr = (byte *)strend((char *)output_ptr);
+    psVar16 = psVar17;
+    pbVar7 = (byte *)format_ptr_plus1 + 1;
+    goto LAB_while;
   case 'B':
   case 'b':
     value = *psVar16;
@@ -296,14 +313,17 @@ LAB_00267c50:
     base = 2;
     kitoa((char *)output_ptr,value,base,-1,cVar8,0);
     psVar17 = psVar16 + 1;
-    break;
+    output_ptr = (byte *)strend((char *)output_ptr);
+    psVar16 = psVar17;
+    pbVar7 = (byte *)format_ptr_plus1 + 1;
+    goto LAB_while;
   case 'C':
   case 'c':
     *output_ptr = *(byte *)psVar16;
     psVar16 = psVar16 + 1;
     output_ptr++;
     pbVar7 = (byte *)format_ptr_plus1 + 1;
-    goto LAB_loop_over_format_string;
+    goto LAB_while;
   case 'D':
   case 'd':
     value = *psVar16;
@@ -314,7 +334,10 @@ LAB_00267c50:
     base = 10;
     kitoa((char *)output_ptr,value,base,-1,cVar8,0);
     psVar17 = psVar16 + 1;
-    break;
+    output_ptr = (byte *)strend((char *)output_ptr);
+    psVar16 = psVar17;
+    pbVar7 = (byte *)format_ptr_plus1 + 1;
+    goto LAB_while;
   case 'E':
   case 'e':
     pcVar5 = *(char **)psVar16;
@@ -337,7 +360,10 @@ LAB_00267c50:
     }
     ftoa((char *)output_ptr,(float)pcVar5,desired_len,cVar8,precision,0);
     psVar17 = psVar16 + 1;
-    break;
+    output_ptr = (byte *)strend((char *)output_ptr);
+    psVar16 = psVar17;
+    pbVar7 = (byte *)format_ptr_plus1 + 1;
+    goto LAB_while;
   case 'F':
     pcVar5 = *(char **)psVar16;
     desired_len = 0xc;
@@ -345,13 +371,19 @@ LAB_00267c50:
     precision = 4;
     ftoa((char *)output_ptr,(float)pcVar5,desired_len,cVar8,precision,0);
     psVar17 = psVar16 + 1;
-    break;
+    output_ptr = (byte *)strend((char *)output_ptr);
+    psVar16 = psVar17;
+    pbVar7 = (byte *)format_ptr_plus1 + 1;
+    goto LAB_while;
   case 'G':
   case 'g':
     *output_ptr = 0;
-    psVar17 = psVar16 + 1;
     strcat((char *)output_ptr,*(char **)psVar16);
-    break;
+    psVar17 = psVar16 + 1;
+    output_ptr = (byte *)strend((char *)output_ptr);
+    psVar16 = psVar17;
+    pbVar7 = (byte *)format_ptr_plus1 + 1;
+    goto LAB_while;
   case 'H':
   case 'J':
   case 'K':
@@ -382,7 +414,7 @@ LAB_00267c50:
     *output_ptr = *format_ptr_plus1;
     output_ptr++;
     pbVar7 = (byte *)format_ptr_plus1 + 1;
-    goto LAB_loop_over_format_string;
+    goto LAB_while;
   case 'I':
   case 'i':
     *output_ptr = 0;
@@ -396,9 +428,12 @@ LAB_00267c50:
         method_id = 3;
         if (type != (Type *)0x0) {
           pcVar5 = *(char **)psVar16;
-          psVar17 = psVar16 + 1;
           call_method_of_type((u32)pcVar5,type,method_id);
-          break;
+          psVar17 = psVar16 + 1;
+          output_ptr = (byte *)strend((char *)output_ptr);
+          psVar16 = psVar17;
+          pbVar7 = (byte *)format_ptr_plus1 + 1;
+          goto LAB_while;
         }
         pcVar5 = *(char **)psVar16;
       }
@@ -406,9 +441,12 @@ LAB_00267c50:
     else {
       pcVar5 = *(char **)psVar16;
     }
-    psVar17 = psVar16 + 1;
     inspect_object((u32)pcVar5);
-    break;
+    psVar17 = psVar16 + 1;
+    output_ptr = (byte *)strend((char *)output_ptr);
+    psVar16 = psVar17;
+    pbVar7 = (byte *)format_ptr_plus1 + 1;
+    goto LAB_while;
   case 'M':
   case 'm':
     pcVar5 = (char *)((float)*(char **)psVar16 * 0.0002441406);
@@ -423,7 +461,10 @@ LAB_00267c50:
     desired_len = -1;
     ftoa((char *)output_ptr,(float)pcVar5,desired_len,cVar8,precision,0);
     psVar17 = psVar16 + 1;
-    break;
+    output_ptr = (byte *)strend((char *)output_ptr);
+    psVar16 = psVar17;
+    pbVar7 = (byte *)format_ptr_plus1 + 1;
+    goto LAB_while;
   case 'O':
   case 'o': {
     *output_ptr = '~';
@@ -434,7 +475,7 @@ LAB_00267c50:
     *output_ptr = 'u';
     output_ptr++;
     pbVar7 = (byte *)format_ptr_plus1 + 1;
-    goto LAB_loop_over_format_string;
+    goto LAB_while;
   }
   case 'P':
   case 'p':
@@ -449,9 +490,12 @@ LAB_00267c50:
         method_id = 2;
         if (type != (Type *)0x0) {
           pcVar5 = *(char **)psVar16;
-          psVar17 = psVar16 + 1;
           call_method_of_type((u32)pcVar5,type,method_id);
-          break;
+          psVar17 = psVar16 + 1;
+          output_ptr = (byte *)strend((char *)output_ptr);
+          psVar16 = psVar17;
+          pbVar7 = (byte *)format_ptr_plus1 + 1;
+          goto LAB_while;
         }
         pcVar5 = *(char **)psVar16;
       }
@@ -459,14 +503,20 @@ LAB_00267c50:
     else {
       pcVar5 = *(char **)psVar16;
     }
-    psVar17 = psVar16 + 1;
     print_object((u32)pcVar5);
-    break;
+    psVar17 = psVar16 + 1;
+    output_ptr = (byte *)strend((char *)output_ptr);
+    psVar16 = psVar17;
+    pbVar7 = (byte *)format_ptr_plus1 + 1;
+    goto LAB_while;
   case 'Q':
   case 'q':
     kqtoa_G();
     psVar17 = psVar16;
-    break;
+    output_ptr = (byte *)strend((char *)output_ptr);
+    psVar16 = psVar17;
+    pbVar7 = (byte *)format_ptr_plus1 + 1;
+    goto LAB_while;
   case 'R':
   case 'r':
     cVar8 = ' ';
@@ -481,7 +531,10 @@ LAB_00267c50:
     pcVar5 = (char *)((float)*(char **)psVar16 * 360.0 * 1.525879e-05);
     ftoa((char *)output_ptr,(float)pcVar5,desired_len,cVar8,precision,0);
     psVar17 = psVar16 + 1;
-    break;
+    output_ptr = (byte *)strend((char *)output_ptr);
+    psVar16 = psVar17;
+    pbVar7 = (byte *)format_ptr_plus1 + 1;
+    goto LAB_while;
   case 'S':
   case 's':
     pcVar5 = *(char **)psVar16;
@@ -501,7 +554,10 @@ LAB_00267c50:
         }
         output_ptr[-1] = 0;
         psVar17 = psVar16 + 1;
-        break;
+        output_ptr = (byte *)strend((char *)output_ptr);
+        psVar16 = psVar17;
+        pbVar7 = (byte *)format_ptr_plus1 + 1;
+        goto LAB_while;
       }
       if ((long)print_len < -1) {
         iVar12 = (int)print_len;
@@ -512,7 +568,10 @@ LAB_00267c50:
           }
           kstrinsert((char *)output_ptr,format_ptr_asterisk___,-1 - iVar12);
           psVar17 = psVar16 + 1;
-          break;
+          output_ptr = (byte *)strend((char *)output_ptr);
+          psVar16 = psVar17;
+          pbVar7 = (byte *)format_ptr_plus1 + 1;
+          goto LAB_while;
         };
         output_ptr = (byte *)strend((char *)output_ptr);
         iVar12 = -1 - iVar12;
@@ -535,7 +594,11 @@ LAB_00267c50:
         }
       }
     }
-    break;
+    // psVar17 = psVar16 + 1 before if statement in this case
+    output_ptr = (byte *)strend((char *)output_ptr);
+    psVar16 = psVar17;
+    pbVar7 = (byte *)format_ptr_plus1 + 1;
+    goto LAB_while;
   case 'T':
     iVar12 = 1;
     if (false) {
@@ -548,10 +611,10 @@ LAB_00267c50:
         output_ptr++;
       }
       pbVar7 = format_ptr + 2;
-      goto LAB_loop_over_format_string;
+      goto LAB_while;
     }
     pbVar7 = (byte *)format_ptr_plus1 + 1;
-    goto LAB_loop_over_format_string;
+    goto LAB_while;
   case 'X':
   case 'x':
     value = *psVar16;
@@ -563,7 +626,10 @@ LAB_00267c50:
 LAB_00267e40:
     kitoa((char *)output_ptr,value,base,-1,cVar8,0);
     psVar17 = psVar16 + 1;
-    break;
+    output_ptr = (byte *)strend((char *)output_ptr);
+    psVar16 = psVar17;
+    pbVar7 = (byte *)format_ptr_plus1 + 1;
+    goto LAB_while;
   case 'f':
     pcVar5 = *(char **)psVar16;
     cVar8 = ' ';
@@ -577,7 +643,10 @@ LAB_00267e40:
     desired_len = -1;
     ftoa((char *)output_ptr,(float)pcVar5,desired_len,cVar8,precision,0);
     psVar17 = psVar16 + 1;
-    break;
+    output_ptr = (byte *)strend((char *)output_ptr);
+    psVar16 = psVar17;
+    pbVar7 = (byte *)format_ptr_plus1 + 1;
+    goto LAB_while;
   case 't':
     int stop = 8;
     if (false) {
@@ -590,18 +659,14 @@ LAB_00267e40:
         output_ptr++;
       }
       pbVar7 = format_ptr + 2;
-      goto LAB_loop_over_format_string;
+      goto LAB_while;
     }
     pbVar7 = (byte *)format_ptr_plus1 + 1;
-    goto LAB_loop_over_format_string;
+    goto LAB_while;
   case '~':
     *output_ptr = '~';
     output_ptr++;
     pbVar7 = (byte *)format_ptr_plus1 + 1;
-    goto LAB_loop_over_format_string;
+    goto LAB_while;
   }
-  output_ptr = (byte *)strend((char *)output_ptr);
-  psVar16 = psVar17;
-  pbVar7 = (byte *)format_ptr_plus1 + 1;
-  goto LAB_loop_over_format_string;
 }
