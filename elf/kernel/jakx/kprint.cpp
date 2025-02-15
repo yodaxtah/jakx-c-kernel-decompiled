@@ -25,7 +25,7 @@
  * fixes made, but it's probably worth another pass.
  */
 s32 format_impl_jak3(uint64_t* args) {
-  byte *__src;
+  byte *PrintPendingLocal__;
   int in_a1_lo;
   int unaff_s7_lo;
   undefined4 unaff_s7_hi;
@@ -38,16 +38,16 @@ s32 format_impl_jak3(uint64_t* args) {
   if (PrintPending == (char *)0x0) {
     print_temp = PrintBufArea + 0x18;
   }
-  __src = (byte *)strend(print_temp);
-  PrintPending = (char *)__src;
-  byte* output_ptr = __src;
+  PrintPendingLocal__ = (byte *)strend(print_temp);
+  PrintPending = (char *)PrintPendingLocal__;
+  byte* output_ptr = PrintPendingLocal__;
   
   byte *format_ptr = (byte *)(in_a1_lo + 4);
 
   u32 indentation = 0;
 
   indentation = (*(u32 *)(print_column - 1)) >> 3;
-  if (indentation != 0 && __src[-1] == '\n') {
+  if (indentation != 0 && PrintPendingLocal__[-1] == '\n') {
     for (uint i = indentation; i != 0; i--) {
       *output_ptr = ' ';
       output_ptr++;
@@ -136,7 +136,8 @@ s32 format_impl_jak3(uint64_t* args) {
       case 'A':
       case 'a':
       {
-        s32 desired_length = -1;
+        s8 arg0 = -1;
+        s32 desired_length = (s32)arg0;
         *output_ptr = 0;
         char* in = *(char **)arg_regs_at_arg_reg_idx++;
         print_object((u32)in);
@@ -225,7 +226,7 @@ s32 format_impl_jak3(uint64_t* args) {
           value = value + value;
         }
         else {
-          value = (float)(int)in; // FIXME: why is this in the other case?
+          value = (float)(int)in; // FIXME: why is this in the else case?
         }
         ftoa((char *)output_ptr, (float)value / 300.0, desired_len, pad_char, precision, 0);
         output_ptr = (byte *)strend((char *)output_ptr);
@@ -280,6 +281,7 @@ s32 format_impl_jak3(uint64_t* args) {
       case 'I':
       case 'i': {
         *output_ptr = 0;
+        s8 arg0 = -1;
         char* in = *(char **)arg_regs_at_arg_reg_idx++;
         if (true /*arg0 == -1*/) {
           inspect_object((u32)in);
@@ -324,8 +326,9 @@ s32 format_impl_jak3(uint64_t* args) {
       case 'P':
       case 'p': {
         *output_ptr = 0;
+        s8 arg0 = -1;
         char* in = *(char **)arg_regs_at_arg_reg_idx++;
-        if (true) {
+        if (true /*arg0 == -1*/) {
           print_object((u32)in);
         } else {
           u32* sym = find_symbol_from_c(0xffff, (const_char *)&argument_data_array);
@@ -362,7 +365,8 @@ s32 format_impl_jak3(uint64_t* args) {
 
       case 'S':
       case 's': {
-        s32 desired_length = -1;
+        s8 arg0 = -1;
+        s32 desired_length = (s32)arg0;
         *output_ptr = 0;
         char* in = *(char **)arg_regs_at_arg_reg_idx++;
 
@@ -419,7 +423,7 @@ s32 format_impl_jak3(uint64_t* args) {
           stop = -1;
         }
         for (int i = 0; i < stop; i++) {
-          *output_ptr = 9;
+          *output_ptr = '\t';
           output_ptr++;
         }
       } break;
@@ -487,39 +491,41 @@ s32 format_impl_jak3(uint64_t* args) {
 
   if (original_dest == (long)(unaff_s7_lo + 4)) {
     if (DiskBoot != 0) {
-      printf("%s", __src);
-      fflush(*(FILE **)(_impure_ptr + 8));
-      PrintPending = (char *)__src;
-      *__src = 0;
+      if (true) {
+        printf("%s", PrintPendingLocal__);
+        fflush(*(FILE **)(_impure_ptr + 8));
+      }
+      PrintPending = (char *)PrintPendingLocal__;
+      *PrintPendingLocal__ = 0;
     }
 
     return 0;
   } else if (original_dest == CONCAT44(unaff_s7_hi,unaff_s7_lo)) {
-    String *string = make_string_from_c((const_char *)__src);
-    PrintPending = (char *)__src;
-    *__src = 0;
+    String *string = make_string_from_c((const_char *)PrintPendingLocal__);
+    PrintPending = (char *)PrintPendingLocal__;
+    *PrintPendingLocal__ = 0;
     return (s32)string;
   } else if (original_dest == 0) {
-    printf("%s", __src);
+    printf("%s", PrintPendingLocal__);
     fflush(*(FILE **)(_impure_ptr + 8));
-    PrintPending = (char *)__src;
-    *__src = 0;
+    PrintPending = (char *)PrintPendingLocal__;
+    *PrintPendingLocal__ = 0;
     return 0;
   } else {
     if ((original_dest & 7) == 4) {
       if (*(int *)((int)args - 4) == *(int *)(unaff_s7_lo + 0xf)) {
         long len = (long)*(int *)args;
         char* str = (char *)((int)args + 4);
-        strncat(str,(char *)__src, len);
-        PrintPending = (char *)__src;
-        *__src = 0;
+        strncat(str, (char *)PrintPendingLocal__, len);
+        PrintPending = (char *)PrintPendingLocal__;
+        *PrintPendingLocal__ = 0;
         return 0;
       } else if (*(int *)((int)args - 4) == *(int *)(unaff_s7_lo + 0x8b)) {
-        size_t print_len = strlen((char *)__src);
-        sceWrite((long)*(int *)((int)args + 0xc),(char *)__src,(int)print_len);
+        size_t print_len = strlen((char *)PrintPendingLocal__);
+        sceWrite((long)*(int *)((int)args + 0xc), (char *)PrintPendingLocal__,(int)print_len);
 
-        PrintPending = (char *)__src;
-        *__src = 0;
+        PrintPending = (char *)PrintPendingLocal__;
+        *PrintPendingLocal__ = 0;
         return 0;
       }
     }
