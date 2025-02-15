@@ -25,7 +25,7 @@
  * fixes made, but it's probably worth another pass.
  */
 s32 format_impl_jak3(uint64_t* args) {
-  byte *PrintPendingLocal__;
+  char *PrintPendingLocal__;
   int format_gstring;
   int unaff_s7_lo;
   undefined4 unaff_s7_hi;
@@ -43,7 +43,7 @@ s32 format_impl_jak3(uint64_t* args) {
   if (PrintPending == (char *)0x0) {
     print_temp = PrintBufArea + 0x18;
   }
-  PrintPendingLocal__ = (char *)strend(print_temp);
+  PrintPendingLocal__ = strend(print_temp);
   PrintPending = (char *)PrintPendingLocal__;
 
   char* output_ptr = PrintPendingLocal__;
@@ -74,13 +74,13 @@ s32 format_impl_jak3(uint64_t* args) {
         x.data[0] = -1; //.reset();
       }
 
-      while ((int)format_ptr[1] - '0' < 10 ||
-          (int)format_ptr[1] == ',' ||
-          (int)format_ptr[1] == '\'' ||
-          (int)format_ptr[1] == '`' ||
-          (argument_data[arg_idx].data[0] == -1 &&
-            ((int)format_ptr[1] == '-' && (int)format_ptr[1] == '+')
-            )) {
+      while ((u8)(format_ptr[1] - '0') < 10 ||
+             format_ptr[1] == ',' ||
+             format_ptr[1] == '\'' ||
+             format_ptr[1] == '`' ||
+             (argument_data[arg_idx].data[0] == -1 &&
+              (format_ptr[1] == '-' || format_ptr[1] == '+')
+              )) {
         char arg_char = format_ptr[1];
         if (arg_char == ',') {
           arg_idx++;
@@ -152,7 +152,7 @@ s32 format_impl_jak3(uint64_t* args) {
           print_object((u32)in);
           if (false /*desired_length != -1*/) {
             size_t print_len_ = strlen(output_ptr);
-            int print_len = (int)print_len_;
+            s32 print_len = (int)print_len_;
             if (desired_length < (long)print_len_) {
               if (false /*desired_length > 1*/) {
                 output_ptr[desired_length - 1] = '~';
@@ -167,23 +167,17 @@ s32 format_impl_jak3(uint64_t* args) {
                 kstrinsert(output_ptr, pad, desired_length - print_len);
               } else {
                 output_ptr = strend(output_ptr);
-                print_len = desired_length - print_len;
-                byte* output_ptr_temp = output_ptr;
-                if (print_len < 1) {
-                  *output_ptr = 0;
-                } else {
-                  do {
-                    output_ptr++;
-                    byte pad = argument_data_array[1].data[0];
-                    if (argument_data_array[1].data[0] == -1) {
-                      pad = ' ';
-                    }
-                    print_len_ = print_len_ + -1;
-                    *output_ptr_temp = pad;
-                    output_ptr_temp = output_ptr;
-                  } while (print_len_ != 0);
-                  *output_ptr = 0;
-                }
+                print_len = desired_length - print_len; // TODO: why this assignment?
+                while (print_len_ != 0) {
+                  char pad = ' ';
+                  if (argument_data_array[1].data[0] != -1) {
+                    pad = argument_data_array[1].data[0];
+                  }
+                  print_len_--;
+                  output_ptr[0] = pad;
+                  output_ptr++;
+                };
+                *output_ptr = 0;
               }
             }
           }
@@ -204,7 +198,7 @@ s32 format_impl_jak3(uint64_t* args) {
 
         case 'C':
         case 'c':
-          *output_ptr = *(byte *)arg_regs[arg_reg_idx++];
+          *output_ptr = *(char *)arg_regs[arg_reg_idx++];
           output_ptr++;
           break;
 
@@ -222,11 +216,11 @@ s32 format_impl_jak3(uint64_t* args) {
         case 'E':
         case 'e': {
           char* in = *(char **)arg_regs[arg_reg_idx++];
-          s32 desired_len = -1;
-          char pad_char = -1;
+          s8 desired_len = -1;
+          s8 pad_char = -1;
           if (pad_char == -1)
             pad_char = ' ';
-          s32 precision = -1;
+          s8 precision = -1;
           if (precision == -1)
             precision = 4;
           float value;
@@ -277,12 +271,12 @@ s32 format_impl_jak3(uint64_t* args) {
         case 'w':
         case 'y':
         case 'z':
-          while (arg_start < (char *)(format_ptr + 1)) {
+          while (arg_start < format_ptr + 1) {
             *output_ptr = *arg_start;
             arg_start++;
             output_ptr++;
           }
-          *output_ptr = (byte)format_ptr[1];
+          *output_ptr = format_ptr[1];
           output_ptr++;
           break;
 
@@ -310,14 +304,14 @@ s32 format_impl_jak3(uint64_t* args) {
         case 'M':
         case 'm': {
           float in = (float)*(char **)arg_regs[arg_reg_idx++];
-          s32 pad_length = -1;
-          char pad_char = -1;
+          s8 pad_length = -1;
+          s8 pad_char = -1;
           if (pad_char == -1)
             pad_char = ' ';
-          s32 precision = -1;
+          s8 precision = -1;
           if (precision == -1)
             precision = 4;
-          ftoa(output_ptr, in * 0.0002441406, pad_length, pad, precision, 0);
+          ftoa(output_ptr, in * 0.0002441406, pad_length, pad_char, precision, 0);
           output_ptr = strend(output_ptr);
         } break;
 
@@ -361,11 +355,11 @@ s32 format_impl_jak3(uint64_t* args) {
         case 'R':
         case 'r': {
           char* in = *(char **)arg_regs[arg_reg_idx++];
-          s32 pad_length = -1;
-          char pad_char = -1;
+          s8 pad_length = -1;
+          s8 pad_char = -1;
           if (pad_char == -1)
             pad_char = ' ';
-          s32 precision = -1;
+          s8 precision = -1;
           if (precision == -1)
             precision = 4;
           ftoa(output_ptr, (float)in * 360.0 * 1.525879e-05, pad_length, pad_char, precision, 0);
@@ -387,7 +381,7 @@ s32 format_impl_jak3(uint64_t* args) {
 
           if (false /*desired_length != -1*/) {
             size_t print_len_ = strlen(output_ptr);
-            int print_len = (int)print_len_;
+            s32 print_len = (s32)print_len_;
             if (desired_length < (long)print_len_) {
               if (false /*desired_length < print_len_*/) {
                 output_ptr[desired_length - 1] = '~';
@@ -400,26 +394,22 @@ s32 format_impl_jak3(uint64_t* args) {
                   pad = argument_data_array[1].data[0];
                 }
                 kstrinsert(output_ptr, pad, desired_length - print_len);
-
               } else {
-                output_ptr = (char *)strend(output_ptr);
-                print_len = -1 - print_len;
-                char* output_ptr_temp = output_ptr;
-                if (print_len < 1) {
-                  *output_ptr = 0;
-                } else {
-                  do {
-                    output_ptr++;
-                    char pad = argument_data_array[1].data[0];
-                    if (argument_data_array[1].data[0] == -1) {
-                      pad = ' ';
-                    }
-                    print_len = print_len + -1;
-                    *output_ptr_temp = pad;
-                    output_ptr_temp = output_ptr;
-                  } while (print_len != 0);
-                  *output_ptr = 0;
-                }
+                ;
+                output_ptr = strend(output_ptr);
+                print_len--;
+                while (print_len != 0) {
+                  // char* l108
+
+                  char pad = ' ';
+                  if (argument_data_array[1].data[0] != -1) {
+                    pad = argument_data_array[1].data[0];
+                  }
+                  print_len--;
+                  *output_ptr = pad;
+                  output_ptr++;
+                };
+                *output_ptr = 0;
               }
             }
           }
@@ -451,11 +441,11 @@ s32 format_impl_jak3(uint64_t* args) {
         case 'f':
         {
           char* in = *(char **)arg_regs[arg_reg_idx++];
-          s32 pad_length = -1;
-          char pad_char = -1;
+          s8 pad_length = -1;
+          s8 pad_char = -1;
           if (pad_char == -1)
             pad_char = ' ';
-          s32 precision = -1;
+          s8 precision = -1;
           if (precision == -1)
             precision = 4;
           ftoa(output_ptr, (float)in, pad_length, pad_char, precision, 0);
