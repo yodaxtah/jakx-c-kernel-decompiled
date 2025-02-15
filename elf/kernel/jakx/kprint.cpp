@@ -25,7 +25,6 @@
  * fixes made, but it's probably worth another pass.
  */
 s32 format_impl_jak3(uint64_t* args) {
-  byte bVar1;
   byte *__src;
   String *pSVar3;
   char *pcVar5;
@@ -66,7 +65,6 @@ s32 format_impl_jak3(uint64_t* args) {
 LAB_while:
   while (*format_ptr_2__ != 0) {
     if (*format_ptr_2__ == '~') {
-      int arg_char;
       argument_data_array[0].data[1] = '\0';
       for (auto& x : argument_data_array) {
         x.data[0] = -1; //.reset();
@@ -74,76 +72,64 @@ LAB_while:
 
       argument_data_at_arg_idx = &argument_data_array;
       format_ptr = format_ptr_2__;
-LAB_continue_noinit:
-      if ((int)(char)format_ptr[1] - '0' >= 10 &&
-          (int)(char)format_ptr[1] != ',' &&
-          (int)(char)format_ptr[1] != '\'' &&
-          (int)(char)format_ptr[1] != '`' &&
-          (*argument_data_at_arg_idx != -1 ||
-            ((int)(char)format_ptr[1] != '-' && (int)(char)format_ptr[1] != '+')
+      while ((int)(char)format_ptr[1] - '0' < 10 ||
+          (int)(char)format_ptr[1] == ',' ||
+          (int)(char)format_ptr[1] == '\'' ||
+          (int)(char)format_ptr[1] == '`' ||
+          (*argument_data_at_arg_idx == -1 &&
+            ((int)(char)format_ptr[1] == '-' && (int)(char)format_ptr[1] == '+')
             )) {
-        if ((int)(char)format_ptr[1] != '-' && (int)(char)format_ptr[1] != '+') {
-          arg_char = (uint)format_ptr[1] << 0x18;
-        }
-        goto LAB_00267c50;
-      }
-      
-      arg_char = (uint)format_ptr[1] && 0xFF;
-      if (arg_char == ',') {
-        argument_data_at_arg_idx = argument_data_at_arg_idx + (format_struct *)((int)argument_data_at_arg_idx + 0x40);
-        format_ptr++;
-        goto LAB_continue_noinit;
-      }
-      
-      if (arg_char == '\'') {  // 0x27
-        *argument_data_at_arg_idx = format_ptr[2];
-        format_ptr += 2;
-        goto LAB_continue_noinit;
-      }
-
-      if (arg_char == '`') {  // 0x60
-        s32 i = 0;
-        while (format_ptr[2] != '`') {
-          argument_data_at_arg_idx[i] = format_ptr[2];
-          i++;
+        int arg_char = (uint)format_ptr[1] && 0xFF;
+        if (arg_char == ',') {
+          argument_data_at_arg_idx = argument_data_at_arg_idx + (format_struct *)((int)argument_data_at_arg_idx + 0x40);
           format_ptr++;
+          continue;
         }
-        format_ptr++;
-        argument_data_at_arg_idx[i] = 0;
-        goto LAB_continue_noinit;
-      }
 
-      if (arg_char == '-') {  // 0x2d
-        argument_data_at_arg_idx[1] = 1;
-        format_ptr++;
-        goto LAB_continue_noinit;
-      }
-
-      if (arg_char == '+') {  // 0x2b
-        format_ptr++;
-        goto LAB_continue_noinit;
-      }
-      
-      if (arg_char < '-') {
-        bVar1 = *argument_data_at_arg_idx;
-        if (bVar1 == 0xff) {
-          *argument_data_at_arg_idx = 0;
+        if (arg_char == '\'') {  // 0x27
+          *argument_data_at_arg_idx = format_ptr[2];
+          format_ptr += 2;
+          continue;
         }
-        format_ptr++;
-        *argument_data_at_arg_idx = (format_ptr[1] + *argument_data_at_arg_idx * '\n') - '0';
-        goto LAB_continue_noinit;
-      }
 
-      if (arg_char != '`' && arg_char >= '-' && arg_char != ',') {  // else
-        bVar1 = *argument_data_at_arg_idx;
-        if (bVar1 == 0xff) {
-          *argument_data_at_arg_idx = 0;
+        if (arg_char == '`') {  // 0x60
+          s32 i = 0;
+          while (format_ptr[2] != '`') {
+            argument_data_at_arg_idx[i] = format_ptr[2];
+            i++;
+            format_ptr++;
+          }
+          format_ptr++;
+          argument_data_at_arg_idx[i] = 0;
+          continue;
         }
-        format_ptr++;
-        *argument_data_at_arg_idx = (format_ptr[1] + *argument_data_at_arg_idx * '\n') - '0';
-        goto LAB_continue_noinit;
+
+        if (arg_char == '-') {  // 0x2d
+          argument_data_at_arg_idx[1] = 1;
+          format_ptr++;
+          continue;
+        }
+
+        if (arg_char == '+') {  // 0x2b
+          format_ptr++;
+          continue;
+        }
+
+        if (arg_char < '-' || arg_char != '`' && arg_char >= '-' && arg_char != ',') {  // else
+          if (*argument_data_at_arg_idx == 0xff) {
+            *argument_data_at_arg_idx = 0;
+          }
+          format_ptr++;
+          *argument_data_at_arg_idx = (format_ptr[1] + *argument_data_at_arg_idx * 10) - '0';
+          continue;
+        }
       }
     }
+    if ((int)(char)format_ptr[1] != '-' && (int)(char)format_ptr[1] != '+') {
+      arg_char = (uint)format_ptr[1] << 0x18;
+    }
+    goto LAB_00267c50;
+
     *output_ptr = *format_ptr_2__;
     output_ptr++;
     pbVar9 = (char *)format_ptr_2__;
@@ -236,7 +222,7 @@ LAB_00267c50:
     if (false /*desired_length != -1*/) {
       size_t print_len = strlen((char *)output_ptr);
       if ((long)print_len >= 0) {
-        if (false) {
+        if (false /*desired_length > 1*/) {
           output_ptr[-2] = '~';
         }
         output_ptr[-1] = 0;
@@ -320,21 +306,21 @@ LAB_00267c50:
   case 'E':
   case 'e': {
     char* in = *(char **)arg_regs_at_arg_reg_idx;
+    s32 desired_len = -1;
+    char pad_char = -1;
+    if (pad_char == -1)
+      pad_char = ' ';
+    s32 precision = -1;
+    if (precision == -1)
+      precision = 4;
     float value;
     if ((int)in < 0) {
       value = (float)((uint)in & 1 | (uint)in >> 1);
       value = value + value;
     }
     else {
-      value = (float)(int)in;
+      value = (float)(int)in; // FIXME: why is this in the other case?
     }
-    s32 desired_len = -1;
-    char pad_char = ' ';
-    if (false /*pad_char != -1*/)
-      pad_char = -1;
-    s32 precision = 4;
-    if (false /*precision != -1*/)
-      precision = -1;
     ftoa((char *)output_ptr, (float)value / 300.0, desired_len, pad_char, precision, 0);
     output_ptr = (byte *)strend((char *)output_ptr);
     arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
@@ -425,15 +411,15 @@ LAB_00267c50:
 
   case 'M':
   case 'm': {
-    pcVar5 = (char *)((float)*(char **)arg_regs_at_arg_reg_idx * 0.0002441406);
-    char pad = ' ';
-    if (false /*pad_char != -1*/)
-      pad = -1;
-    s32 precision = 4;
-    if (false /*precision != -1*/)
-      precision = -1;
-    s32 desired_len = -1;
-    ftoa((char *)output_ptr, (float)pcVar5, desired_len, pad, precision, 0);
+    float in = (float)*(char **)arg_regs_at_arg_reg_idx;
+    s32 pad_length = -1;
+    char pad_char = -1;
+    if (pad_char == -1)
+      pad_char = ' ';
+    s32 precision = -1;
+    if (precision == -1)
+      precision = 4;
+    ftoa((char *)output_ptr, in * 0.0002441406, pad_length, pad, precision, 0);
     output_ptr = (byte *)strend((char *)output_ptr);
     arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
     arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
@@ -599,12 +585,12 @@ LAB_00267c50:
   {
     char* in = *(char **)arg_regs_at_arg_reg_idx;
     s32 pad_length = -1;
-    char pad_char = ' ';
-    if (false /*pad_char != -1*/)
-      pad_char = -1;
-    s32 precision = 4;
-    if (false /*precision != -1*/)
-      precision = -1;
+    char pad_char = -1;
+    if (pad_char == -1)
+      pad_char = ' ';
+    s32 precision = -1;
+    if (precision == -1)
+      precision = 4;
     ftoa((char *)output_ptr, (float)in, pad_length, pad_char, precision, 0);
     output_ptr = (byte *)strend((char *)output_ptr);
     arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
