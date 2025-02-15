@@ -29,9 +29,14 @@ s32 format_impl_jak3(uint64_t* args) {
   int in_a1_lo;
   int unaff_s7_lo;
   undefined4 unaff_s7_hi;
-  format_struct argument_data_array [4];
   s64 local_30 [6];
+
+  s64* arg_regs_at_arg_reg_idx = local_30;
+
+  format_struct argument_data_array [4];
   
+  u32 arg_reg_idx = 0;
+
   ulong original_dest = (ulong)(int)args;
 
   char* print_temp = PrintPending;
@@ -47,22 +52,25 @@ s32 format_impl_jak3(uint64_t* args) {
   u32 indentation = 0;
 
   indentation = (*(u32 *)(print_column - 1)) >> 3;
+
+  u32 arg_idx = 0;
+
   if (indentation != 0 && PrintPendingLocal__[-1] == '\n') {
-    for (uint i = indentation; i != 0; i--) {
+    for (u32 i = indentation; i != 0; i--) {
       *output_ptr = ' ';
       output_ptr++;
     }
   }
-  s64* arg_regs_at_arg_reg_idx = local_30;
+
   while (*format_ptr != 0) {
     if (*format_ptr == '~') {
       byte* arg_start = format_ptr;
       argument_data_array[0].data[1] = '\0';
+      arg_idx = 0;
       for (auto& x : argument_data_array) {
         x.data[0] = -1; //.reset();
       }
 
-      uint arg_idx = 0;
       while ((int)(char)format_ptr[1] - '0' < 10 ||
           (int)(char)format_ptr[1] == ',' ||
           (int)(char)format_ptr[1] == '\'' ||
@@ -139,7 +147,7 @@ s32 format_impl_jak3(uint64_t* args) {
         s8 arg0 = -1;
         s32 desired_length = (s32)arg0;
         *output_ptr = 0;
-        char* in = *(char **)arg_regs_at_arg_reg_idx++;
+        char* in = *(char **)arg_regs[arg_reg_idx++];
         print_object((u32)in);
         if (false /*desired_length != -1*/) {
           size_t print_len_ = strlen((char *)output_ptr);
@@ -188,14 +196,14 @@ s32 format_impl_jak3(uint64_t* args) {
         if (false /*argument_data[1].data[0]*/) {
           pad = -1;
         }
-        s64 in = *arg_regs_at_arg_reg_idx++;
+        s64 in = *arg_regs[arg_reg_idx++];
         kitoa((char *)output_ptr, in, 2, -1, pad, 0);
         output_ptr = (byte *)strend((char *)output_ptr);
       } break;
 
       case 'C':
       case 'c':
-        *output_ptr = *(byte *)arg_regs_at_arg_reg_idx++;
+        *output_ptr = *(byte *)arg_regs[arg_reg_idx++];
         output_ptr++;
         break;
 
@@ -205,14 +213,14 @@ s32 format_impl_jak3(uint64_t* args) {
         if (false /*argument_data[1].data[0] != -1*/) {
           pad = -1;
         }
-        char* in = *(char **)arg_regs_at_arg_reg_idx++;
+        char* in = *(char **)arg_regs[arg_reg_idx++];
         kitoa((char *)output_ptr, in, 10, -1, pad, 0);
         output_ptr = (byte *)strend((char *)output_ptr);
       } break;
 
       case 'E':
       case 'e': {
-        char* in = *(char **)arg_regs_at_arg_reg_idx++;
+        char* in = *(char **)arg_regs[arg_reg_idx++];
         s32 desired_len = -1;
         char pad_char = -1;
         if (pad_char == -1)
@@ -234,7 +242,7 @@ s32 format_impl_jak3(uint64_t* args) {
 
       case 'F':
       {
-        char* in = *(char **)arg_regs_at_arg_reg_idx++;
+        char* in = *(char **)arg_regs[arg_reg_idx++];
         ftoa((char *)output_ptr, (float)in, 0xc, ' ', 4, 0);
         output_ptr = (byte *)strend((char *)output_ptr);
       } break;
@@ -242,7 +250,7 @@ s32 format_impl_jak3(uint64_t* args) {
       case 'G':
       case 'g': {
         *output_ptr = 0;
-        char* in = *(char **)arg_regs_at_arg_reg_idx++;
+        char* in = *(char **)arg_regs[arg_reg_idx++];
         strcat((char *)output_ptr, in);
         output_ptr = (byte *)strend((char *)output_ptr);
       } break;
@@ -282,7 +290,7 @@ s32 format_impl_jak3(uint64_t* args) {
       case 'i': {
         *output_ptr = 0;
         s8 arg0 = -1;
-        char* in = *(char **)arg_regs_at_arg_reg_idx++;
+        char* in = *(char **)arg_regs[arg_reg_idx++];
         if (true /*arg0 == -1*/) {
           inspect_object((u32)in);
         } else {
@@ -301,7 +309,7 @@ s32 format_impl_jak3(uint64_t* args) {
 
       case 'M':
       case 'm': {
-        float in = (float)*(char **)arg_regs_at_arg_reg_idx++;
+        float in = (float)*(char **)arg_regs[arg_reg_idx++];
         s32 pad_length = -1;
         char pad_char = -1;
         if (pad_char == -1)
@@ -317,7 +325,7 @@ s32 format_impl_jak3(uint64_t* args) {
       case 'o': {
         *output_ptr = '~';
         output_ptr++;
-        kitoa((char *)output_ptr, *arg_regs_at_arg_reg_idx++, 10, 0, ' ', 0);
+        kitoa((char *)output_ptr, *arg_regs[arg_reg_idx++], 10, 0, ' ', 0);
         output_ptr = (byte *)strend((char *)output_ptr);
         *output_ptr = 'u';
         output_ptr++;
@@ -327,7 +335,7 @@ s32 format_impl_jak3(uint64_t* args) {
       case 'p': {
         *output_ptr = 0;
         s8 arg0 = -1;
-        char* in = *(char **)arg_regs_at_arg_reg_idx++;
+        char* in = *(char **)arg_regs[arg_reg_idx++];
         if (true /*arg0 == -1*/) {
           print_object((u32)in);
         } else {
@@ -351,7 +359,7 @@ s32 format_impl_jak3(uint64_t* args) {
 
       case 'R':
       case 'r': {
-        char* in = *(char **)arg_regs_at_arg_reg_idx++;
+        char* in = *(char **)arg_regs[arg_reg_idx++];
         s32 pad_length = -1;
         char pad_char = -1;
         if (pad_char == -1)
@@ -368,7 +376,7 @@ s32 format_impl_jak3(uint64_t* args) {
         s8 arg0 = -1;
         s32 desired_length = (s32)arg0;
         *output_ptr = 0;
-        char* in = *(char **)arg_regs_at_arg_reg_idx++;
+        char* in = *(char **)arg_regs[arg_reg_idx++];
 
         if ((((uint)in & 0x7) == 0x4) && (*(int *)(in - 4) == *(int *)(unaff_s7_lo + 0xf))) {
           cprintf("%s", in + 4);
@@ -434,14 +442,14 @@ s32 format_impl_jak3(uint64_t* args) {
         if (false /*argument_data[1].data[0] != -1*/) {
           pad = -1;
         }
-        s64 in = *arg_regs_at_arg_reg_idx++;
+        s64 in = *arg_regs[arg_reg_idx++];
         kitoa((char *)output_ptr, in, 16, -1, pad, 0);
         output_ptr = (byte *)strend((char *)output_ptr);
       } break;
 
       case 'f':
       {
-        char* in = *(char **)arg_regs_at_arg_reg_idx++;
+        char* in = *(char **)arg_regs[arg_reg_idx++];
         s32 pad_length = -1;
         char pad_char = -1;
         if (pad_char == -1)
