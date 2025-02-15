@@ -49,10 +49,7 @@ s32 format_impl_jak3(uint64_t* args) {
   int unaff_s7_lo;
   undefined4 unaff_s7_hi;
   float fVar18;
-  byte local_180;
-  byte local_140;
-  undefined local_100;
-  undefined local_c0;
+  format_struct local_180 [4];
   s64 local_30 [6];
   
   uVar6 = (ulong)(int)args;
@@ -81,10 +78,10 @@ LAB_while:
     if (*format_ptr_2__ == '~') {
       int arg_char;
       char justify = '\0';
-      local_c0 = 0xff;
-      local_180 = 0xff;
-      local_140 = 0xff;
-      local_100 = 0xff;
+      local_180[3].data[0] = -1;
+      local_180[0].data[0] = -1;
+      local_180[1].data[0] = -1;
+      local_180[2].data[0] = -1;
       argument_data = &local_180;
       format_ptr = format_ptr_2__;
 LAB_continue_noinit:
@@ -106,7 +103,7 @@ LAB_continue_noinit:
 LAB_002682b0:
       arg_char = arg_char >> 0x18;
       if (arg_char == ',') {
-        argument_data = argument_data + '@';
+        argument_data = argument_data + (format_struct *)((int)argument_data + 0x40);
         format_ptr++;
         goto LAB_continue_noinit;
       }
@@ -255,10 +252,10 @@ LAB_00267c50:
       if ((long)print_len_size_t < 0) {
         if ((long)print_len_size_t < -1) {
           int print_len = (int)print_len_size_t;
-          if (justify == '\0') {
+          if (local_180[0].data[1] == '\0') {
             byte pad = ' ';
-            if (local_140 != 0xff) {
-              pad = local_140;
+            if (local_180[1].data[0] != -1) {
+              pad = local_180[1].data[0];
             }
             kstrinsert((char *)output_ptr,pad,-1 - print_len);
             psVar17 = psVar16 + 1;
@@ -277,8 +274,8 @@ LAB_00267c50:
             else {
               do {
                 output_ptr = format_ptr_2__ + 1;
-                byte pad = local_140;
-                if (local_140 == 0xff) {
+                byte pad = local_180[1].data[0];
+                if (local_180[1].data[0] == 0xff) {
                   pad = ' ';
                 }
                 print_len = print_len + -1;
@@ -580,12 +577,12 @@ LAB_00267c50:
         goto LAB_while;
       } else if ((long)print_len < -1) {
         iVar12 = (int)print_len;
-        if (justify == '\0') {
-          byte format_ptr_asterisk___ = ' ';
-          if (local_140 != 0xff) {
-            format_ptr_asterisk___ = local_140;
+        if (local_180[0].data[1] == '\0') {
+          byte pad = ' ';
+          if (local_180[1].data[0] != -1) {
+            pad = local_180[1].data[0];
           }
-          kstrinsert((char *)output_ptr,format_ptr_asterisk___,-1 - iVar12);
+          kstrinsert((char *)output_ptr,pad,-1 - iVar12);
           psVar17 = psVar16 + 1;
           output_ptr = (byte *)strend((char *)output_ptr);
           psVar16 = psVar17;
@@ -601,12 +598,12 @@ LAB_00267c50:
         else {
           do {
             output_ptr = format_ptr_2__ + 1;
-            byte format_ptr_asterisk___ = local_140;
-            if (local_140 == 0xff) {
-              format_ptr_asterisk___ = ' ';
+            byte pad = local_180[1].data[0];
+            if (local_180[1].data[0] == 0xff) {
+              pad = ' ';
             }
             iVar12 = iVar12 + -1;
-            *format_ptr_2__ = format_ptr_asterisk___;
+            *format_ptr_2__ = pad;
             format_ptr_2__ = output_ptr;
           } while (iVar12 != 0);
           *output_ptr = 0;
