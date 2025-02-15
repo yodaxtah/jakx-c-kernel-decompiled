@@ -26,13 +26,7 @@
  */
 s32 format_impl_jak3(uint64_t* args) {
   byte *__src;
-  String *pSVar3;
-  char *pcVar5;
   int in_a1_lo;
-  byte *argument_data_at_arg_idx;
-  int iVar12;
-  char *pbVar9;
-  s64 *arg_regs_at_new_arg_reg_idx;
   int unaff_s7_lo;
   undefined4 unaff_s7_hi;
   format_struct argument_data_array [4];
@@ -68,23 +62,23 @@ s32 format_impl_jak3(uint64_t* args) {
         x.data[0] = -1; //.reset();
       }
 
-      argument_data_at_arg_idx = &argument_data_array;
+      uint arg_idx = 0;
       while ((int)(char)format_ptr[1] - '0' < 10 ||
           (int)(char)format_ptr[1] == ',' ||
           (int)(char)format_ptr[1] == '\'' ||
           (int)(char)format_ptr[1] == '`' ||
-          (*argument_data_at_arg_idx == -1 &&
+          (*argument_data[arg_idx] == -1 &&
             ((int)(char)format_ptr[1] == '-' && (int)(char)format_ptr[1] == '+')
             )) {
         int arg_char = (uint)format_ptr[1] && 0xFF;
         if (arg_char == ',') {
-          argument_data_at_arg_idx = argument_data_at_arg_idx + (format_struct *)((int)argument_data_at_arg_idx + 0x40);
+          arg_idx++;
           format_ptr++;
           continue;
         }
 
         if (arg_char == '\'') {  // 0x27
-          *argument_data_at_arg_idx = format_ptr[2];
+          *argument_data[arg_idx] = format_ptr[2];
           format_ptr += 2;
           continue;
         }
@@ -92,17 +86,17 @@ s32 format_impl_jak3(uint64_t* args) {
         if (arg_char == '`') {  // 0x60
           s32 i = 0;
           while (format_ptr[2] != '`') {
-            argument_data_at_arg_idx[i] = format_ptr[2];
+            argument_data[arg_idx].data[i] = format_ptr[2];
             i++;
             format_ptr++;
           }
           format_ptr++;
-          argument_data_at_arg_idx[i] = 0;
+          argument_data[arg_idx].data[i] = 0;
           continue;
         }
 
         if (arg_char == '-') {  // 0x2d
-          argument_data_at_arg_idx[1] = 1;
+          argument_data[arg_idx].data[1] = 1;
           format_ptr++;
           continue;
         }
@@ -112,10 +106,10 @@ s32 format_impl_jak3(uint64_t* args) {
           continue;
         }
 
-        if (*argument_data_at_arg_idx == -1) {
-          *argument_data_at_arg_idx = 0;
+        if (*argument_data[arg_idx] == -1) {
+          *argument_data[arg_idx] = 0;
         }
-        *argument_data_at_arg_idx = *argument_data_at_arg_idx * 10 + format_ptr[1] - '0';
+        *argument_data[arg_idx] = *argument_data[arg_idx] * 10 + format_ptr[1] - '0';
         format_ptr++;
       }
       // if ((int)(char)format_ptr[1] != '-' && (int)(char)format_ptr[1] != '+') {
@@ -490,40 +484,46 @@ s32 format_impl_jak3(uint64_t* args) {
   }
 
   *output_ptr = 0;
+
   if (original_dest == (long)(unaff_s7_lo + 4)) {
-    if (DiskBoot == 0) {
-      return 0;
-    }
-  }
-  else {
-    if (original_dest == CONCAT44(unaff_s7_hi,unaff_s7_lo)) {
-      pSVar3 = make_string_from_c((const_char *)__src);
+    if (DiskBoot != 0) {
+      printf("%s", __src);
+      fflush(*(FILE **)(_impure_ptr + 8));
       PrintPending = (char *)__src;
       *__src = 0;
-      return (s32)pSVar3;
     }
-    if (original_dest != 0) {
-      if ((original_dest & 7) != 4) {
-        return 0;
-      }
+
+    return 0;
+  } else if (original_dest == CONCAT44(unaff_s7_hi,unaff_s7_lo)) {
+    String *string = make_string_from_c((const_char *)__src);
+    PrintPending = (char *)__src;
+    *__src = 0;
+    return (s32)string;
+  } else if (original_dest == 0) {
+    printf("%s", __src);
+    fflush(*(FILE **)(_impure_ptr + 8));
+    PrintPending = (char *)__src;
+    *__src = 0;
+    return 0;
+  } else {
+    if ((original_dest & 7) == 4) {
       if (*(int *)((int)args - 4) == *(int *)(unaff_s7_lo + 0xf)) {
-        strncat((char *)((int)args + 4),(char *)__src,(long)*(int *)args);
-      }
-      else {
-        if (*(int *)((int)args - 4) != *(int *)(unaff_s7_lo + 0x8b)) {
-          return 0;
-        }
+        long len = (long)*(int *)args;
+        char* str = (char *)((int)args + 4);
+        strncat(str,(char *)__src, len);
+        PrintPending = (char *)__src;
+        *__src = 0;
+        return 0;
+      } else if (*(int *)((int)args - 4) == *(int *)(unaff_s7_lo + 0x8b)) {
         size_t print_len = strlen((char *)__src);
         sceWrite((long)*(int *)((int)args + 0xc),(char *)__src,(int)print_len);
+
+        PrintPending = (char *)__src;
+        *__src = 0;
+        return 0;
       }
-      PrintPending = (char *)__src;
-      *__src = 0;
-      return 0;
     }
+    return 0;
   }
-  printf("%s",__src);
-  fflush(*(FILE **)(_impure_ptr + 8));
-  PrintPending = (char *)__src;
-  *__src = 0;
-  return 0;
+
 }
