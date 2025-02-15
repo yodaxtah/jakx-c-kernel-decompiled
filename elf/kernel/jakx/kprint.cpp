@@ -26,15 +26,15 @@
  */
 s32 format_impl_jak3(uint64_t* args) {
   byte *PrintPendingLocal__;
-  int in_a1_lo;
+  int format_gstring;
   int unaff_s7_lo;
   undefined4 unaff_s7_hi;
   s64 local_30 [6];
 
-  s64* arg_regs_at_arg_reg_idx = local_30;
+  s64* arg_regs = local_30;
 
   format_struct argument_data_array [4];
-  
+
   u32 arg_reg_idx = 0;
 
   ulong original_dest = (ulong)(int)args;
@@ -43,11 +43,12 @@ s32 format_impl_jak3(uint64_t* args) {
   if (PrintPending == (char *)0x0) {
     print_temp = PrintBufArea + 0x18;
   }
-  PrintPendingLocal__ = (byte *)strend(print_temp);
+  PrintPendingLocal__ = (char *)strend(print_temp);
   PrintPending = (char *)PrintPendingLocal__;
-  byte* output_ptr = PrintPendingLocal__;
-  
-  byte *format_ptr = (byte *)(in_a1_lo + 4);
+
+  char* output_ptr = PrintPendingLocal__;
+
+  char* format_cstring = (char *)(format_gstring + 4);
 
   u32 indentation = 0;
 
@@ -55,30 +56,32 @@ s32 format_impl_jak3(uint64_t* args) {
 
   u32 arg_idx = 0;
 
-  if (indentation != 0 && PrintPendingLocal__[-1] == '\n') {
-    for (u32 i = indentation; i != 0; i--) {
+  if (indentation != 0 && output_ptr[-1] == '\n') {
+    for (u32 i = 0; i < indentation; i++) {
       *output_ptr = ' ';
       output_ptr++;
     }
   }
 
+  char* format_ptr = format_cstring;
+
   while (*format_ptr != 0) {
     if (*format_ptr == '~') {
-      byte* arg_start = format_ptr;
-      argument_data_array[0].data[1] = '\0';
+      char* arg_start = format_ptr;
       arg_idx = 0;
+      argument_data_array[0].data[1] = '\0';
       for (auto& x : argument_data_array) {
         x.data[0] = -1; //.reset();
       }
 
-      while ((int)(char)format_ptr[1] - '0' < 10 ||
-          (int)(char)format_ptr[1] == ',' ||
-          (int)(char)format_ptr[1] == '\'' ||
-          (int)(char)format_ptr[1] == '`' ||
-          (*argument_data[arg_idx] == -1 &&
-            ((int)(char)format_ptr[1] == '-' && (int)(char)format_ptr[1] == '+')
+      while ((int)format_ptr[1] - '0' < 10 ||
+          (int)format_ptr[1] == ',' ||
+          (int)format_ptr[1] == '\'' ||
+          (int)format_ptr[1] == '`' ||
+          (argument_data[arg_idx].data[0] == -1 &&
+            ((int)format_ptr[1] == '-' && (int)format_ptr[1] == '+')
             )) {
-        int arg_char = (uint)format_ptr[1] && 0xFF;
+        char arg_char = format_ptr[1];
         if (arg_char == ',') {
           arg_idx++;
           format_ptr++;
@@ -86,7 +89,7 @@ s32 format_impl_jak3(uint64_t* args) {
         }
 
         if (arg_char == '\'') {  // 0x27
-          *argument_data[arg_idx] = format_ptr[2];
+          argument_data[arg_idx].data[0] = format_ptr[2];
           format_ptr += 2;
           continue;
         }
@@ -114,368 +117,366 @@ s32 format_impl_jak3(uint64_t* args) {
           continue;
         }
 
-        if (*argument_data[arg_idx] == -1) {
-          *argument_data[arg_idx] = 0;
+        if (argument_data[arg_idx].data[0] == -1) {
+          argument_data[arg_idx].data[0] = 0;
         }
-        *argument_data[arg_idx] = *argument_data[arg_idx] * 10 + format_ptr[1] - '0';
+
+        argument_data[arg_idx].data[0] = argument_data[arg_idx].data[0] * 10 + arg_char - '0';
         format_ptr++;
       }
-      // if ((int)(char)format_ptr[1] != '-' && (int)(char)format_ptr[1] != '+') {
-      //   arg_char = (uint)format_ptr[1] << 0x18;
-      // }
 
       switch (format_ptr[1]) {
 
-      case '%':
-        *output_ptr = '\n';
-        output_ptr++;
-        if (indentation != 0 && format_ptr[2] != 0) {
-          for (s32 i = 0; i < (s32)indentation; i++) {
+        case '%':
+          *output_ptr = '\n';
+          output_ptr++;
+          if (indentation != 0 && format_ptr[2] != 0) {
+            for (u32 i = 0; i < indentation; i++) {
+              *output_ptr = ' ';
+              output_ptr++;
+            }
+          }
+          break;
+
+        default:
+          MsgErr("format: unknown code 0x%02x\n", format_ptr[1]);
+          break;
+
+        case 'A':
+        case 'a':
+        {
+          s8 arg0 = -1;
+          s32 desired_length = (s32)arg0;
+          *output_ptr = 0;
+          char* in = *(char **)arg_regs[arg_reg_idx++];
+          print_object((u32)in);
+          if (false /*desired_length != -1*/) {
+            size_t print_len_ = strlen(output_ptr);
+            int print_len = (int)print_len_;
+            if (desired_length < (long)print_len_) {
+              if (false /*desired_length > 1*/) {
+                output_ptr[desired_length - 1] = '~';
+              }
+              output_ptr[desired_length] = 0;
+            } else if ((long)print_len_ < desired_length) {
+              if (argument_data_array[0].data[1] == '\0') {
+                char pad = ' ';
+                if (argument_data_array[1].data[0] != -1) {
+                  pad = argument_data_array[1].data[0];
+                }
+                kstrinsert(output_ptr, pad, desired_length - print_len);
+              } else {
+                output_ptr = strend(output_ptr);
+                print_len = desired_length - print_len;
+                byte* output_ptr_temp = output_ptr;
+                if (print_len < 1) {
+                  *output_ptr = 0;
+                } else {
+                  do {
+                    output_ptr++;
+                    byte pad = argument_data_array[1].data[0];
+                    if (argument_data_array[1].data[0] == -1) {
+                      pad = ' ';
+                    }
+                    print_len_ = print_len_ + -1;
+                    *output_ptr_temp = pad;
+                    output_ptr_temp = output_ptr;
+                  } while (print_len_ != 0);
+                  *output_ptr = 0;
+                }
+              }
+            }
+          }
+          output_ptr = strend(output_ptr);
+
+        } break;
+
+        case 'B':
+        case 'b': {
+          char pad = '0';
+          if (false /*argument_data[1].data[0]*/) {
+            pad = -1;
+          }
+          s64 in = *arg_regs[arg_reg_idx++];
+          kitoa(output_ptr, in, 2, -1, pad, 0);
+          output_ptr = strend(output_ptr);
+        } break;
+
+        case 'C':
+        case 'c':
+          *output_ptr = *(byte *)arg_regs[arg_reg_idx++];
+          output_ptr++;
+          break;
+
+        case 'D':
+        case 'd': {
+          char pad = ' ';
+          if (false /*argument_data[1].data[0] != -1*/) {
+            pad = -1;
+          }
+          char* in = *(char **)arg_regs[arg_reg_idx++];
+          kitoa(output_ptr, in, 10, -1, pad, 0);
+          output_ptr = strend(output_ptr);
+        } break;
+
+        case 'E':
+        case 'e': {
+          char* in = *(char **)arg_regs[arg_reg_idx++];
+          s32 desired_len = -1;
+          char pad_char = -1;
+          if (pad_char == -1)
+            pad_char = ' ';
+          s32 precision = -1;
+          if (precision == -1)
+            precision = 4;
+          float value;
+          if ((int)in < 0) {
+            value = (float)((uint)in & 1 | (uint)in >> 1);
+            value = value + value;
+          } else {
+            value = (float)(int)in; // FIXME: why is this in the else case?
+          }
+          ftoa(output_ptr, (float)value / 300.0, desired_len, pad_char, precision, 0);
+          output_ptr = strend(output_ptr);
+        } break;
+
+        case 'F':
+        {
+          char* in = *(char **)arg_regs[arg_reg_idx++];
+          ftoa(output_ptr, (float)in, 0xc, ' ', 4, 0);
+          output_ptr = strend(output_ptr);
+        } break;
+
+        case 'G':
+        case 'g': {
+          *output_ptr = 0;
+          char* in = *(char **)arg_regs[arg_reg_idx++];
+          strcat(output_ptr, in);
+          output_ptr = strend(output_ptr);
+        } break;
+
+        case 'H':
+        case 'J':
+        case 'K':
+        case 'L':
+        case 'N':
+        case 'U':
+        case 'V':
+        case 'W':
+        case 'Y':
+        case 'Z':
+        case '[':
+        case ']':
+        case 'h':
+        case 'j':
+        case 'k':
+        case 'l':
+        case 'n':
+        case 'u':
+        case 'v':
+        case 'w':
+        case 'y':
+        case 'z':
+          while (arg_start < (char *)(format_ptr + 1)) {
+            *output_ptr = *arg_start;
+            arg_start++;
+            output_ptr++;
+          }
+          *output_ptr = (byte)format_ptr[1];
+          output_ptr++;
+          break;
+
+        case 'I':
+        case 'i': {
+          *output_ptr = 0;
+          s8 arg0 = -1;
+          char* in = *(char **)arg_regs[arg_reg_idx++];
+          if (true /*arg0 == -1*/) {
+            inspect_object((u32)in);
+          } else {
+            u32* sym = find_symbol_from_c(-1, (const_char *)&argument_data_array);
+            if (sym != (u32 *)0x0) {
+              Type* type = *(Type **)((int)sym + -1);
+              if (type != (Type *)0x0) {
+                call_method_of_type((u32)in, type, 3);
+              }
+            } else {
+              ;
+            }
+          }
+          output_ptr = strend(output_ptr);
+        } break;
+
+        case 'M':
+        case 'm': {
+          float in = (float)*(char **)arg_regs[arg_reg_idx++];
+          s32 pad_length = -1;
+          char pad_char = -1;
+          if (pad_char == -1)
+            pad_char = ' ';
+          s32 precision = -1;
+          if (precision == -1)
+            precision = 4;
+          ftoa(output_ptr, in * 0.0002441406, pad_length, pad, precision, 0);
+          output_ptr = strend(output_ptr);
+        } break;
+
+        case 'O':
+        case 'o': {
+          *output_ptr = '~';
+          output_ptr++;
+          kitoa(output_ptr, *arg_regs[arg_reg_idx++], 10, 0, ' ', 0);
+          output_ptr = strend(output_ptr);
+          *output_ptr = 'u';
+          output_ptr++;
+        } break;
+
+        case 'P':
+        case 'p': {
+          *output_ptr = 0;
+          s8 arg0 = -1;
+          char* in = *(char **)arg_regs[arg_reg_idx++];
+          if (true /*arg0 == -1*/) {
+            print_object((u32)in);
+          } else {
+            u32* sym = find_symbol_from_c(-1, (const_char *)&argument_data_array);
+            if (sym != (u32 *)0x0) {
+              Type* type = *(Type **)((int)sym + -1);
+              if (type != (Type *)0x0) {
+                call_method_of_type((u32)in, type, 2);
+              }
+            } else {
+              ;
+            }
+          }
+          output_ptr = strend(output_ptr);
+        } break;
+
+        case 'Q':
+        case 'q':
+          kqtoa_G();
+          output_ptr = strend(output_ptr);
+          break;
+
+        case 'R':
+        case 'r': {
+          char* in = *(char **)arg_regs[arg_reg_idx++];
+          s32 pad_length = -1;
+          char pad_char = -1;
+          if (pad_char == -1)
+            pad_char = ' ';
+          s32 precision = -1;
+          if (precision == -1)
+            precision = 4;
+          ftoa(output_ptr, (float)in * 360.0 * 1.525879e-05, pad_length, pad_char, precision, 0);
+          output_ptr = strend(output_ptr);
+        } break;
+
+        case 'S':
+        case 's': {
+          s8 arg0 = -1;
+          s32 desired_length = (s32)arg0;
+          *output_ptr = 0;
+          char* in = *(char **)arg_regs[arg_reg_idx++];
+
+          if ((((uint)in & 0x7) == 0x4) && (*(int *)(in - 4) == *(int *)(unaff_s7_lo + 0xf))) {
+            cprintf("%s", in + 4);
+          } else {
+            print_object((u32)in);
+          }
+
+          if (false /*desired_length != -1*/) {
+            size_t print_len_ = strlen(output_ptr);
+            int print_len = (int)print_len_;
+            if (desired_length < (long)print_len_) {
+              if (false /*desired_length < print_len_*/) {
+                output_ptr[desired_length - 1] = '~';
+              }
+              output_ptr[desired_length] = 0;
+            } else if ((long)print_len_ < desired_length) {
+              if (argument_data_array[0].data[1] == '\0') {
+                char pad = ' ';
+                if (argument_data_array[1].data[0] != -1) {
+                  pad = argument_data_array[1].data[0];
+                }
+                kstrinsert(output_ptr, pad, desired_length - print_len);
+
+              } else {
+                output_ptr = (char *)strend(output_ptr);
+                print_len = -1 - print_len;
+                char* output_ptr_temp = output_ptr;
+                if (print_len < 1) {
+                  *output_ptr = 0;
+                } else {
+                  do {
+                    output_ptr++;
+                    char pad = argument_data_array[1].data[0];
+                    if (argument_data_array[1].data[0] == -1) {
+                      pad = ' ';
+                    }
+                    print_len = print_len + -1;
+                    *output_ptr_temp = pad;
+                    output_ptr_temp = output_ptr;
+                  } while (print_len != 0);
+                  *output_ptr = 0;
+                }
+              }
+            }
+          }
+          output_ptr = strend(output_ptr);
+        } break;
+
+        case 'T': {
+          int stop = 1;
+          if (false) {
+            stop = -1;
+          }
+          for (int i = 0; i < stop; i++) {
+            *output_ptr = '\t';
+            output_ptr++;
+          }
+        } break;
+
+        case 'X':
+        case 'x': {
+          char pad = '0';
+          if (false /*argument_data[1].data[0] != -1*/) {
+            pad = -1;
+          }
+          s64 in = *arg_regs[arg_reg_idx++];
+          kitoa(output_ptr, in, 16, -1, pad, 0);
+          output_ptr = strend(output_ptr);
+        } break;
+
+        case 'f':
+        {
+          char* in = *(char **)arg_regs[arg_reg_idx++];
+          s32 pad_length = -1;
+          char pad_char = -1;
+          if (pad_char == -1)
+            pad_char = ' ';
+          s32 precision = -1;
+          if (precision == -1)
+            precision = 4;
+          ftoa(output_ptr, (float)in, pad_length, pad_char, precision, 0);
+          output_ptr = strend(output_ptr);
+        } break;
+
+        case 't':
+          int stop = 8;
+          if (false) {
+            stop = -1;
+          }
+          for (int i = 0; i < stop; i++) {
             *output_ptr = ' ';
             output_ptr++;
           }
-        }
-        break;
+          break;
 
-      default:
-        MsgErr("format: unknown code 0x%02x\n", format_ptr[1]);
-        break;
-
-      case 'A':
-      case 'a':
-      {
-        s8 arg0 = -1;
-        s32 desired_length = (s32)arg0;
-        *output_ptr = 0;
-        char* in = *(char **)arg_regs[arg_reg_idx++];
-        print_object((u32)in);
-        if (false /*desired_length != -1*/) {
-          size_t print_len_ = strlen((char *)output_ptr);
-          int print_len = (int)print_len_;
-          if (desired_length < (long)print_len_) {
-            if (false /*desired_length > 1*/) {
-              output_ptr[desired_length - 1] = '~';
-            }
-            output_ptr[desired_length] = 0;
-          } else if ((long)print_len_ < desired_length) {
-            if (argument_data_array[0].data[1] == '\0') {
-              char pad = ' ';
-              if (argument_data_array[1].data[0] != -1) {
-                pad = argument_data_array[1].data[0];
-              }
-              kstrinsert((char *)output_ptr, pad, desired_length - print_len);
-            } else {
-              output_ptr = (byte *)strend((char *)output_ptr);
-              print_len = desired_length - print_len;
-              byte* output_ptr_temp = output_ptr;
-              if (print_len < 1) {
-                *output_ptr = 0;
-              } else {
-                do {
-                  output_ptr++;
-                  byte pad = argument_data_array[1].data[0];
-                  if (argument_data_array[1].data[0] == -1) {
-                    pad = ' ';
-                  }
-                  print_len_ = print_len_ + -1;
-                  *output_ptr_temp = pad;
-                  output_ptr_temp = output_ptr;
-                } while (print_len_ != 0);
-                *output_ptr = 0;
-              }
-            }
-          }
-        }
-        output_ptr = (byte *)strend((char *)output_ptr);
-
-      } break;
-
-      case 'B':
-      case 'b': {
-        char pad = '0';
-        if (false /*argument_data[1].data[0]*/) {
-          pad = -1;
-        }
-        s64 in = *arg_regs[arg_reg_idx++];
-        kitoa((char *)output_ptr, in, 2, -1, pad, 0);
-        output_ptr = (byte *)strend((char *)output_ptr);
-      } break;
-
-      case 'C':
-      case 'c':
-        *output_ptr = *(byte *)arg_regs[arg_reg_idx++];
-        output_ptr++;
-        break;
-
-      case 'D':
-      case 'd': {
-        char pad = ' ';
-        if (false /*argument_data[1].data[0] != -1*/) {
-          pad = -1;
-        }
-        char* in = *(char **)arg_regs[arg_reg_idx++];
-        kitoa((char *)output_ptr, in, 10, -1, pad, 0);
-        output_ptr = (byte *)strend((char *)output_ptr);
-      } break;
-
-      case 'E':
-      case 'e': {
-        char* in = *(char **)arg_regs[arg_reg_idx++];
-        s32 desired_len = -1;
-        char pad_char = -1;
-        if (pad_char == -1)
-          pad_char = ' ';
-        s32 precision = -1;
-        if (precision == -1)
-          precision = 4;
-        float value;
-        if ((int)in < 0) {
-          value = (float)((uint)in & 1 | (uint)in >> 1);
-          value = value + value;
-        }
-        else {
-          value = (float)(int)in; // FIXME: why is this in the else case?
-        }
-        ftoa((char *)output_ptr, (float)value / 300.0, desired_len, pad_char, precision, 0);
-        output_ptr = (byte *)strend((char *)output_ptr);
-      } break;
-
-      case 'F':
-      {
-        char* in = *(char **)arg_regs[arg_reg_idx++];
-        ftoa((char *)output_ptr, (float)in, 0xc, ' ', 4, 0);
-        output_ptr = (byte *)strend((char *)output_ptr);
-      } break;
-
-      case 'G':
-      case 'g': {
-        *output_ptr = 0;
-        char* in = *(char **)arg_regs[arg_reg_idx++];
-        strcat((char *)output_ptr, in);
-        output_ptr = (byte *)strend((char *)output_ptr);
-      } break;
-
-      case 'H':
-      case 'J':
-      case 'K':
-      case 'L':
-      case 'N':
-      case 'U':
-      case 'V':
-      case 'W':
-      case 'Y':
-      case 'Z':
-      case '[':
-      case ']':
-      case 'h':
-      case 'j':
-      case 'k':
-      case 'l':
-      case 'n':
-      case 'u':
-      case 'v':
-      case 'w':
-      case 'y':
-      case 'z':
-        while (arg_start < (char *)(format_ptr + 1)) {
-          *output_ptr = *arg_start;
-          arg_start++;
+        case '~':
+          *output_ptr = '~';
           output_ptr++;
-        }
-        *output_ptr = (byte)format_ptr[1];
-        output_ptr++;
-        break;
-
-      case 'I':
-      case 'i': {
-        *output_ptr = 0;
-        s8 arg0 = -1;
-        char* in = *(char **)arg_regs[arg_reg_idx++];
-        if (true /*arg0 == -1*/) {
-          inspect_object((u32)in);
-        } else {
-          u32* sym = find_symbol_from_c(0xffff,(const_char *)&argument_data_array);
-          if (sym != (u32 *)0x0) {
-            Type* type = *(Type **)((int)sym + -1);
-            if (type != (Type *)0x0) {
-              call_method_of_type((u32)in, type, 3);
-            }
-          } else {
-            ;
-          }
-        }
-        output_ptr = (byte *)strend((char *)output_ptr);
-      } break;
-
-      case 'M':
-      case 'm': {
-        float in = (float)*(char **)arg_regs[arg_reg_idx++];
-        s32 pad_length = -1;
-        char pad_char = -1;
-        if (pad_char == -1)
-          pad_char = ' ';
-        s32 precision = -1;
-        if (precision == -1)
-          precision = 4;
-        ftoa((char *)output_ptr, in * 0.0002441406, pad_length, pad, precision, 0);
-        output_ptr = (byte *)strend((char *)output_ptr);
-      } break;
-
-      case 'O':
-      case 'o': {
-        *output_ptr = '~';
-        output_ptr++;
-        kitoa((char *)output_ptr, *arg_regs[arg_reg_idx++], 10, 0, ' ', 0);
-        output_ptr = (byte *)strend((char *)output_ptr);
-        *output_ptr = 'u';
-        output_ptr++;
-      } break;
-
-      case 'P':
-      case 'p': {
-        *output_ptr = 0;
-        s8 arg0 = -1;
-        char* in = *(char **)arg_regs[arg_reg_idx++];
-        if (true /*arg0 == -1*/) {
-          print_object((u32)in);
-        } else {
-          u32* sym = find_symbol_from_c(0xffff, (const_char *)&argument_data_array);
-          if (sym != (u32 *)0x0) {
-            Type* type = *(Type **)((int)sym + -1);
-            if (type != (Type *)0x0) {
-              call_method_of_type((u32)in, type, 2);
-            }
-          } else {
-            ;
-          }
-        }
-        output_ptr = (byte *)strend((char *)output_ptr);
-      } break;
-
-      case 'Q':
-      case 'q':
-        kqtoa_G();
-        output_ptr = (byte *)strend((char *)output_ptr);
-
-      case 'R':
-      case 'r': {
-        char* in = *(char **)arg_regs[arg_reg_idx++];
-        s32 pad_length = -1;
-        char pad_char = -1;
-        if (pad_char == -1)
-          pad_char = ' ';
-        s32 precision = -1;
-        if (precision == -1)
-          precision = 4;
-        ftoa((char *)output_ptr, (float)in * 360.0 * 1.525879e-05, pad_length, pad_char, precision, 0);
-        output_ptr = (byte *)strend((char *)output_ptr);
-      } break;
-
-      case 'S':
-      case 's': {
-        s8 arg0 = -1;
-        s32 desired_length = (s32)arg0;
-        *output_ptr = 0;
-        char* in = *(char **)arg_regs[arg_reg_idx++];
-
-        if ((((uint)in & 0x7) == 0x4) && (*(int *)(in - 4) == *(int *)(unaff_s7_lo + 0xf))) {
-          cprintf("%s", in + 4);
-        } else {
-          print_object((u32)in);
-        }
-
-        if (false /*desired_length != -1*/) {
-          size_t print_len_ = strlen((char *)output_ptr);
-          int print_len = (int)print_len_;
-          if (desired_length < (long)print_len_) {
-            if (false /*desired_length < print_len_*/) {
-              output_ptr[desired_length - 1] = '~';
-            }
-            output_ptr[desired_length] = 0;
-          } else if ((long)print_len_ < desired_length) {
-            if (argument_data_array[0].data[1] == '\0') {
-              byte pad = ' ';
-              if (argument_data_array[1].data[0] != -1) {
-                pad = argument_data_array[1].data[0];
-              }
-              kstrinsert((char *)output_ptr, pad, desired_length - print_len);
-
-            } else {
-              output_ptr = (byte *)strend((char *)output_ptr);
-              print_len = -1 - print_len;
-              byte* output_ptr_temp = output_ptr;
-              if (print_len < 1) {
-                *output_ptr = 0;
-              } else {
-                do {
-                  output_ptr++;
-                  byte pad = argument_data_array[1].data[0];
-                  if (argument_data_array[1].data[0] == -1) {
-                    pad = ' ';
-                  }
-                  print_len = print_len + -1;
-                  *output_ptr_temp = pad;
-                  output_ptr_temp = output_ptr;
-                } while (print_len != 0);
-                *output_ptr = 0;
-              }
-            }
-          }
-        }
-        output_ptr = (byte *)strend((char *)output_ptr);
-      } break;
-
-      case 'T': {
-        int stop = 1;
-        if (false) {
-          stop = -1;
-        }
-        for (int i = 0; i < stop; i++) {
-          *output_ptr = '\t';
-          output_ptr++;
-        }
-      } break;
-
-      case 'X':
-      case 'x': {
-        char pad = '0';
-        if (false /*argument_data[1].data[0] != -1*/) {
-          pad = -1;
-        }
-        s64 in = *arg_regs[arg_reg_idx++];
-        kitoa((char *)output_ptr, in, 16, -1, pad, 0);
-        output_ptr = (byte *)strend((char *)output_ptr);
-      } break;
-
-      case 'f':
-      {
-        char* in = *(char **)arg_regs[arg_reg_idx++];
-        s32 pad_length = -1;
-        char pad_char = -1;
-        if (pad_char == -1)
-          pad_char = ' ';
-        s32 precision = -1;
-        if (precision == -1)
-          precision = 4;
-        ftoa((char *)output_ptr, (float)in, pad_length, pad_char, precision, 0);
-        output_ptr = (byte *)strend((char *)output_ptr);
-      } break;
-
-      case 't':
-        int stop = 8;
-        if (false) {
-          stop = -1;
-        }
-        for (int i = 0; i < stop; i++) {
-          *output_ptr = ' ';
-          output_ptr++;
-        }
-        break;
-
-      case '~':
-        *output_ptr = '~';
-        output_ptr++;
-        break;
+          break;
       }
       format_ptr += 2; // FIXME: why 2 instead of ++?
     } else {
