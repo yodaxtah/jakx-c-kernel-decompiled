@@ -85,25 +85,20 @@ LAB_while:
       argument_data_at_arg_idx = &argument_data_array;
       format_ptr = format_ptr_2__;
 LAB_continue_noinit:
-      if ((int)(char)format_ptr[1] - '0' >= 10
-        && (int)(char)format_ptr[1] != ','
-        && (int)(char)format_ptr[1] != '\''
-        && (int)(char)format_ptr[1] != '`') {
-        if (*argument_data_at_arg_idx != -1) {
-          goto LAB_00267c50;
-        } else if ((int)(char)format_ptr[1] != '-' && (int)(char)format_ptr[1] != '+') {
+      if ((int)(char)format_ptr[1] - '0' >= 10 &&
+          (int)(char)format_ptr[1] != ',' &&
+          (int)(char)format_ptr[1] != '\'' &&
+          (int)(char)format_ptr[1] != '`' &&
+          (*argument_data_at_arg_idx != -1 ||
+            ((int)(char)format_ptr[1] != '-' && (int)(char)format_ptr[1] != '+')
+            )) {
+        if ((int)(char)format_ptr[1] != '-' && (int)(char)format_ptr[1] != '+') {
           arg_char = (uint)format_ptr[1] << 0x18;
-          goto LAB_00267c50;
-        } else {
-          arg_char = ((uint)format_ptr[1] << 0x18) >> 0x18;
-          goto LAB_002682b0;
         }
-      } else {
-        arg_char = ((uint)format_ptr[1] << 0x18) >> 0x18;
-        goto LAB_002682b0;
+        goto LAB_00267c50;
       }
-
-LAB_002682b0:
+      
+      arg_char = (uint)format_ptr[1] && 0xFF;
       if (arg_char == ',') {
         argument_data_at_arg_idx = argument_data_at_arg_idx + (format_struct *)((int)argument_data_at_arg_idx + 0x40);
         format_ptr++;
