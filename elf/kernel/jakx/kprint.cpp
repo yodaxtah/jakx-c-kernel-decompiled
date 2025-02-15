@@ -124,7 +124,446 @@ LAB_while:
       if ((int)(char)format_ptr[1] != '-' && (int)(char)format_ptr[1] != '+') {
         arg_char = (uint)format_ptr[1] << 0x18;
       }
-      goto LAB_00267c50;
+      
+      char* format_ptr_plus1 = (char *)(format_ptr + 1);
+      if (false) {
+        MsgErr("format: unknown code 0x%02x\n",*format_ptr_plus1);
+        format_ptr_2__ = format_ptr + 2;
+        goto LAB_while;
+      }
+      switch (*format_ptr_plus1) {
+      case '%':
+        *output_ptr = '\n';
+        output_ptr++;
+        if (((indentation != 0) && (format_ptr[2] != 0)) && (indentation != 0)) {
+          for (int i = 0; i < (int)indentation; i++) {
+            *output_ptr = ' ';
+            output_ptr++;
+          }
+          format_ptr_2__ = format_ptr + 2;
+          goto LAB_while;
+        }
+        format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
+        goto LAB_while;
+        break;
+
+      default:
+        MsgErr("format: unknown code 0x%02x\n", *format_ptr_plus1);
+        format_ptr_2__ = format_ptr + 2;
+        goto LAB_while;
+        break;
+
+      case 'A':
+      case 'a':
+      {
+        *output_ptr = 0;
+        char* in = *(char **)arg_regs_at_arg_reg_idx;
+        print_object((u32)in);
+        if (false /*desired_length != -1*/) {
+          size_t print_len = strlen((char *)output_ptr);
+          if ((long)print_len >= 0) {
+            if (false /*desired_length > 1*/) {
+              output_ptr[-2] = '~';
+            }
+            output_ptr[-1] = 0;
+          } else if ((long)print_len < -1) {
+            int print_len__ = (int)print_len;
+            if (argument_data_array[0].data[1] == '\0') {
+              byte pad = ' ';
+              if (argument_data_array[1].data[0] != -1) {
+                pad = argument_data_array[1].data[0];
+              }
+              kstrinsert((char *)output_ptr, pad, -1 - print_len__);
+            } else {
+              output_ptr = (byte *)strend((char *)output_ptr);
+              print_len__ = -1 - print_len__;
+              format_ptr_2__ = output_ptr;
+              if (print_len__ < 1) {
+                *output_ptr = 0;
+              } else {
+                do {
+                  output_ptr++;
+                  byte pad = argument_data_array[1].data[0];
+                  if (argument_data_array[1].data[0] == -1) {
+                    pad = ' ';
+                  }
+                  print_len = print_len + -1;
+                  *format_ptr_2__ = pad;
+                  format_ptr_2__ = output_ptr;
+                } while (print_len != 0);
+                *output_ptr = 0;
+              }
+            }
+          }
+        }
+        output_ptr = (byte *)strend((char *)output_ptr);
+
+        arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
+        arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
+        format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
+        goto LAB_while;
+      } break;
+
+      case 'B':
+      case 'b': {
+        char pad = '0';
+        if (false /*argument_data[1].data[0]*/) {
+          pad = -1;
+        }
+        s64 in = *arg_regs_at_arg_reg_idx;
+        kitoa((char *)output_ptr, in, 2, -1, pad, 0);
+        output_ptr = (byte *)strend((char *)output_ptr);
+        arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
+        arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
+        format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
+        goto LAB_while;
+      } break;
+
+      case 'C':
+      case 'c':
+        *output_ptr = *(byte *)arg_regs_at_arg_reg_idx;
+        output_ptr++;
+        arg_regs_at_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
+        format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
+        goto LAB_while;
+        break;
+
+      case 'D':
+      case 'd': {
+        char pad = ' ';
+        if (false /*argument_data[1].data[0] != -1*/) {
+          pad = -1;
+        }
+        char* in = *(char **)arg_regs_at_arg_reg_idx;
+        kitoa((char *)output_ptr, in, 10, -1, pad, 0);
+        output_ptr = (byte *)strend((char *)output_ptr);
+        arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
+        arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
+        format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
+        goto LAB_while;
+      } break;
+
+      case 'E':
+      case 'e': {
+        char* in = *(char **)arg_regs_at_arg_reg_idx;
+        s32 desired_len = -1;
+        char pad_char = -1;
+        if (pad_char == -1)
+          pad_char = ' ';
+        s32 precision = -1;
+        if (precision == -1)
+          precision = 4;
+        float value;
+        if ((int)in < 0) {
+          value = (float)((uint)in & 1 | (uint)in >> 1);
+          value = value + value;
+        }
+        else {
+          value = (float)(int)in; // FIXME: why is this in the other case?
+        }
+        ftoa((char *)output_ptr, (float)value / 300.0, desired_len, pad_char, precision, 0);
+        output_ptr = (byte *)strend((char *)output_ptr);
+        arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
+        arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
+        format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
+        goto LAB_while;
+      } break;
+
+      case 'F':
+      {
+        char* in = *(char **)arg_regs_at_arg_reg_idx;
+        ftoa((char *)output_ptr, (float)in, 0xc, ' ', 4, 0);
+        output_ptr = (byte *)strend((char *)output_ptr);
+        arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
+        arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
+        format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
+        goto LAB_while;
+      } break;
+
+      case 'G':
+      case 'g': {
+        *output_ptr = 0;
+        char* in = *(char **)arg_regs_at_arg_reg_idx;
+        strcat((char *)output_ptr, in);
+        output_ptr = (byte *)strend((char *)output_ptr);
+        arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
+        arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
+        format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
+        goto LAB_while;
+      } break;
+
+      case 'H':
+      case 'J':
+      case 'K':
+      case 'L':
+      case 'N':
+      case 'U':
+      case 'V':
+      case 'W':
+      case 'Y':
+      case 'Z':
+      case '[':
+      case ']':
+      case 'h':
+      case 'j':
+      case 'k':
+      case 'l':
+      case 'n':
+      case 'u':
+      case 'v':
+      case 'w':
+      case 'y':
+      case 'z':
+        while (format_ptr_2__ < format_ptr_plus1) {
+          *output_ptr = *format_ptr_2__;
+          format_ptr_2__++;
+          output_ptr++;
+        }
+        *output_ptr = *format_ptr_plus1;
+        output_ptr++;
+        format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
+        goto LAB_while;
+        break;
+
+      case 'I':
+      case 'i': {
+        *output_ptr = 0;
+        char* in = *(char **)arg_regs_at_arg_reg_idx;
+        if (true /*arg0 == -1*/) {
+          inspect_object((u32)in);
+        } else {
+          u32* sym = find_symbol_from_c(0xffff,(const_char *)&argument_data_array);
+          if (sym != (u32 *)0x0) {
+            Type* type = *(Type **)((int)sym + -1);
+            if (type != (Type *)0x0) {
+              call_method_of_type((u32)in, type, 3);
+            }
+          } else {
+            ;
+          }
+        }
+        output_ptr = (byte *)strend((char *)output_ptr);
+        arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
+        arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
+        format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
+        goto LAB_while;
+      } break;
+
+      case 'M':
+      case 'm': {
+        float in = (float)*(char **)arg_regs_at_arg_reg_idx;
+        s32 pad_length = -1;
+        char pad_char = -1;
+        if (pad_char == -1)
+          pad_char = ' ';
+        s32 precision = -1;
+        if (precision == -1)
+          precision = 4;
+        ftoa((char *)output_ptr, in * 0.0002441406, pad_length, pad, precision, 0);
+        output_ptr = (byte *)strend((char *)output_ptr);
+        arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
+        arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
+        format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
+        goto LAB_while;
+      } break;
+
+      case 'O':
+      case 'o': {
+        *output_ptr = '~';
+        output_ptr++;
+        kitoa((char *)output_ptr, *arg_regs_at_arg_reg_idx, 10, 0, ' ', 0);
+        output_ptr = (byte *)strend((char *)output_ptr);
+        *output_ptr = 'u';
+        output_ptr++;
+        arg_regs_at_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
+        format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
+        goto LAB_while;
+      } break;
+
+      case 'P':
+      case 'p': {
+        *output_ptr = 0;
+        char* in = *(char **)arg_regs_at_arg_reg_idx;
+        if (true) {
+          print_object((u32)in);
+        } else {
+          u32* sym = find_symbol_from_c(0xffff,(const_char *)&argument_data_array);
+          if (sym != (u32 *)0x0) {
+            Type* type = *(Type **)((int)sym + -1);
+            if (type != (Type *)0x0) {
+              call_method_of_type((u32)in, type, 2);
+            }
+          } else {
+            ;
+          }
+        }
+        output_ptr = (byte *)strend((char *)output_ptr);
+        arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
+        arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
+        format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
+        goto LAB_while;
+      } break;
+
+      case 'Q':
+      case 'q':
+        kqtoa_G();
+        output_ptr = (byte *)strend((char *)output_ptr);
+        arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx;
+        arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
+        format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
+        goto LAB_while;
+
+      case 'R':
+      case 'r': {
+        char* in = *(char **)arg_regs_at_arg_reg_idx;
+        s32 pad_length = -1;
+        char pad_char = ' ';
+        if (false)
+          pad_char = -1;
+        s32 precision = 4;
+        if (false)
+          precision = -1;
+        ftoa((char *)output_ptr, (float)in * 360.0 * 1.525879e-05, pad_length, pad_char, precision, 0);
+        output_ptr = (byte *)strend((char *)output_ptr);
+        arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
+        arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
+        format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
+        goto LAB_while;
+      } break;
+
+      case 'S':
+      case 's': {
+        *output_ptr = 0;
+        char* in = *(char **)arg_regs_at_arg_reg_idx;
+        // arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1; at bottom
+        // TODO: did some gotos in 's' case have double ++?
+
+        if ((((uint)in & 0x7) == 0x4) && (*(int *)(in + -4) == *(int *)(unaff_s7_lo + 0xf))) {
+          cprintf("%s", in + 4);
+        } else {
+          print_object((u32)in);
+        }
+
+        if (false /*desired_length != -1*/) {
+          size_t print_len = strlen((char *)output_ptr);
+          if (-1 < (long)print_len) {
+            if (false /*desired_length < print_len*/) {
+              output_ptr[-2] = '~';
+            }
+            output_ptr[-1] = 0;
+          } else if ((long)print_len < -1) {
+            iVar12 = (int)print_len;
+            if (argument_data_array[0].data[1] == '\0') {
+              byte pad = ' ';
+              if (argument_data_array[1].data[0] != -1) {
+                pad = argument_data_array[1].data[0];
+              }
+              kstrinsert((char *)output_ptr,pad,-1 - iVar12);
+            } else {
+              output_ptr = (byte *)strend((char *)output_ptr);
+              iVar12 = -1 - iVar12;
+              format_ptr_2__ = output_ptr;
+              if (iVar12 < 1) {
+                *output_ptr = 0;
+              }
+              else {
+                do {
+                  output_ptr++;
+                  byte pad = argument_data_array[1].data[0];
+                  if (argument_data_array[1].data[0] == -1) {
+                    pad = ' ';
+                  }
+                  iVar12 = iVar12 + -1;
+                  *format_ptr_2__ = pad;
+                  format_ptr_2__ = output_ptr;
+                } while (iVar12 != 0);
+                *output_ptr = 0;
+              }
+            }
+          }
+        }
+        output_ptr = (byte *)strend((char *)output_ptr);
+        arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
+        arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
+        format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
+        goto LAB_while;
+      } break;
+
+      case 'T': {
+        iVar12 = 1;
+        if (false) {
+          iVar12 = -1;
+        }
+        for (int i = 0; i < iVar12; i++) {
+          *output_ptr = 9;
+          output_ptr++;
+        }
+        if (0 < iVar12) {
+          format_ptr_2__ = format_ptr + 2;
+        } else {
+          format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
+        }
+        goto LAB_while;
+      } break;
+
+      case 'X':
+      case 'x': {
+        char pad = '0';
+        if (false /*argument_data[1].data[0] != -1*/) {
+          pad = -1;
+        }
+        s64 in = *arg_regs_at_arg_reg_idx;
+        kitoa((char *)output_ptr, in, 16, -1, pad, 0);
+        output_ptr = (byte *)strend((char *)output_ptr);
+        arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
+        arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
+        format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
+        goto LAB_while;
+      } break;
+
+      case 'f':
+      {
+        char* in = *(char **)arg_regs_at_arg_reg_idx;
+        s32 pad_length = -1;
+        char pad_char = -1;
+        if (pad_char == -1)
+          pad_char = ' ';
+        s32 precision = -1;
+        if (precision == -1)
+          precision = 4;
+        ftoa((char *)output_ptr, (float)in, pad_length, pad_char, precision, 0);
+        output_ptr = (byte *)strend((char *)output_ptr);
+        arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
+        arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
+        format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
+        goto LAB_while;
+      } break;
+
+      case 't':
+        int stop = 8;
+        if (false) {
+          stop = -1;
+        }
+        if (0 < stop) {
+          for (int i = 0; i < stop; i++) {
+            *output_ptr = ' ';
+            output_ptr++;
+          }
+          format_ptr_2__ = format_ptr + 2;
+          goto LAB_while;
+        }
+        format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
+        goto LAB_while;
+        break;
+
+      case '~':
+        *output_ptr = '~';
+        output_ptr++;
+        format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
+        goto LAB_while;
+        break;
+      }
+
     } else {
       *output_ptr = *format_ptr_2__;
       output_ptr++;
@@ -144,6 +583,7 @@ LAB_while:
       }
     }
   }
+
   *output_ptr = 0;
   if (uVar6 == (long)(unaff_s7_lo + 4)) {
     if (DiskBoot == 0) {
@@ -181,443 +621,4 @@ LAB_while:
   PrintPending = (char *)__src;
   *__src = 0;
   return 0;
-LAB_00267c50:
-  char* format_ptr_plus1 = (char *)(format_ptr + 1);
-  if (false) {
-    MsgErr("format: unknown code 0x%02x\n",*format_ptr_plus1);
-    format_ptr_2__ = format_ptr + 2;
-    goto LAB_while;
-  }
-  switch (*format_ptr_plus1) {
-  case '%':
-    *output_ptr = '\n';
-    output_ptr++;
-    if (((indentation != 0) && (format_ptr[2] != 0)) && (indentation != 0)) {
-      for (int i = 0; i < (int)indentation; i++) {
-        *output_ptr = ' ';
-        output_ptr++;
-      }
-      format_ptr_2__ = format_ptr + 2;
-      goto LAB_while;
-    }
-    format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
-    goto LAB_while;
-    break;
-
-  default:
-    MsgErr("format: unknown code 0x%02x\n", *format_ptr_plus1);
-    format_ptr_2__ = format_ptr + 2;
-    goto LAB_while;
-    break;
-
-  case 'A':
-  case 'a':
-  {
-    *output_ptr = 0;
-    char* in = *(char **)arg_regs_at_arg_reg_idx;
-    print_object((u32)in);
-    if (false /*desired_length != -1*/) {
-      size_t print_len = strlen((char *)output_ptr);
-      if ((long)print_len >= 0) {
-        if (false /*desired_length > 1*/) {
-          output_ptr[-2] = '~';
-        }
-        output_ptr[-1] = 0;
-      } else if ((long)print_len < -1) {
-        int print_len__ = (int)print_len;
-        if (argument_data_array[0].data[1] == '\0') {
-          byte pad = ' ';
-          if (argument_data_array[1].data[0] != -1) {
-            pad = argument_data_array[1].data[0];
-          }
-          kstrinsert((char *)output_ptr, pad, -1 - print_len__);
-        } else {
-          output_ptr = (byte *)strend((char *)output_ptr);
-          print_len__ = -1 - print_len__;
-          format_ptr_2__ = output_ptr;
-          if (print_len__ < 1) {
-            *output_ptr = 0;
-          } else {
-            do {
-              output_ptr++;
-              byte pad = argument_data_array[1].data[0];
-              if (argument_data_array[1].data[0] == -1) {
-                pad = ' ';
-              }
-              print_len = print_len + -1;
-              *format_ptr_2__ = pad;
-              format_ptr_2__ = output_ptr;
-            } while (print_len != 0);
-            *output_ptr = 0;
-          }
-        }
-      }
-    }
-    output_ptr = (byte *)strend((char *)output_ptr);
-
-    arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
-    arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
-    format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
-    goto LAB_while;
-  } break;
-
-  case 'B':
-  case 'b': {
-    char pad = '0';
-    if (false /*argument_data[1].data[0]*/) {
-      pad = -1;
-    }
-    s64 in = *arg_regs_at_arg_reg_idx;
-    kitoa((char *)output_ptr, in, 2, -1, pad, 0);
-    output_ptr = (byte *)strend((char *)output_ptr);
-    arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
-    arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
-    format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
-    goto LAB_while;
-  } break;
-
-  case 'C':
-  case 'c':
-    *output_ptr = *(byte *)arg_regs_at_arg_reg_idx;
-    output_ptr++;
-    arg_regs_at_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
-    format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
-    goto LAB_while;
-    break;
-
-  case 'D':
-  case 'd': {
-    char pad = ' ';
-    if (false /*argument_data[1].data[0] != -1*/) {
-      pad = -1;
-    }
-    char* in = *(char **)arg_regs_at_arg_reg_idx;
-    kitoa((char *)output_ptr, in, 10, -1, pad, 0);
-    output_ptr = (byte *)strend((char *)output_ptr);
-    arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
-    arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
-    format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
-    goto LAB_while;
-  } break;
-
-  case 'E':
-  case 'e': {
-    char* in = *(char **)arg_regs_at_arg_reg_idx;
-    s32 desired_len = -1;
-    char pad_char = -1;
-    if (pad_char == -1)
-      pad_char = ' ';
-    s32 precision = -1;
-    if (precision == -1)
-      precision = 4;
-    float value;
-    if ((int)in < 0) {
-      value = (float)((uint)in & 1 | (uint)in >> 1);
-      value = value + value;
-    }
-    else {
-      value = (float)(int)in; // FIXME: why is this in the other case?
-    }
-    ftoa((char *)output_ptr, (float)value / 300.0, desired_len, pad_char, precision, 0);
-    output_ptr = (byte *)strend((char *)output_ptr);
-    arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
-    arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
-    format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
-    goto LAB_while;
-  } break;
-
-  case 'F':
-  {
-    char* in = *(char **)arg_regs_at_arg_reg_idx;
-    ftoa((char *)output_ptr, (float)in, 0xc, ' ', 4, 0);
-    output_ptr = (byte *)strend((char *)output_ptr);
-    arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
-    arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
-    format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
-    goto LAB_while;
-  } break;
-
-  case 'G':
-  case 'g': {
-    *output_ptr = 0;
-    char* in = *(char **)arg_regs_at_arg_reg_idx;
-    strcat((char *)output_ptr, in);
-    output_ptr = (byte *)strend((char *)output_ptr);
-    arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
-    arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
-    format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
-    goto LAB_while;
-  } break;
-
-  case 'H':
-  case 'J':
-  case 'K':
-  case 'L':
-  case 'N':
-  case 'U':
-  case 'V':
-  case 'W':
-  case 'Y':
-  case 'Z':
-  case '[':
-  case ']':
-  case 'h':
-  case 'j':
-  case 'k':
-  case 'l':
-  case 'n':
-  case 'u':
-  case 'v':
-  case 'w':
-  case 'y':
-  case 'z':
-    while (format_ptr_2__ < format_ptr_plus1) {
-      *output_ptr = *format_ptr_2__;
-      format_ptr_2__++;
-      output_ptr++;
-    }
-    *output_ptr = *format_ptr_plus1;
-    output_ptr++;
-    format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
-    goto LAB_while;
-    break;
-
-  case 'I':
-  case 'i': {
-    *output_ptr = 0;
-    char* in = *(char **)arg_regs_at_arg_reg_idx;
-    if (true /*arg0 == -1*/) {
-      inspect_object((u32)in);
-    } else {
-      u32* sym = find_symbol_from_c(0xffff,(const_char *)&argument_data_array);
-      if (sym != (u32 *)0x0) {
-        Type* type = *(Type **)((int)sym + -1);
-        if (type != (Type *)0x0) {
-          call_method_of_type((u32)in, type, 3);
-        }
-      } else {
-        ;
-      }
-    }
-    output_ptr = (byte *)strend((char *)output_ptr);
-    arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
-    arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
-    format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
-    goto LAB_while;
-  } break;
-
-  case 'M':
-  case 'm': {
-    float in = (float)*(char **)arg_regs_at_arg_reg_idx;
-    s32 pad_length = -1;
-    char pad_char = -1;
-    if (pad_char == -1)
-      pad_char = ' ';
-    s32 precision = -1;
-    if (precision == -1)
-      precision = 4;
-    ftoa((char *)output_ptr, in * 0.0002441406, pad_length, pad, precision, 0);
-    output_ptr = (byte *)strend((char *)output_ptr);
-    arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
-    arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
-    format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
-    goto LAB_while;
-  } break;
-
-  case 'O':
-  case 'o': {
-    *output_ptr = '~';
-    output_ptr++;
-    kitoa((char *)output_ptr, *arg_regs_at_arg_reg_idx, 10, 0, ' ', 0);
-    output_ptr = (byte *)strend((char *)output_ptr);
-    *output_ptr = 'u';
-    output_ptr++;
-    arg_regs_at_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
-    format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
-    goto LAB_while;
-  } break;
-
-  case 'P':
-  case 'p': {
-    *output_ptr = 0;
-    char* in = *(char **)arg_regs_at_arg_reg_idx;
-    if (true) {
-      print_object((u32)in);
-    } else {
-      u32* sym = find_symbol_from_c(0xffff,(const_char *)&argument_data_array);
-      if (sym != (u32 *)0x0) {
-        Type* type = *(Type **)((int)sym + -1);
-        if (type != (Type *)0x0) {
-          call_method_of_type((u32)in, type, 2);
-        }
-      } else {
-        ;
-      }
-    }
-    output_ptr = (byte *)strend((char *)output_ptr);
-    arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
-    arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
-    format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
-    goto LAB_while;
-  } break;
-
-  case 'Q':
-  case 'q':
-    kqtoa_G();
-    output_ptr = (byte *)strend((char *)output_ptr);
-    arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx;
-    arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
-    format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
-    goto LAB_while;
-
-  case 'R':
-  case 'r': {
-    char* in = *(char **)arg_regs_at_arg_reg_idx;
-    s32 pad_length = -1;
-    char pad_char = ' ';
-    if (false)
-      pad_char = -1;
-    s32 precision = 4;
-    if (false)
-      precision = -1;
-    ftoa((char *)output_ptr, (float)in * 360.0 * 1.525879e-05, pad_length, pad_char, precision, 0);
-    output_ptr = (byte *)strend((char *)output_ptr);
-    arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
-    arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
-    format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
-    goto LAB_while;
-  } break;
-
-  case 'S':
-  case 's': {
-    *output_ptr = 0;
-    char* in = *(char **)arg_regs_at_arg_reg_idx;
-    // arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1; at bottom
-    // TODO: did some gotos in 's' case have double ++?
-
-    if ((((uint)in & 0x7) == 0x4) && (*(int *)(in + -4) == *(int *)(unaff_s7_lo + 0xf))) {
-      cprintf("%s", in + 4);
-    } else {
-      print_object((u32)in);
-    }
-
-    if (false /*desired_length != -1*/) {
-      size_t print_len = strlen((char *)output_ptr);
-      if (-1 < (long)print_len) {
-        if (false /*desired_length < print_len*/) {
-          output_ptr[-2] = '~';
-        }
-        output_ptr[-1] = 0;
-      } else if ((long)print_len < -1) {
-        iVar12 = (int)print_len;
-        if (argument_data_array[0].data[1] == '\0') {
-          byte pad = ' ';
-          if (argument_data_array[1].data[0] != -1) {
-            pad = argument_data_array[1].data[0];
-          }
-          kstrinsert((char *)output_ptr,pad,-1 - iVar12);
-        } else {
-          output_ptr = (byte *)strend((char *)output_ptr);
-          iVar12 = -1 - iVar12;
-          format_ptr_2__ = output_ptr;
-          if (iVar12 < 1) {
-            *output_ptr = 0;
-          }
-          else {
-            do {
-              output_ptr++;
-              byte pad = argument_data_array[1].data[0];
-              if (argument_data_array[1].data[0] == -1) {
-                pad = ' ';
-              }
-              iVar12 = iVar12 + -1;
-              *format_ptr_2__ = pad;
-              format_ptr_2__ = output_ptr;
-            } while (iVar12 != 0);
-            *output_ptr = 0;
-          }
-        }
-      }
-    }
-    output_ptr = (byte *)strend((char *)output_ptr);
-    arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
-    arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
-    format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
-    goto LAB_while;
-  } break;
-
-  case 'T': {
-    iVar12 = 1;
-    if (false) {
-      iVar12 = -1;
-    }
-    for (int i = 0; i < iVar12; i++) {
-      *output_ptr = 9;
-      output_ptr++;
-    }
-    if (0 < iVar12) {
-      format_ptr_2__ = format_ptr + 2;
-    } else {
-      format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
-    }
-    goto LAB_while;
-  } break;
-
-  case 'X':
-  case 'x': {
-    char pad = '0';
-    if (false /*argument_data[1].data[0] != -1*/) {
-      pad = -1;
-    }
-    s64 in = *arg_regs_at_arg_reg_idx;
-    kitoa((char *)output_ptr, in, 16, -1, pad, 0);
-    output_ptr = (byte *)strend((char *)output_ptr);
-    arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
-    arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
-    format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
-    goto LAB_while;
-  } break;
-
-  case 'f':
-  {
-    char* in = *(char **)arg_regs_at_arg_reg_idx;
-    s32 pad_length = -1;
-    char pad_char = -1;
-    if (pad_char == -1)
-      pad_char = ' ';
-    s32 precision = -1;
-    if (precision == -1)
-      precision = 4;
-    ftoa((char *)output_ptr, (float)in, pad_length, pad_char, precision, 0);
-    output_ptr = (byte *)strend((char *)output_ptr);
-    arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
-    arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
-    format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
-    goto LAB_while;
-  } break;
-
-  case 't':
-    int stop = 8;
-    if (false) {
-      stop = -1;
-    }
-    if (0 < stop) {
-      for (int i = 0; i < stop; i++) {
-        *output_ptr = ' ';
-        output_ptr++;
-      }
-      format_ptr_2__ = format_ptr + 2;
-      goto LAB_while;
-    }
-    format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
-    goto LAB_while;
-    break;
-
-  case '~':
-    *output_ptr = '~';
-    output_ptr++;
-    format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
-    goto LAB_while;
-    break;
-  }
 }
