@@ -115,36 +115,33 @@ LAB_while:
           continue;
         }
 
-        if (arg_char < '-' || arg_char != '`' && arg_char >= '-' && arg_char != ',') {  // else
-          if (*argument_data_at_arg_idx == 0xff) {
-            *argument_data_at_arg_idx = 0;
-          }
-          format_ptr++;
-          *argument_data_at_arg_idx = (format_ptr[1] + *argument_data_at_arg_idx * 10) - '0';
-          continue;
+        if (*argument_data_at_arg_idx == 0xff) {
+          *argument_data_at_arg_idx = 0;
         }
+        *argument_data_at_arg_idx = *argument_data_at_arg_idx * 10 + format_ptr[1] - '0';
+        format_ptr++;
       }
-    }
-    if ((int)(char)format_ptr[1] != '-' && (int)(char)format_ptr[1] != '+') {
-      arg_char = (uint)format_ptr[1] << 0x18;
-    }
-    goto LAB_00267c50;
-
-    *output_ptr = *format_ptr_2__;
-    output_ptr++;
-    pbVar9 = (char *)format_ptr_2__;
-    if (2 < *format_ptr_2__ - 1) {
-      format_ptr_2__ = (byte *)pbVar9 + 1;
-      goto LAB_while;
-    }
-    format_ptr++;
-    format_ptr_2__++;
-    pbVar9 = (char *)format_ptr_2__;
-    if (*format_ptr != 0) {
-      *output_ptr = *pbVar9;
+      if ((int)(char)format_ptr[1] != '-' && (int)(char)format_ptr[1] != '+') {
+        arg_char = (uint)format_ptr[1] << 0x18;
+      }
+      goto LAB_00267c50;
+    } else {
+      *output_ptr = *format_ptr_2__;
       output_ptr++;
-      format_ptr_2__ = (byte *)pbVar9 + 1;
-      goto LAB_while;
+      pbVar9 = (char *)format_ptr_2__;
+      if (2 < *format_ptr_2__ - 1) {
+        format_ptr_2__ = (byte *)pbVar9 + 1;
+        goto LAB_while;
+      }
+      format_ptr++;
+      format_ptr_2__++;
+      pbVar9 = (char *)format_ptr_2__;
+      if (*format_ptr != 0) {
+        *output_ptr = *pbVar9;
+        output_ptr++;
+        format_ptr_2__ = (byte *)pbVar9 + 1;
+        goto LAB_while;
+      }
     }
   }
   *output_ptr = 0;
