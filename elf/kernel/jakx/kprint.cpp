@@ -62,9 +62,9 @@ s32 format_impl_jak3(uint64_t* args) {
     }
   }
   s64* arg_regs_at_arg_reg_idx = local_30;
-LAB_while:
   while (*format_ptr_2__ != 0) {
     if (*format_ptr_2__ == '~') {
+      byte* arg_start = format_ptr_2__;
       argument_data_array[0].data[1] = '\0';
       for (auto& x : argument_data_array) {
         x.data[0] = -1; //.reset();
@@ -124,12 +124,7 @@ LAB_while:
       if ((int)(char)format_ptr[1] != '-' && (int)(char)format_ptr[1] != '+') {
         arg_char = (uint)format_ptr[1] << 0x18;
       }
-      
-      if (false) {
-        MsgErr("format: unknown code 0x%02x\n", format_ptr[1]);
-        format_ptr_2__ = format_ptr + 2;
-        goto LAB_while;
-      }
+
       switch (format_ptr[1]) {
       case '%':
         *output_ptr = '\n';
@@ -139,21 +134,11 @@ LAB_while:
             *output_ptr = ' ';
             output_ptr++;
           }
-          format_ptr_2__ = format_ptr + 2;
-          goto LAB_while;
-          // must be the same as:
-          // format_ptr_2__ = (byte *)format_ptr[1] + 1;
-          // goto LAB_while;
         }
         break;
 
       default:
         MsgErr("format: unknown code 0x%02x\n", format_ptr[1]);
-        format_ptr_2__ = format_ptr + 2;
-        goto LAB_while;
-        // must be the same as:
-        // format_ptr_2__ = (byte *)format_ptr_plus1 + 1;
-        // goto LAB_while;
         break;
 
       case 'A':
@@ -180,7 +165,7 @@ LAB_while:
             } else {
               output_ptr = (byte *)strend((char *)output_ptr);
               print_len__ = -1 - print_len__;
-              format_ptr_2__ = output_ptr;
+              byte* output_ptr_temp = output_ptr;
               if (print_len__ < 1) {
                 *output_ptr = 0;
               } else {
@@ -191,8 +176,8 @@ LAB_while:
                     pad = ' ';
                   }
                   print_len = print_len + -1;
-                  *format_ptr_2__ = pad;
-                  format_ptr_2__ = output_ptr;
+                  *output_ptr_temp = pad;
+                  output_ptr_temp = output_ptr;
                 } while (print_len != 0);
                 *output_ptr = 0;
               }
@@ -201,8 +186,7 @@ LAB_while:
         }
         output_ptr = (byte *)strend((char *)output_ptr);
 
-        arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
-        arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
+        arg_regs_at_arg_reg_idx++;
       } break;
 
       case 'B':
@@ -214,15 +198,14 @@ LAB_while:
         s64 in = *arg_regs_at_arg_reg_idx;
         kitoa((char *)output_ptr, in, 2, -1, pad, 0);
         output_ptr = (byte *)strend((char *)output_ptr);
-        arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
-        arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
+        arg_regs_at_arg_reg_idx++;
       } break;
 
       case 'C':
       case 'c':
         *output_ptr = *(byte *)arg_regs_at_arg_reg_idx;
         output_ptr++;
-        arg_regs_at_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
+        arg_regs_at_arg_reg_idx++;
         break;
 
       case 'D':
@@ -234,8 +217,7 @@ LAB_while:
         char* in = *(char **)arg_regs_at_arg_reg_idx;
         kitoa((char *)output_ptr, in, 10, -1, pad, 0);
         output_ptr = (byte *)strend((char *)output_ptr);
-        arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
-        arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
+        arg_regs_at_arg_reg_idx++;
       } break;
 
       case 'E':
@@ -258,8 +240,7 @@ LAB_while:
         }
         ftoa((char *)output_ptr, (float)value / 300.0, desired_len, pad_char, precision, 0);
         output_ptr = (byte *)strend((char *)output_ptr);
-        arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
-        arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
+        arg_regs_at_arg_reg_idx++;
       } break;
 
       case 'F':
@@ -267,8 +248,7 @@ LAB_while:
         char* in = *(char **)arg_regs_at_arg_reg_idx;
         ftoa((char *)output_ptr, (float)in, 0xc, ' ', 4, 0);
         output_ptr = (byte *)strend((char *)output_ptr);
-        arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
-        arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
+        arg_regs_at_arg_reg_idx++;
       } break;
 
       case 'G':
@@ -277,8 +257,7 @@ LAB_while:
         char* in = *(char **)arg_regs_at_arg_reg_idx;
         strcat((char *)output_ptr, in);
         output_ptr = (byte *)strend((char *)output_ptr);
-        arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
-        arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
+        arg_regs_at_arg_reg_idx++;
       } break;
 
       case 'H':
@@ -303,9 +282,9 @@ LAB_while:
       case 'w':
       case 'y':
       case 'z':
-        while (format_ptr_2__ < (char *)(format_ptr + 1)) {
-          *output_ptr = *format_ptr_2__;
-          format_ptr_2__++;
+        while (arg_start < (char *)(format_ptr + 1)) {
+          *output_ptr = *arg_start;
+          arg_start++;
           output_ptr++;
         }
         *output_ptr = (byte)format_ptr[1];
@@ -330,8 +309,7 @@ LAB_while:
           }
         }
         output_ptr = (byte *)strend((char *)output_ptr);
-        arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
-        arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
+        arg_regs_at_arg_reg_idx++;
       } break;
 
       case 'M':
@@ -346,8 +324,7 @@ LAB_while:
           precision = 4;
         ftoa((char *)output_ptr, in * 0.0002441406, pad_length, pad, precision, 0);
         output_ptr = (byte *)strend((char *)output_ptr);
-        arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
-        arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
+        arg_regs_at_arg_reg_idx++;
       } break;
 
       case 'O':
@@ -358,7 +335,7 @@ LAB_while:
         output_ptr = (byte *)strend((char *)output_ptr);
         *output_ptr = 'u';
         output_ptr++;
-        arg_regs_at_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
+        arg_regs_at_arg_reg_idx++;
       } break;
 
       case 'P':
@@ -379,8 +356,7 @@ LAB_while:
           }
         }
         output_ptr = (byte *)strend((char *)output_ptr);
-        arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
-        arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
+        arg_regs_at_arg_reg_idx++;
       } break;
 
       case 'Q':
@@ -402,8 +378,7 @@ LAB_while:
           precision = -1;
         ftoa((char *)output_ptr, (float)in * 360.0 * 1.525879e-05, pad_length, pad_char, precision, 0);
         output_ptr = (byte *)strend((char *)output_ptr);
-        arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
-        arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
+        arg_regs_at_arg_reg_idx++;
       } break;
 
       case 'S':
@@ -437,7 +412,7 @@ LAB_while:
             } else {
               output_ptr = (byte *)strend((char *)output_ptr);
               iVar12 = -1 - iVar12;
-              format_ptr_2__ = output_ptr;
+              byte* output_ptr_temp = output_ptr;
               if (iVar12 < 1) {
                 *output_ptr = 0;
               }
@@ -449,8 +424,8 @@ LAB_while:
                     pad = ' ';
                   }
                   iVar12 = iVar12 + -1;
-                  *format_ptr_2__ = pad;
-                  format_ptr_2__ = output_ptr;
+                  *output_ptr_temp = pad;
+                  output_ptr_temp = output_ptr;
                 } while (iVar12 != 0);
                 *output_ptr = 0;
               }
@@ -458,8 +433,7 @@ LAB_while:
           }
         }
         output_ptr = (byte *)strend((char *)output_ptr);
-        arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
-        arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
+        arg_regs_at_arg_reg_idx++;
       } break;
 
       case 'T': {
@@ -471,12 +445,6 @@ LAB_while:
           *output_ptr = 9;
           output_ptr++;
         }
-        if (0 < iVar12) {
-          format_ptr_2__ = format_ptr + 2;
-        } else {
-          format_ptr_2__ = (byte *)(char *)(format_ptr + 1) + 1;
-        }
-        goto LAB_while;
       } break;
 
       case 'X':
@@ -488,8 +456,7 @@ LAB_while:
         s64 in = *arg_regs_at_arg_reg_idx;
         kitoa((char *)output_ptr, in, 16, -1, pad, 0);
         output_ptr = (byte *)strend((char *)output_ptr);
-        arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
-        arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
+        arg_regs_at_arg_reg_idx++;
       } break;
 
       case 'f':
@@ -504,8 +471,7 @@ LAB_while:
           precision = 4;
         ftoa((char *)output_ptr, (float)in, pad_length, pad_char, precision, 0);
         output_ptr = (byte *)strend((char *)output_ptr);
-        arg_regs_at_new_arg_reg_idx = arg_regs_at_arg_reg_idx + 1;
-        arg_regs_at_arg_reg_idx = arg_regs_at_new_arg_reg_idx;
+        arg_regs_at_arg_reg_idx++;
       } break;
 
       case 't':
@@ -518,8 +484,6 @@ LAB_while:
             *output_ptr = ' ';
             output_ptr++;
           }
-          format_ptr_2__ = format_ptr + 2;
-          goto LAB_while;
         }
         break;
 
@@ -528,14 +492,14 @@ LAB_while:
         output_ptr++;
         break;
       }
-      format_ptr_2__ = (byte *)(char *)(format_ptr + 1) + 1;
+      format_ptr_2__ = (byte *)format_ptr + 2;
     } else {
       *output_ptr = *format_ptr_2__;
       output_ptr++;
       pbVar9 = (char *)format_ptr_2__;
       if (2 < *format_ptr_2__ - 1) {
         format_ptr_2__ = (byte *)pbVar9 + 1;
-        goto LAB_while;
+        continue;
       }
       format_ptr++;
       format_ptr_2__++;
@@ -544,7 +508,7 @@ LAB_while:
         *output_ptr = *pbVar9;
         output_ptr++;
         format_ptr_2__ = (byte *)pbVar9 + 1;
-        goto LAB_while;
+        continue;
       }
     }
   }
