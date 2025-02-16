@@ -28,85 +28,89 @@ void jak3_begin(link_control* this, uint8_t* object_file,
                 int32_t size,
                 kheapinfo* heap,
                 uint32_t flags) {
-  if (heap == &kglobalheapinfo) {
-    kmemopen_from_c(&kglobalheapinfo, name);
-    this->m_on_global_heap = true;
-  }
-  else {
-    this->m_on_global_heap = false;
-  }
-  this->m_object_data = object_file;
-  strcpy(this->m_object_name, name);
-  this->m_object_size = size;
-  LinkHeaderV5 *l_hdr = (LinkHeaderV5 *)this->m_object_data;
-  this->m_flags = flags;
-  uint16_t version = l_hdr->core.version;
-  this->m_heap_top = heap->top;
-  // TODO: where is unk_init1?
-  this->m_busy = 1;
-  this->m_heap = heap;
-  this->m_entry = (uint8_t *)0x0;
-  this->m_keep_debug = 0;
-  this->m_link_hdr = &l_hdr->core;
-  this->m_code_size = 0;
-  this->m_ptr2 = (undefined *)l_hdr;
-  this->m_state = 0;
-  this->m_segment_process = 0;
-  this->m_moved_link_block = false;
-  if (version == 4) {
-    uint32_t size___ = l_hdr->core.length_to_get_to_link;
-    this->m_object_data = (uint8_t *)&l_hdr->core.link_length;
-    this->m_code_size = size___;
-    this->m_link_hdr = (LinkHeaderV5Core *)(l_hdr->core.name + (size___ - 1));
+  if (false /*is_opengoal_object()*/) {
+    // this if clause/statement is not present in the code
   } else {
-    uint32_t size___ = l_hdr->core.length_to_get_to_code;
-    this->m_object_data = (uint8_t *)(l_hdr->core.name + (size___ - 0x15));
-    size___ = size - size___;
-    if (version == 5) {
-      size___ = (size - l_hdr->core.link_length) - 0x50;
+    if (heap == &kglobalheapinfo) {
+      kmemopen_from_c(&kglobalheapinfo, name);
+      this->m_on_global_heap = true;
     } else {
-      ;
+      this->m_on_global_heap = false;
     }
-    this->m_code_size = size___;
-    if ((int)this->m_link_hdr < (int)m_heap->base || (int)this->m_link_hdr >= (int)m_heap->top) {
-      if ((int)m_heap->base <= (int)this->m_object_data &&
-          (int)this->m_object_data < (int)m_heap->top &&
-          (int)this->m_object_data < (int)m_heap->current) {
-        m_heap->current = this->m_object_data;
-      }
+    this->m_object_data = object_file;
+    strcpy(this->m_object_name, name);
+    this->m_object_size = size;
+    LinkHeaderV5* l_hdr = (LinkHeaderV5*)this->m_object_data;
+    this->m_flags = flags;
+    u16 version = l_hdr->core.version;
+
+    this->m_heap_top = heap->top;
+    // TODO: where is unk_init1?
+    this->m_busy = (int)true;
+    this->m_heap = heap;
+    this->m_entry = nullptr;
+    this->m_keep_debug = (int)false;
+    this->m_link_hdr = &l_hdr->core;
+    this->m_code_size = 0;
+    this->m_ptr2 = (undefined*)l_hdr;
+    this->m_state = 0;
+    this->m_segment_process = 0;
+    this->m_moved_link_block = false;
+    if (version == 4) {
+      uint32_t size___ = l_hdr->core.length_to_get_to_link;
+      this->m_object_data = (uint8_t *)&l_hdr->core.link_length;
+      this->m_code_size = size___;
+      this->m_link_hdr = (LinkHeaderV5Core *)(l_hdr->core.name + (size___ - 1));
     } else {
-      this->m_moved_link_block = true;
-      LinkHeaderV5* new_link_block_mem;
-      char* old_link_block_G;
-
-      if (m_link_hdr->version == 5) {
-        old_link_block_G = (char *)(object_file + m_link_hdr->length_to_get_to_link);
-
-        new_link_block_mem = (LinkHeaderV5 *)kmalloc(this->m_heap, m_link_hdr->link_length + 0x50,
-                                                      0x2000, "link-block");
-
-        m_link_hdr->length_to_get_to_link = 0x50;
-
-        memcpy(new_link_block_mem_temp, object_file, 0x50);
-        ultimate_memcpy_G(new_link_block_mem + 1, old_link_block_G, m_link_hdr->link_length);
-        memcpy(new_link_block_mem, new_link_block_mem_temp, 0x50);
+      uint32_t size___ = l_hdr->core.length_to_get_to_code;
+      this->m_object_data = (uint8_t *)(l_hdr->core.name + (size___ - 0x15));
+      size___ = size - size___;
+      if (version == 5) {
+        size___ = (size - l_hdr->core.link_length) - 0x50;
       } else {
-        new_link_block_mem = (LinkHeaderV5 *)kmalloc(this->m_heap, m_link_hdr->length_to_get_to_code,
-                                                      0x2000, "link-block");
-        old_link_block_G = this->m_link_hdr[-1].name + 0x37;
-        ultimate_memcpy_G(new_link_block_mem, old_link_block_G,
-                          this->m_link_hdr->length_to_get_to_code);
+        ;
       }
+      this->m_code_size = size___;
+      if ((int)this->m_link_hdr < (int)m_heap->base || (int)this->m_link_hdr >= (int)m_heap->top) {
+        if ((int)m_heap->base <= (int)this->m_object_data &&
+            (int)this->m_object_data < (int)m_heap->top &&
+            (int)this->m_object_data < (int)m_heap->current) {
+          m_heap->current = this->m_object_data;
+        }
+      } else {
+        this->m_moved_link_block = true;
+        LinkHeaderV5* new_link_block_mem;
+        char* old_link_block_G;
 
-      this->m_link_hdr = &new_link_block_mem->core;
+        if (m_link_hdr->version == 5) {
+          old_link_block_G = (char *)(object_file + m_link_hdr->length_to_get_to_link);
 
-      if ((int)old_link_block_G < (int)this->m_heap->current) {
-        this->m_heap->current = (u8 *)old_link_block_G;
+          new_link_block_mem = (LinkHeaderV5 *)kmalloc(this->m_heap, m_link_hdr->link_length + 0x50,
+                                                        0x2000, "link-block");
+
+          m_link_hdr->length_to_get_to_link = 0x50;
+
+          memcpy(new_link_block_mem_temp, object_file, 0x50);
+          ultimate_memcpy_G(new_link_block_mem + 1, old_link_block_G, m_link_hdr->link_length);
+          memcpy(new_link_block_mem, new_link_block_mem_temp, 0x50);
+        } else {
+          new_link_block_mem = (LinkHeaderV5 *)kmalloc(this->m_heap, m_link_hdr->length_to_get_to_code,
+                                                        0x2000, "link-block");
+          old_link_block_G = this->m_link_hdr[-1].name + 0x37;
+          ultimate_memcpy_G(new_link_block_mem, old_link_block_G,
+                            this->m_link_hdr->length_to_get_to_code);
+        }
+
+        this->m_link_hdr = &new_link_block_mem->core;
+
+        if ((int)old_link_block_G < (int)this->m_heap->current) {
+          this->m_heap->current = (u8 *)old_link_block_G;
+        }
       }
     }
-  }
-  if ((this->m_flags & 0x10) != 0 && MasterDebug != 0 && DiskBoot == 0) {
-    this->m_keep_debug = 1;
+    if ((this->m_flags & 0x10) != 0 && MasterDebug != 0 && DiskBoot == 0) {
+      this->m_keep_debug = (int)true;
+    }
   }
 }
 
