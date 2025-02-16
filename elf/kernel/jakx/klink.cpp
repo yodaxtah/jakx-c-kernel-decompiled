@@ -557,7 +557,7 @@ uint32_t jak3_work_opengoal(link_control* this) {
         if (*this->m_reloc_ptr__ != '\0') {
           while (true) {
 
-            byte count = *this->m_reloc_ptr__;
+            u8 count = *this->m_reloc_ptr__;
             
             if (this->m_table_toggle__ == 0) {
               this->m_loc_ptr__ +=
@@ -592,8 +592,8 @@ uint32_t jak3_work_opengoal(link_control* this) {
             }
             
             this->m_reloc_ptr__++;
-
             this->m_table_toggle__ = this->m_table_toggle__ ^ 1;
+
             relocCounter--;
             if (this->m_reloc_ptr__[1] == '\0') {
               break;
@@ -614,7 +614,6 @@ uint32_t jak3_work_opengoal(link_control* this) {
       
       if (m_state == 2) {
         byte* sub_link_ptr = this->m_reloc_ptr__;
-        uint uVar12 = *(uint *)(this->m_link_block_ptr + this->m_state * 0x10 + -4);
         while (true) {
           byte reloc = *sub_link_ptr;
           if (*this->m_reloc_ptr__ == 0) {
@@ -629,31 +628,26 @@ uint32_t jak3_work_opengoal(link_control* this) {
             goalObj = (Type *)intern_from_c((int)sVar4, (uint)reloc, sname);
           }
           else {
-            u64 methods;
             int n_methods_base = (uint)reloc & 0x3f;
             int n_methods = n_methods_base * 4;
-            if (((uint)reloc & 0x3f) == 0x3f) {
+            if (n_methods_base == 0x3f) {
               reloc = sub_link_ptr[1];
               this->m_reloc_ptr__ = sub_link_ptr + 2;
-              methods = (long)(int)((uint)reloc * 4 + 3);
+              n_methods = (long)(int)((uint)reloc * 4 + 3);
             } else if ((long)n_methods != 0) {
-              methods = (long)(n_methods + 3);
-            } else {
-              methods = (long)n_methods;
+              n_methods += 3;
             }
             this->m_reloc_ptr__ +=
                 2;
             char* name = (char*)this->m_reloc_ptr__;
-            goalObj = intern_type_from_c((int)this->m_reloc_ptr__, (uint)reloc, name, methods);
+            goalObj = intern_type_from_c((int)this->m_reloc_ptr__, (uint)reloc, name, n_methods);
           }
           this->m_reloc_ptr__ += (int)strlen((char *)this->m_reloc_ptr__) + 1;
-          code* symlink_function;
-          if ((uVar12 & 1) == 0) {
-            symlink_function = (code *)symlink3_G;
-          }
-          else {
-            symlink_function = (code *)symlink2_G;
-          }
+          uint symlink_version = (uint)*(this->m_link_block_ptr + this->m_state * 0x10 - 4);
+          code* symlink_function = (((symlink_version) & 1) == 0)
+            ? (code *)symlink3_G
+            : (code *)symlink2_G
+            ;
           this->m_reloc_ptr__ = (uint8_t *)(*symlink_function)(this->m_object_data, goalObj);
           
           int currentCycle = (*(code *)kernel.read_clock_G)();
