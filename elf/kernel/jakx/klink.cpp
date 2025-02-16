@@ -531,8 +531,8 @@ uint32_t jak3_work_opengoal(link_control* this) {
     }
   }
 
-LAB_0026f94c:
-  while ((int)this->m_state < (int)(this->m_code_start + 1) && this->m_segment_process == 0) {
+endless_loop:
+  if ((int)this->m_state < (int)(this->m_code_start + 1) && this->m_segment_process == 0) {
     ObjectFileHeader* m_link_block_ptr = (ObjectFileHeader *)this->m_link_block_ptr;
     if ((m_link_block_ptr->code_infos[this->m_state - 1].offset != 0) &&
         (m_link_block_ptr->code_infos[this->m_state - 1].size != 0)) {
@@ -545,12 +545,15 @@ LAB_0026f94c:
       this->m_object_data = puVar17;
       this->m_loc_ptr__ = puVar17 + -4;
       this->m_base_ptr__ = puVar17;
-      break;
+      goto endless_loop_body;
+    } else {
+      this->m_segment_process = 0;
+      this->m_state++;
+      goto endless_loop;
     }
-    this->m_segment_process = 0;
-    this->m_state++;
   }
-  
+
+endless_loop_body:
   if ((int)this->m_state - 1 >= (int)(this->m_code_start + 1)) {
     update_goal_fns();
     return 1;
@@ -561,7 +564,6 @@ LAB_0026f94c:
   if (m_state == 1) {
     int relocCounter = 0x400;
     if (*this->m_reloc_ptr__ != '\0') {
-LAB_0026f9e8:
       while (true) {
 
         byte count = *this->m_reloc_ptr__;
@@ -595,7 +597,7 @@ LAB_0026f9e8:
 
         if (count == 0xff) {
           this->m_reloc_ptr__++;
-          goto LAB_0026f9e8;
+          continue;
         }
         
         this->m_reloc_ptr__++;
@@ -672,8 +674,8 @@ LAB_0026f9e8:
     this->m_segment_process = 0;
     this->m_state++;
     this->m_entry = this->m_object_data + 4;
-    goto LAB_0026f94c;
-  } else if (m_state != 2) { // else
+    goto endless_loop;
+  } else {
     update_goal_fns();
     return 1;
   }
