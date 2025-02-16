@@ -612,7 +612,7 @@ uint32_t jak3_work_opengoal(link_control* this) {
         m_state = this->m_segment_process;
       }
       
-      else if (m_state == 2) {
+      if (m_state == 2) {
         byte* sub_link_ptr = this->m_reloc_ptr__;
         uint uVar12 = *(uint *)(this->m_link_block_ptr + this->m_state * 0x10 + -4);
         while (true) {
