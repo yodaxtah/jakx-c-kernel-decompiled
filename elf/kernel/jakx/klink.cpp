@@ -563,9 +563,9 @@ LAB_0026f94c:
       int relocCounter = 0x400;
       if (*this->m_original_object_location != '\0') {
 LAB_0026f9e8:
-        do {
+        while(true) {
           byte bVar1 = *(byte *)&this->m_loc_ptr;
-          while( true ) {
+          while(true) {
             int iVar7 = 0;
             if (bVar1 == 0) {
               this->m_base_ptr = this->m_base_ptr + (uint)*this->m_original_object_location * 4;
@@ -604,17 +604,22 @@ LAB_0026f9e8:
             }
             this->m_original_object_location = puVar17 + 1;
             *(byte *)&this->m_loc_ptr = bVar1 ^ 1;
-            relocCounter = relocCounter + -1;
-            if (puVar17[1] == '\0') goto LAB_0026fb20;
-            if (relocCounter == 0) break;
+            relocCounter--;
+            if (puVar17[1] == '\0') {
+              goto LAB_0026fb20;
+            }
+            if (relocCounter == 0) {
+              relocCounter = 0x400;
+              int currentCycle = (*(code *)kernel.read_clock_G)();
+              if (200000 < (uint)(currentCycle - startCycle)) {
+                return 0;
+              }
+              bVar1 = *(byte *)&this->m_loc_ptr;
+              continue;
+            };
             bVar1 = *(byte *)&this->m_loc_ptr;
           }
-          relocCounter = 0x400;
-          int currentCycle = (*(code *)kernel.read_clock_G)();
-          if (200000 < (uint)(currentCycle - startCycle)) {
-            return 0;
-          }
-        } while( true );
+        }
       }
 LAB_0026fb20:
       this->m_original_object_location++;
