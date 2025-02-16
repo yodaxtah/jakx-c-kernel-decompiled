@@ -446,14 +446,13 @@ uint32_t symlink_v3(Ptr<uint8_t> link, Ptr<uint8_t> data) {
 
 uint32_t jak3_work_opengoal(link_control* this) {
   int startCycle = (*(code *)kernel.read_clock_G)();
-  ObjectFileHeader* ofh = (ObjectFileHeader *)this->m_link_block_ptr;
+  ObjectFileHeader* ofh = (ObjectFileHeader*)this->m_link_block_ptr;
   if (this->m_state == 0) {
     uint32_t prev_length = this->m_link_hdr->length_to_get_to_link;
     this->m_code_start = (uint8_t *)(uint)this->m_link_hdr->n_segments;
     this->m_link_hdr->length_to_get_to_link = (uint32_t)(this->m_link_hdr->name + (prev_length - 0x15));
     this->m_link_block_ptr = (uint8_t *)(this->m_link_hdr->name + (prev_length - 0x15));
-LAB_0026f70c_for_loop:
-    for (s32 seg_id = (s32)(uint8_t *)(uint)m_link_hdr->n_segments + -1; seg_id >= 0; seg_id -= 1) {
+    for (s32 seg_id = (s32)(uint8_t *)(uint)m_link_hdr->n_segments - 1; seg_id >= 0; seg_id--) {
       (&ofh->code_infos[seg_id - 1].unknown_0xc)[0] += ((int)ofh->code_infos - 4);
       (&ofh->code_infos[seg_id - 1].unknown_0xc)[1] += this->m_object_data;
 
@@ -473,13 +472,13 @@ LAB_0026f70c_for_loop:
                      ofh->code_infos[seg_id].size);
               return 1;
             }
-            ultimate_memcpy_G(ofh->code_infos[seg_id].offset, src, ofh->code_infos[seg_id].size);
+            ultimate_memcpy_G(ofh->code_infos[seg_id].offset, src,
+                              ofh->code_infos[seg_id].size);
           }
         }
       } else if (seg_id == 0) {
         if (ofh->code_infos[seg_id].size == 0) {
           ofh->code_infos[seg_id].offset = 0;
-          continue;
         } else if (this->m_moved_link_block == false) {
           do {
             void* src = (void *)ofh->code_infos[seg_id].offset;
@@ -492,15 +491,17 @@ LAB_0026f70c_for_loop:
             }
             ultimate_memcpy_G((void *)ofh->code_infos[seg_id].offset, src,
                               ofh->code_infos[seg_id].size);
-            goto LAB_0026f70c_for_loop;
+            break;
           } while ((int)(m_link_hdr->link_length + 0x50) <= (int)m_link_hdr->length_to_get_to_code);
-        }
-        // m_heap = this->m_heap; // TODO: Why is this assigned?
-        m_heap->current = this->m_object_data + this->m_code_size;
-        seg_id = -1;
-        if (m_heap->current < m_heap->top) {
-          MsgErr("dkernel: heap overflow~%");
-          return 1;
+        } else {
+          // m_heap = this->m_heap; // TODO: Why is this assigned?
+          m_heap->current = this->m_object_data + this->m_code_size;
+          if (m_heap->current < m_heap->top) {
+            MsgErr("dkernel: heap overflow~%");
+            return 1;
+          } else {
+            break;
+          }
         }
       } else if (seg_id == 2) {
         if (ofh->code_infos[seg_id].size == 0) {
