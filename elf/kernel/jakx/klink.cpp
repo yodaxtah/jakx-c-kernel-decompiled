@@ -567,13 +567,10 @@ LAB_0026f9e8:
         while(true) {
           if (bVar1 == 0) {
             this->m_base_ptr = this->m_base_ptr + (uint)*this->m_original_object_location * 4;
-            puVar17 = this->m_original_object_location;
           }
           else {
             pbVar15 = this->m_original_object_location;
-            byte bVar2 = *pbVar15;
-            int i = 0;
-            while (bVar2 != 0) {
+            for (int i = 0; i < (int)(uint)*pbVar15; i++;) {
               u8** ppuVar3 = (u8 **)this->m_base_ptr;
               pVar___ = *ppuVar3;
               uVar12 = (uint)pVar___ >> 8 & 0xf;
@@ -591,12 +588,10 @@ LAB_0026f9e8:
                 *ppuVar3 = (u8 *)((uint)pVar___ & 0xffff0000 | uVar11 >> 0x10);
                 *puVar13 = *puVar13 & 0xffff0000 | uVar11 & 0xffff;
               }
-              i++;
               this->m_base_ptr = (u8 *)(ppuVar3 + 1);
-              bVar2 = i < (int)(uint)*pbVar15;
             }
-            puVar17 = this->m_original_object_location;
           }
+          puVar17 = this->m_original_object_location;
           if (*puVar17 == 0xff) {
             this->m_original_object_location = puVar17 + 1;
             goto LAB_0026f9e8;
@@ -627,10 +622,12 @@ LAB_0026f9e8:
     }
     pbVar15 = this->m_original_object_location;
     uVar12 = *(uint *)(this->m_link_block_ptr + this->m_state * 0x10 + -4);
-    while( true ) {
+    while (true) {
       bVar1 = *pbVar15;
       uVar11 = (uint)bVar1;
-      if (uVar11 == 0) break;
+      if (uVar11 == 0) {
+        break;
+      }
       this->m_original_object_location = pbVar15 + 1;
       Type *pTVar8;
       if ((bVar1 & 0x80) == 0) {
@@ -641,17 +638,18 @@ LAB_0026f9e8:
       }
       else {
         u64 methods;
-        int iVar6 = (uVar11 & 0x3f) * 4;
+        int n_methods_base = uVar11 & 0x3f;
+        int n_methods = n_methods_base * 4;
         if ((uVar11 & 0x3f) == 0x3f) {
           bVar1 = pbVar15[1];
           this->m_original_object_location = pbVar15 + 2;
           methods = (long)(int)((uint)bVar1 * 4 + 3);
         }
+        else if ((long)n_methods != 0) {
+          methods = (long)(n_methods + 3);
+        }
         else {
-          methods = (long)iVar6;
-          if ((long)iVar6 != 0) {
-            methods = (long)(iVar6 + 3);
-          }
+          methods = (long)n_methods;
         }
         short* name = (short *)((int)this->m_original_object_location + 2);
         short sVar4 = *(short *)this->m_original_object_location;
@@ -661,16 +659,16 @@ LAB_0026f9e8:
       }
       size_t sVar10 = strlen((char *)puVar17);
       this->m_original_object_location = this->m_original_object_location + (int)sVar10 + 1;
-      code* pcVar9;
+      code* symlink_function;
       if ((uVar12 & 1) == 0) {
         puVar17 = this->m_object_data;
-        pcVar9 = (code *)symlink3_G;
+        symlink_function = (code *)symlink3_G;
       }
       else {
         puVar17 = this->m_object_data;
-        pcVar9 = (code *)symlink2_G;
+        symlink_function = (code *)symlink2_G;
       }
-      puVar17 = (uint8_t *)(*pcVar9)(puVar17,pTVar8);
+      puVar17 = (uint8_t *)(*symlink_function)(puVar17,pTVar8);
       this->m_original_object_location = puVar17;
       int currentCycle = (*(code *)kernel.read_clock_G)();
       if (200000 < (uint)(currentCycle - startCycle)) {
