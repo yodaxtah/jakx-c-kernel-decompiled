@@ -927,7 +927,7 @@ Type* intern_type(u32 name, u64 methods) {
  */
 Type* set_fixed_type(FixedSymbolTypeOffset offset,
                      const char* name,
-                     Symbol4 *parent_symbol,
+                     Type** parent_symbol,
                      u64 flags,
                      u32 print,
                      u32 inspect) {
@@ -947,7 +947,7 @@ Type* set_fixed_type(FixedSymbolTypeOffset offset,
   symbol_value->symbol = type_symbol;
   symbol_value[-1].memusage_method = *(Function **)(unaff_s7_lo + 0x17);
 
-  Type* parent_type = *(Type **)((int)parent_type_symbol + -1);
+  Type* parent_type = *(Type **)((int)parent_symbol + -1);
   set_type_values(symbol_value, parent_type, flags);
 
   symbol_value->new_method = parent_type->new_method;
