@@ -493,32 +493,31 @@ Ptr<Function> make_stack_arg_function_from_c_win32(void* func) {
  * TBD
  */
 Function * make_function_from_c(void *func,bool arg3_is_pp) {
-  u64 uVar1;
   u32 in_a3_lo;
   undefined4 *mem;
   int unaff_s7_lo;
   
-  uVar1 = alloc_heap_object(unaff_s7_lo + 0xa0,*(u32 *)(unaff_s7_lo + 7),0x50,in_a3_lo);
+  u64 uVar1 = alloc_heap_object(unaff_s7_lo + 0xa0, *(u32 *)(unaff_s7_lo + 7), 0x50, in_a3_lo);
   mem = (undefined4 *)uVar1;
-  mem[0x10] = 0x67bd0040;
-  mem[10] = 0;
-  mem[0x11] = 0;
-  mem[5] = 0x3c1c002d;
-  mem[0x12] = 0;
-  mem[6] = 0x379c2b80;
-  mem[7] = (uint)func >> 0x10 | 0x3c190000;
-  mem[8] = (uint)func & 0xffff | 0x37390000;
-  mem[1] = 0xffbf0000;
   mem[0] = 0x67bdffc0;
+  mem[1] = 0xffbf0000;
   mem[2] = 0xffbc0010;
   mem[3] = 0xffb60020;
   mem[4] = 0xffb70030;
+  mem[5] = 0x3c1c002d;
+  mem[6] = 0x379c2b80;
+  mem[7] = (uint)func >> 0x10 | 0x3c190000;
+  mem[8] = (uint)func & 0xffff | 0x37390000;
   mem[9] = 0x320f809;
+  mem[10] = 0;
+  mem[0xb] = 0xdfbf0000;
   mem[0xc] = 0xdfbc0010;
   mem[0xd] = 0xdfb60020;
   mem[0xe] = 0xdfb70030;
-  mem[0xb] = 0xdfbf0000;
   mem[0xf] = 0x3e00008;
+  mem[0x10] = 0x67bd0040;
+  mem[0x11] = 0;
+  mem[0x12] = 0;
   CacheFlush(mem, 0x4c);
   return (Function *)mem;
 }
