@@ -531,44 +531,42 @@ uint32_t jak3_work_opengoal(link_control* this) {
     }
   }
 
-  uint32_t state_W;
 LAB_0026f94c:
   while ((int)this->m_state < (int)(this->m_code_start + 1) && this->m_segment_process == 0) {
-    state_W = this->m_state;
     ObjectFileHeader* m_link_block_ptr = (ObjectFileHeader *)this->m_link_block_ptr;
-    if ((m_link_block_ptr->code_infos[state_W - 1].offset != 0) &&
-        (m_link_block_ptr->code_infos[state_W - 1].size != 0)) {
+    if ((m_link_block_ptr->code_infos[this->m_state - 1].offset != 0) &&
+        (m_link_block_ptr->code_infos[this->m_state - 1].size != 0)) {
       puVar17 = (uint8_t *)
-                m_link_block_ptr->code_infos[state_W - 2].unknown_0xc;
+                m_link_block_ptr->code_infos[this->m_state - 2].unknown_0xc;
       this->m_segment_process = 1;
       this->m_reloc_ptr__ = puVar17;
       *(undefined *)&this->m_table_toggle__ = 0;
-      puVar17 = (uint8_t *)m_link_block_ptr->code_infos[state_W - 1].offset;
+      puVar17 = (uint8_t *)m_link_block_ptr->code_infos[this->m_state - 1].offset;
       this->m_object_data = puVar17;
       this->m_loc_ptr__ = puVar17 + -4;
       this->m_base_ptr__ = puVar17;
       break;
     }
     this->m_segment_process = 0;
-    this->m_state = state_W + 1;
+    this->m_state++;
   }
-
-  if ((int)state_W >= (int)(this->m_code_start + 1)) {
+  
+  if ((int)this->m_state - 1 >= (int)(this->m_code_start + 1)) {
     update_goal_fns();
     return 1;
   }
 
-  uint32_t state_W = this->m_segment_process;
-  if (state_W == 1) {
+  uint32_t m_state = this->m_segment_process;
+
+  if (m_state == 1) {
     int relocCounter = 0x400;
     if (*this->m_reloc_ptr__ != '\0') {
 LAB_0026f9e8:
-      byte m_table_toggle = *(byte *)&this->m_table_toggle__;
-      while(true) {
+      while (true) {
 
         byte count = *this->m_reloc_ptr__;
         
-        if (m_table_toggle == 0) {
+        if (this->m_table_toggle__ == 0) {
           this->m_loc_ptr__ +=
               4 *
               (uint)count;
@@ -599,8 +597,10 @@ LAB_0026f9e8:
           this->m_reloc_ptr__++;
           goto LAB_0026f9e8;
         }
+        
         this->m_reloc_ptr__++;
-        *(byte *)&this->m_table_toggle__ = m_table_toggle ^ 1;
+
+        this->m_table_toggle__ = this->m_table_toggle__ ^ 1;
         relocCounter--;
         if (this->m_reloc_ptr__[1] == '\0') {
           break;
@@ -612,51 +612,48 @@ LAB_0026f9e8:
           }
           relocCounter = 0x400;
         }
-        m_table_toggle = *(byte *)&this->m_table_toggle__;
       }
     }
     this->m_reloc_ptr__++;
     this->m_segment_process++;
-    state_W = this->m_segment_process;
-  } else if (state_W == 2) {
-    byte* pbVar15 = this->m_reloc_ptr__;
+    m_state = this->m_segment_process;
+  }
+  
+  else if (m_state == 2) {
+    byte* sub_link_ptr = this->m_reloc_ptr__;
     uint uVar12 = *(uint *)(this->m_link_block_ptr + this->m_state * 0x10 + -4);
     while (true) {
-      byte bVar1 = *pbVar15;
-      uint uVar11 = (uint)bVar1;
-      if (uVar11 == 0) {
+      byte reloc = *sub_link_ptr;
+      if (*this->m_reloc_ptr__ == 0) {
         break;
       }
-      this->m_reloc_ptr__ = pbVar15 + 1;
-      Type *goalObj;
-      if ((bVar1 & 0x80) == 0) {
-        short sVar4 = *(short *)(pbVar15 + 1);
-        this->m_reloc_ptr__ = pbVar15 + 3;
-        goalObj = (Type *)intern_from_c((int)sVar4,uVar11,(const char *)(pbVar15 + 3));
-        puVar17 = this->m_reloc_ptr__;
+      this->m_reloc_ptr__ = sub_link_ptr + 1;
+      Type* goalObj;
+      if ((reloc & 0x80) == 0) {
+        short sVar4 = *(short *)(sub_link_ptr + 1);
+        this->m_reloc_ptr__ = sub_link_ptr + 3;
+        char* sname = (const char *)this->m_reloc_ptr__;
+        goalObj = (Type *)intern_from_c((int)sVar4, (uint)reloc, sname);
       }
       else {
         u64 methods;
-        int n_methods_base = uVar11 & 0x3f;
+        int n_methods_base = (uint)reloc & 0x3f;
         int n_methods = n_methods_base * 4;
-        if ((uVar11 & 0x3f) == 0x3f) {
-          bVar1 = pbVar15[1];
-          this->m_reloc_ptr__ = pbVar15 + 2;
-          methods = (long)(int)((uint)bVar1 * 4 + 3);
-        }
-        else if ((long)n_methods != 0) {
+        if (((uint)reloc & 0x3f) == 0x3f) {
+          reloc = sub_link_ptr[1];
+          this->m_reloc_ptr__ = sub_link_ptr + 2;
+          methods = (long)(int)((uint)reloc * 4 + 3);
+        } else if ((long)n_methods != 0) {
           methods = (long)(n_methods + 3);
-        }
-        else {
+        } else {
           methods = (long)n_methods;
         }
-        short* name = (short *)((int)this->m_reloc_ptr__ + 2);
-        short sVar4 = *(short *)this->m_reloc_ptr__;
-        this->m_reloc_ptr__ = (uint8_t *)name;
-        goalObj = intern_type_from_c((int)sVar4,uVar11,(const char *)name,methods);
-        puVar17 = this->m_reloc_ptr__;
+        this->m_reloc_ptr__ +=
+            2;
+        char* name = (char*)this->m_reloc_ptr__;
+        goalObj = intern_type_from_c((int)this->m_reloc_ptr__, (uint)reloc, name, methods);
       }
-      this->m_reloc_ptr__ = this->m_reloc_ptr__ + (int)strlen((char *)puVar17) + 1;
+      this->m_reloc_ptr__ += (int)strlen((char *)this->m_reloc_ptr__) + 1;
       code* symlink_function;
       if ((uVar12 & 1) == 0) {
         symlink_function = (code *)symlink3_G;
@@ -670,13 +667,13 @@ LAB_0026f9e8:
       if (200000 < (uint)(currentCycle - startCycle)) {
         return 0;
       }
-      pbVar15 = this->m_reloc_ptr__;
+      sub_link_ptr = this->m_reloc_ptr__;
     }
     this->m_segment_process = 0;
     this->m_state++;
     this->m_entry = this->m_object_data + 4;
     goto LAB_0026f94c;
-  } else if (state_W != 2) { // else
+  } else if (m_state != 2) { // else
     update_goal_fns();
     return 1;
   }
