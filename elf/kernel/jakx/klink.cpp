@@ -563,65 +563,60 @@ LAB_0026f94c:
       int relocCounter = 0x400;
       if (*this->m_original_object_location != '\0') {
 LAB_0026f9e8:
+        byte bVar1 = *(byte *)&this->m_loc_ptr;
         while(true) {
-          byte bVar1 = *(byte *)&this->m_loc_ptr;
-          while(true) {
-            int iVar7 = 0;
-            if (bVar1 == 0) {
-              this->m_base_ptr = this->m_base_ptr + (uint)*this->m_original_object_location * 4;
-              puVar17 = this->m_original_object_location;
-            }
-            else {
-              pbVar15 = this->m_original_object_location;
-              byte bVar2 = *pbVar15;
-              while (bVar2 != 0) {
-                u8** ppuVar3 = (u8 **)this->m_base_ptr;
-                pVar___ = *ppuVar3;
-                uVar12 = (uint)pVar___ >> 8 & 0xf;
-                uint* puVar13 = (uint *)(((uint)pVar___ >> 10 & 0x3c) + (int)ppuVar3);
-                if ((uint)pVar___ >> 0x18 == 0) {
-                  *ppuVar3 = pVar___ + (int)this->m_reloc_ptr;
-                }
-                else {
-                  uVar11 = *(int *)(this->m_link_block_ptr + uVar12 * 0x10 + 4) +
-                            (((uint)pVar___ & 0xff) << 0x10 |
-                            (uint)*(ushort *)puVar13);
-                  if ((DebugSegment == 0) && (uVar12 == 1)) {
-                    uVar11 = 0;
-                  }
-                  *ppuVar3 = (u8 *)((uint)pVar___ & 0xffff0000 | uVar11 >> 0x10);
-                  *puVar13 = *puVar13 & 0xffff0000 | uVar11 & 0xffff;
-                }
-                iVar7 = iVar7 + 1;
-                this->m_base_ptr = (u8 *)(ppuVar3 + 1);
-                bVar2 = iVar7 < (int)(uint)*pbVar15;
-              }
-              puVar17 = this->m_original_object_location;
-            }
-            if (*puVar17 == 0xff) {
-              this->m_original_object_location = puVar17 + 1;
-              goto LAB_0026f9e8;
-            }
-            this->m_original_object_location = puVar17 + 1;
-            *(byte *)&this->m_loc_ptr = bVar1 ^ 1;
-            relocCounter--;
-            if (puVar17[1] == '\0') {
-              goto LAB_0026fb20;
-            }
-            if (relocCounter == 0) {
-              relocCounter = 0x400;
-              int currentCycle = (*(code *)kernel.read_clock_G)();
-              if (200000 < (uint)(currentCycle - startCycle)) {
-                return 0;
-              }
-              bVar1 = *(byte *)&this->m_loc_ptr;
-              continue;
-            };
-            bVar1 = *(byte *)&this->m_loc_ptr;
+          if (bVar1 == 0) {
+            this->m_base_ptr = this->m_base_ptr + (uint)*this->m_original_object_location * 4;
+            puVar17 = this->m_original_object_location;
           }
+          else {
+            pbVar15 = this->m_original_object_location;
+            byte bVar2 = *pbVar15;
+            int i = 0;
+            while (bVar2 != 0) {
+              u8** ppuVar3 = (u8 **)this->m_base_ptr;
+              pVar___ = *ppuVar3;
+              uVar12 = (uint)pVar___ >> 8 & 0xf;
+              uint* puVar13 = (uint *)(((uint)pVar___ >> 10 & 0x3c) + (int)ppuVar3);
+              if ((uint)pVar___ >> 0x18 == 0) {
+                *ppuVar3 = pVar___ + (int)this->m_reloc_ptr;
+              }
+              else {
+                uVar11 = *(int *)(this->m_link_block_ptr + uVar12 * 0x10 + 4) +
+                          (((uint)pVar___ & 0xff) << 0x10 |
+                          (uint)*(ushort *)puVar13);
+                if ((DebugSegment == 0) && (uVar12 == 1)) {
+                  uVar11 = 0;
+                }
+                *ppuVar3 = (u8 *)((uint)pVar___ & 0xffff0000 | uVar11 >> 0x10);
+                *puVar13 = *puVar13 & 0xffff0000 | uVar11 & 0xffff;
+              }
+              i++;
+              this->m_base_ptr = (u8 *)(ppuVar3 + 1);
+              bVar2 = i < (int)(uint)*pbVar15;
+            }
+            puVar17 = this->m_original_object_location;
+          }
+          if (*puVar17 == 0xff) {
+            this->m_original_object_location = puVar17 + 1;
+            goto LAB_0026f9e8;
+          }
+          this->m_original_object_location = puVar17 + 1;
+          *(byte *)&this->m_loc_ptr = bVar1 ^ 1;
+          relocCounter--;
+          if (puVar17[1] == '\0') {
+            break;
+          }
+          if (relocCounter == 0) {
+            int currentCycle = (*(code *)kernel.read_clock_G)();
+            if (200000 < (uint)(currentCycle - startCycle)) {
+              return 0;
+            }
+            relocCounter = 0x400;
+          };
+          bVar1 = *(byte *)&this->m_loc_ptr;
         }
       }
-LAB_0026fb20:
       this->m_original_object_location++;
       this->m_segment_process++;
       state_W = this->m_segment_process;
