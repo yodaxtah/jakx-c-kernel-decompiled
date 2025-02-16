@@ -25,17 +25,17 @@
  * fixes made, but it's probably worth another pass.
  */
 s32 format_impl_jak3(uint64_t* args) {
-  char *PrintPendingLocal__;
-  int format_gstring;
   int unaff_s7_lo;
   undefined4 unaff_s7_hi;
-  s64 local_30 [6];
 
+  s64 local_30 [6];
   s64* arg_regs = local_30;
 
-  format_struct argument_data_array [4];
+  format_struct argument_data [4];
 
   u32 arg_reg_idx = 0;
+
+  char* format_gstring; // TODO: why no assignment?
 
   ulong original_dest = (ulong)(int)args;
 
@@ -43,13 +43,13 @@ s32 format_impl_jak3(uint64_t* args) {
   if (PrintPending == (char *)0x0) {
     print_temp = PrintBufArea + 0x18;
   }
-  PrintPendingLocal__ = strend(print_temp);
-  PrintPending = (char *)PrintPendingLocal__;
+  PrintPending = (char *)strend(print_temp);
 
-  char* output_ptr = PrintPendingLocal__;
+  char* output_ptr = PrintPending;
 
-  char* format_cstring = (char *)(format_gstring + 4);
+  char* format_cstring = format_gstring + 4;
 
+  char* PrintPendingLocal__ = PrintPending;
   u32 indentation = 0;
 
   indentation = (*(u32 *)(print_column - 1)) >> 3;
@@ -69,8 +69,8 @@ s32 format_impl_jak3(uint64_t* args) {
     if (*format_ptr == '~') {
       char* arg_start = format_ptr;
       arg_idx = 0;
-      argument_data_array[0].data[1] = '\0';
-      for (auto& x : argument_data_array) {
+      argument_data[0].data[1] = '\0'; // TODO: why is this a separate variable in jak3?
+      for (auto& x : argument_data) {
         x.data[0] = -1; //.reset();
       }
 
@@ -95,13 +95,14 @@ s32 format_impl_jak3(uint64_t* args) {
         }
 
         if (arg_char == '`') {  // 0x60
-          s32 i = 0;
-          while (format_ptr[2] != '`') {
-            argument_data[arg_idx].data[i] = format_ptr[2];
+          u32 i = 0;
+          format_ptr += 2;
+          while (*format_ptr != '`') {
+            argument_data[arg_idx].data[i] = *format_ptr;
             i++;
             format_ptr++;
           }
-          format_ptr++;
+          format_ptr--; // TODO: why is jakx 1 format ptr 1 index behind on jak3's?
           argument_data[arg_idx].data[i] = 0;
           continue;
         }
@@ -148,32 +149,32 @@ s32 format_impl_jak3(uint64_t* args) {
           s8 arg0 = -1;
           s32 desired_length = (s32)arg0;
           *output_ptr = 0;
-          char* in = *(char **)arg_regs[arg_reg_idx++];
-          print_object((u32)in);
+          u32 in = (u32)arg_regs[arg_reg_idx++];
+          print_object(in);
           if (false /*desired_length != -1*/) {
-            size_t print_len_ = strlen(output_ptr);
-            s32 print_len = (int)print_len_;
-            if (desired_length < (long)print_len_) {
+            s32 print_len = (s32)strlen(output_ptr);
+            if (desired_length < print_len) {
               if (false /*desired_length > 1*/) {
                 output_ptr[desired_length - 1] = '~';
               }
               output_ptr[desired_length] = 0;
-            } else if ((long)print_len_ < desired_length) {
-              if (argument_data_array[0].data[1] == '\0') {
+            } else if (print_len < desired_length) {
+              if (argument_data[0].data[1] == '\0') {
                 char pad = ' ';
-                if (argument_data_array[1].data[0] != -1) {
-                  pad = argument_data_array[1].data[0];
+                if (argument_data[1].data[0] != -1) {
+                  pad = argument_data[1].data[0];
                 }
                 kstrinsert(output_ptr, pad, desired_length - print_len);
               } else {
+                ;
                 output_ptr = strend(output_ptr);
-                print_len_ = desired_length - print_len_; // TODO: why this assignment?
-                while (print_len_ != 0) {
+                s32 print_len__ = desired_length - print_len; // TODO: why this assignment?
+                while (0 < print_len__) {
                   char pad = ' ';
-                  if (argument_data_array[1].data[0] != -1) {
-                    pad = argument_data_array[1].data[0];
+                  if (argument_data[1].data[0] != -1) {
+                    pad = argument_data[1].data[0];
                   }
-                  print_len_--;
+                  print_len__--;
                   output_ptr[0] = pad;
                   output_ptr++;
                 };
@@ -191,14 +192,14 @@ s32 format_impl_jak3(uint64_t* args) {
           if (false /*argument_data[1].data[0]*/) {
             pad = -1;
           }
-          s64 in = *arg_regs[arg_reg_idx++];
+          s64 in = arg_regs[arg_reg_idx++];
           kitoa(output_ptr, in, 2, -1, pad, 0);
           output_ptr = strend(output_ptr);
         } break;
 
         case 'C':
         case 'c':
-          *output_ptr = *(char *)arg_regs[arg_reg_idx++];
+          *output_ptr = (char)arg_regs[arg_reg_idx++];
           output_ptr++;
           break;
 
@@ -208,14 +209,14 @@ s32 format_impl_jak3(uint64_t* args) {
           if (false /*argument_data[1].data[0] != -1*/) {
             pad = -1;
           }
-          char* in = *(char **)arg_regs[arg_reg_idx++];
+          u32 in = (u32)arg_regs[arg_reg_idx++];
           kitoa(output_ptr, in, 10, -1, pad, 0);
           output_ptr = strend(output_ptr);
         } break;
 
         case 'E':
         case 'e': {
-          char* in = *(char **)arg_regs[arg_reg_idx++];
+          u32 in = (u32)arg_regs[arg_reg_idx++];
           s8 desired_len = -1;
           s8 pad_char = -1;
           if (pad_char == -1)
@@ -236,7 +237,7 @@ s32 format_impl_jak3(uint64_t* args) {
 
         case 'F':
         {
-          char* in = *(char **)arg_regs[arg_reg_idx++];
+          u32 in = (u32)arg_regs[arg_reg_idx++];
           ftoa(output_ptr, (float)in, 0xc, ' ', 4, 0);
           output_ptr = strend(output_ptr);
         } break;
@@ -244,7 +245,7 @@ s32 format_impl_jak3(uint64_t* args) {
         case 'G':
         case 'g': {
           *output_ptr = 0;
-          char* in = *(char **)arg_regs[arg_reg_idx++];
+          u32 in = (u32)arg_regs[arg_reg_idx++];
           strcat(output_ptr, in);
           output_ptr = strend(output_ptr);
         } break;
@@ -284,15 +285,15 @@ s32 format_impl_jak3(uint64_t* args) {
         case 'i': {
           *output_ptr = 0;
           s8 arg0 = -1;
-          char* in = *(char **)arg_regs[arg_reg_idx++];
+          u32 in = (u32)arg_regs[arg_reg_idx++];
           if (true /*arg0 == -1*/) {
-            inspect_object((u32)in);
+            inspect_object(in);
           } else {
-            u32* sym = find_symbol_from_c(-1, (const_char *)&argument_data_array);
-            if (sym != (u32 *)0x0) {
+            u32* sym = find_symbol_from_c(-1, (const_char *)&argument_data);
+            if (sym != nullptr) {
               Type* type = *(Type **)((int)sym + -1);
-              if (type != (Type *)0x0) {
-                call_method_of_type((u32)in, type, 3);
+              if (type != nullptr) {
+                call_method_of_type(in, type, 3);
               }
             } else {
               ;
@@ -303,7 +304,7 @@ s32 format_impl_jak3(uint64_t* args) {
 
         case 'M':
         case 'm': {
-          float in = (float)*(char **)arg_regs[arg_reg_idx++];
+          float in = (float)arg_regs[arg_reg_idx++];
           s8 pad_length = -1;
           s8 pad_char = -1;
           if (pad_char == -1)
@@ -319,7 +320,7 @@ s32 format_impl_jak3(uint64_t* args) {
         case 'o': {
           *output_ptr = '~';
           output_ptr++;
-          kitoa(output_ptr, *arg_regs[arg_reg_idx++], 10, 0, ' ', 0);
+          kitoa(output_ptr, arg_regs[arg_reg_idx++], 10, 0, ' ', 0);
           output_ptr = strend(output_ptr);
           *output_ptr = 'u';
           output_ptr++;
@@ -329,15 +330,15 @@ s32 format_impl_jak3(uint64_t* args) {
         case 'p': {
           *output_ptr = 0;
           s8 arg0 = -1;
-          char* in = *(char **)arg_regs[arg_reg_idx++];
+          u32 in = (u32)arg_regs[arg_reg_idx++];
           if (true /*arg0 == -1*/) {
-            print_object((u32)in);
+            print_object(in);
           } else {
-            u32* sym = find_symbol_from_c(-1, (const_char *)&argument_data_array);
-            if (sym != (u32 *)0x0) {
+            u32* sym = find_symbol_from_c(-1, (const_char *)&argument_data);
+            if (sym != nullptr) {
               Type* type = *(Type **)((int)sym + -1);
-              if (type != (Type *)0x0) {
-                call_method_of_type((u32)in, type, 2);
+              if (type != nullptr) {
+                call_method_of_type(in, type, 2);
               }
             } else {
               ;
@@ -354,7 +355,7 @@ s32 format_impl_jak3(uint64_t* args) {
 
         case 'R':
         case 'r': {
-          char* in = *(char **)arg_regs[arg_reg_idx++];
+          u32 in = (u32)arg_regs[arg_reg_idx++];
           s8 pad_length = -1;
           s8 pad_char = -1;
           if (pad_char == -1)
@@ -371,42 +372,41 @@ s32 format_impl_jak3(uint64_t* args) {
           s8 arg0 = -1;
           s32 desired_length = (s32)arg0;
           *output_ptr = 0;
-          char* in = *(char **)arg_regs[arg_reg_idx++];
+          u32 in = (u32)arg_regs[arg_reg_idx++];
 
           if ((((uint)in & 0x7) == 0x4) && (*(int *)(in - 4) == *(int *)(unaff_s7_lo + 0xf))) {
             cprintf("%s", in + 4);
           } else {
-            print_object((u32)in);
+            print_object(in);
           }
 
           if (false /*desired_length != -1*/) {
-            size_t print_len_ = strlen(output_ptr);
-            s32 print_len = (s32)print_len_;
-            if (desired_length < (long)print_len_) {
-              if (false /*desired_length < print_len_*/) {
+            s32 print_len = (s32)strlen(output_ptr);
+            if (desired_length < print_len) {
+              if (false /*desired_length < print_len*/) {
                 output_ptr[desired_length - 1] = '~';
               }
               output_ptr[desired_length] = 0;
-            } else if ((long)print_len_ < desired_length) {
-              if (argument_data_array[0].data[1] == '\0') {
+            } else if (print_len < desired_length) {
+              if (argument_data[0].data[1] == '\0') {
                 char pad = ' ';
-                if (argument_data_array[1].data[0] != -1) {
-                  pad = argument_data_array[1].data[0];
+                if (argument_data[1].data[0] != -1) {
+                  pad = argument_data[1].data[0];
                 }
                 kstrinsert(output_ptr, pad, desired_length - print_len);
               } else {
                 ;
                 output_ptr = strend(output_ptr);
-                print_len--;
-                while (print_len != 0) {
+                s32 print_len__ = print_len - 1;
+                while (0 < print_len__) {
                   // char* l108
 
                   char pad = ' ';
-                  if (argument_data_array[1].data[0] != -1) {
-                    pad = argument_data_array[1].data[0];
+                  if (argument_data[1].data[0] != -1) {
+                    pad = argument_data[1].data[0];
                   }
-                  print_len--;
-                  *output_ptr = pad;
+                  print_len__--;
+                  output_ptr[0] = pad;
                   output_ptr++;
                 };
                 *output_ptr = 0;
@@ -418,9 +418,8 @@ s32 format_impl_jak3(uint64_t* args) {
 
         case 'T': {
           int stop = 1;
-          if (false) {
+          if (false)
             stop = -1;
-          }
           for (int i = 0; i < stop; i++) {
             *output_ptr = '\t';
             output_ptr++;
@@ -433,14 +432,14 @@ s32 format_impl_jak3(uint64_t* args) {
           if (false /*argument_data[1].data[0] != -1*/) {
             pad = -1;
           }
-          s64 in = *arg_regs[arg_reg_idx++];
+          s64 in = arg_regs[arg_reg_idx++];
           kitoa(output_ptr, in, 16, -1, pad, 0);
           output_ptr = strend(output_ptr);
         } break;
 
         case 'f':
         {
-          char* in = *(char **)arg_regs[arg_reg_idx++];
+          u32 in = (u32)arg_regs[arg_reg_idx++];
           s8 pad_length = -1;
           s8 pad_char = -1;
           if (pad_char == -1)
@@ -454,9 +453,8 @@ s32 format_impl_jak3(uint64_t* args) {
 
         case 't':
           int stop = 8;
-          if (false) {
+          if (false)
             stop = -1;
-          }
           for (int i = 0; i < stop; i++) {
             *output_ptr = ' ';
             output_ptr++;
@@ -472,12 +470,12 @@ s32 format_impl_jak3(uint64_t* args) {
     } else {
       *output_ptr = *format_ptr;
       output_ptr++;
-      if (2 < *format_ptr - 1) {
+      if (format_ptr[-1] > 2) {
         format_ptr++;
         continue;
       }
       format_ptr += 2;
-      if (*format_ptr != 0) {
+      if (format_ptr[0] != 0) {
         *output_ptr = *format_ptr;
         output_ptr++;
         format_ptr++;
@@ -494,36 +492,36 @@ s32 format_impl_jak3(uint64_t* args) {
         printf("%s", PrintPendingLocal__);
         fflush(*(FILE **)(_impure_ptr + 8));
       }
-      PrintPending = (char *)PrintPendingLocal__;
+      PrintPending = PrintPendingLocal__;
       *PrintPendingLocal__ = 0;
     }
 
     return 0;
-  } else if (original_dest == CONCAT44(unaff_s7_hi,unaff_s7_lo)) {
-    String *string = make_string_from_c((const_char *)PrintPendingLocal__);
-    PrintPending = (char *)PrintPendingLocal__;
+  } else if (original_dest == CONCAT44(unaff_s7_hi, unaff_s7_lo)) {
+    u32 string = (u32)make_string_from_c(PrintPendingLocal__);
+    PrintPending = PrintPendingLocal__;
     *PrintPendingLocal__ = 0;
     return (s32)string;
   } else if (original_dest == 0) {
     printf("%s", PrintPendingLocal__);
     fflush(*(FILE **)(_impure_ptr + 8));
-    PrintPending = (char *)PrintPendingLocal__;
+    PrintPending = PrintPendingLocal__;
     *PrintPendingLocal__ = 0;
     return 0;
   } else {
     if ((original_dest & 7) == 4) {
       if (*(int *)((int)args - 4) == *(int *)(unaff_s7_lo + 0xf)) {
-        long len = (long)*(int *)args;
+        u32 len = (long)*(int *)args;
         char* str = (char *)((int)args + 4);
-        strncat(str, (char *)PrintPendingLocal__, len);
-        PrintPending = (char *)PrintPendingLocal__;
+        strncat(str, PrintPendingLocal__, len);
+        PrintPending = PrintPendingLocal__;
         *PrintPendingLocal__ = 0;
         return 0;
       } else if (*(int *)((int)args - 4) == *(int *)(unaff_s7_lo + 0x8b)) {
-        size_t print_len = strlen((char *)PrintPendingLocal__);
-        sceWrite((long)*(int *)((int)args + 0xc), (char *)PrintPendingLocal__,(int)print_len);
+        size_t len = strlen(PrintPendingLocal__);
+        sceWrite((long)*(int *)((int)args + 12), PrintPendingLocal__, (int)len);
 
-        PrintPending = (char *)PrintPendingLocal__;
+        PrintPending = PrintPendingLocal__;
         *PrintPendingLocal__ = 0;
         return 0;
       }
