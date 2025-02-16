@@ -167,7 +167,7 @@ s32 format_impl_jak3(uint64_t* args) {
                 kstrinsert(output_ptr, pad, desired_length - print_len);
               } else {
                 output_ptr = strend(output_ptr);
-                print_len = desired_length - print_len; // TODO: why this assignment?
+                print_len_ = desired_length - print_len_; // TODO: why this assignment?
                 while (print_len_ != 0) {
                   char pad = ' ';
                   if (argument_data_array[1].data[0] != -1) {
