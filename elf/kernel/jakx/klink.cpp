@@ -531,8 +531,10 @@ uint32_t jak3_work_opengoal(link_control* this) {
     }
   }
 
+  // NOTE: resembles jak3_work_v2_v4's init offset phase
   while ((int)this->m_state < (int)(this->m_code_start + 1) && this->m_segment_process == 0) {
     ObjectFileHeader* m_link_block_ptr = (ObjectFileHeader *)this->m_link_block_ptr;
+    // NOTE: condition resembles jak3_work_opengoal's m_state == 1
     if ((m_link_block_ptr->code_infos[this->m_state - 1].offset != 0) &&
         (m_link_block_ptr->code_infos[this->m_state - 1].size != 0)) {
       puVar17 = (uint8_t *)
@@ -552,6 +554,7 @@ uint32_t jak3_work_opengoal(link_control* this) {
 
       uint32_t m_state = this->m_segment_process;
 
+      // NOTE: resembles jak3_work_v2_v4, jak3_work_v5
       if (m_state == 1) {
         int relocCounter = 0x400;
         if (*this->m_reloc_ptr__ != '\0') {
@@ -565,6 +568,7 @@ uint32_t jak3_work_opengoal(link_control* this) {
                   (uint)count;
             } else {
               for (int i = 0; i < (int)(uint)count; i++;) {
+                // NOTE: resembles jak3_work_v5
                 u8** ppuVar3 = (u8 **)this->m_loc_ptr__;
                 u8* pVar___ = *ppuVar3;
                 uint uVar12 = (uint)pVar___ >> 8 & 0xf;
@@ -598,6 +602,7 @@ uint32_t jak3_work_opengoal(link_control* this) {
             if (this->m_reloc_ptr__[1] == '\0') {
               break;
             }
+            // NOTE: resembles jak3_work_v2_v4
             if (relocCounter == 0) {
               int currentCycle = (*(code *)kernel.read_clock_G)();
               if (200000 < (uint)(currentCycle - startCycle)) {
@@ -612,6 +617,7 @@ uint32_t jak3_work_opengoal(link_control* this) {
         m_state = this->m_segment_process;
       }
       
+      // NOTE: resembles jak3_work_v2_v4, jak3_work_v5
       if (m_state == 2) {
         byte* sub_link_ptr = this->m_reloc_ptr__;
         while (true) {
@@ -628,6 +634,7 @@ uint32_t jak3_work_opengoal(link_control* this) {
             goalObj = (Type *)intern_from_c((int)sVar4, (uint)reloc, sname);
           }
           else {
+            // NOTE: resembles jak3_work_v2_v4
             int n_methods_base = (uint)reloc & 0x3f;
             int n_methods = n_methods_base * 4;
             if (n_methods_base == 0x3f) {
@@ -650,6 +657,7 @@ uint32_t jak3_work_opengoal(link_control* this) {
             ;
           this->m_reloc_ptr__ = (uint8_t *)(*symlink_function)(this->m_object_data, goalObj);
           
+          // NOTE: resembles jak3_work_v2_v4
           int currentCycle = (*(code *)kernel.read_clock_G)();
           if (200000 < (uint)(currentCycle - startCycle)) {
             return 0;
@@ -660,6 +668,7 @@ uint32_t jak3_work_opengoal(link_control* this) {
         this->m_state++;
         this->m_entry = this->m_object_data + 4;
       } else {
+        // NOTE: nowhere to be found in jak3
         update_goal_fns();
         return 1;
       }
