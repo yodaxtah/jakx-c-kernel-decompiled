@@ -254,7 +254,7 @@ int StopIOP_G() {
  * Presumably used for debugging DGO loads.
  * We don't have the TEST.DGO file, so this isn't very useful.
  *
- * TBD,
+ * DONE,
  * EXACT,
  * UNUSED
  */

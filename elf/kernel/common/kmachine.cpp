@@ -77,7 +77,7 @@ void InitCD() {
 /*!
  * Initialize the GS and display the splash screen.
  * Not yet implemented. TODO
- * TBD
+ * DONE
  */
 void InitVideo() {
   undefined auStack_b0 [96];

@@ -511,7 +511,7 @@ int ShutdownMachine(int reasonIndex) {
 }
 
 /*!
- * TBD
+ * TBD RETURN 0 SKIPPED
  */
 u32 KeybdGetData(u32 mouse) {
   undefined1 *puVar1;

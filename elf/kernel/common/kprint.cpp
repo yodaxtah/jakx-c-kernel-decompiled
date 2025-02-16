@@ -211,7 +211,7 @@ void reverse(char* str) {
  * It is unused and believed to be not correct.
  * Currently copy-pasta from GHIDRA
  * (not checked in jak2)
- * TBD
+ * TBD SKIPPED
  */
 char* round(float x, s32* param1, char* start, char* sEnd, char padchar, s32 *param4) {
   char cVar1;
@@ -504,7 +504,7 @@ char* kitoa(char* buffer, s64 value, u64 base, s32 length, char pad, u32 flag) {
  * It would also require passing 128-bit values between GOAL and C++ and this is not worth
  * implementing. It is only used by the "format" function, which cannot use it properly. "format"
  * uses C varags, but 128-bit varags don't work, so "format" always passes 0 for quadword printing.
- * TBD
+ * TBD SKIPPED
  */
 void kqtoa_G() {
   undefined in_zero_qw [16];

@@ -1930,7 +1930,7 @@ int InitHeapAndSymbol() {
   return 0;
 }
 
-// TBD
+// TBD SKIPPED
 u64 load(u32 file_name_in,u32 heap_in) {
   undefined4 uVar1;
   char *__src;
@@ -1951,7 +1951,7 @@ u64 load(u32 file_name_in,u32 heap_in) {
   return uVar2;
 }
 
-// TBD
+// TBD SKIPPED
 u64 loadb(u32 file_name_in, u32 heap_in, u32 param3) {
   char *__src;
   u8 *puVar1;
@@ -1969,7 +1969,7 @@ u64 loadb(u32 file_name_in, u32 heap_in, u32 param3) {
   return uVar2;
 }
 
-// TBD
+// TBD SKIPPED
 u64 loadc(const char* file_name,kheapinfo *heap,u32 flags) {
   undefined4 uVar1;
   char *__src;
