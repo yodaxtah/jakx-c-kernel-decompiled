@@ -531,12 +531,7 @@ uint32_t jak3_work_opengoal(link_control* this) {
     }
   }
 
-  u8 *pVar___;
-  uint uVar11;
-  uint uVar12;
-  byte *pbVar15;
   uint32_t state_W;
-
 LAB_0026f94c:
   while ((int)this->m_state < (int)(this->m_code_start + 1) && this->m_segment_process == 0) {
     state_W = this->m_state;
@@ -557,134 +552,133 @@ LAB_0026f94c:
     this->m_segment_process = 0;
     this->m_state = state_W + 1;
   }
-  if ((int)state_W < (int)(this->m_code_start + 1)) {
-    state_W = this->m_segment_process;
-    if (state_W == 1) {
-      int relocCounter = 0x400;
-      if (*this->m_reloc_ptr__ != '\0') {
+
+  if ((int)state_W >= (int)(this->m_code_start + 1)) {
+    update_goal_fns();
+    return 1;
+  }
+
+  uint32_t state_W = this->m_segment_process;
+  if (state_W == 1) {
+    int relocCounter = 0x400;
+    if (*this->m_reloc_ptr__ != '\0') {
 LAB_0026f9e8:
-        byte m_table_toggle = *(byte *)&this->m_table_toggle__;
-        while(true) {
+      byte m_table_toggle = *(byte *)&this->m_table_toggle__;
+      while(true) {
 
-          byte* count = this->m_reloc_ptr__;
-          
-          if (m_table_toggle == 0) {
-            this->m_loc_ptr__ +=
-                4 *
-                (uint)*count;
-          } else {
-            for (int i = 0; i < (int)(uint)*count; i++;) {
-              u8** ppuVar3 = (u8 **)this->m_loc_ptr__;
-              pVar___ = *ppuVar3;
-              uVar12 = (uint)pVar___ >> 8 & 0xf;
-              uint* puVar13 = (uint *)(((uint)pVar___ >> 10 & 0x3c) + (int)ppuVar3);
-              if ((uint)pVar___ >> 0x18 == 0) {
-                *ppuVar3 = pVar___ + (int)this->m_base_ptr__;
-              }
-              else {
-                uVar11 = *(int *)(this->m_link_block_ptr + uVar12 * 0x10 + 4) +
-                          (((uint)pVar___ & 0xff) << 0x10 |
-                          (uint)*(ushort *)puVar13);
-                if ((DebugSegment == 0) && (uVar12 == 1)) {
-                  uVar11 = 0;
-                }
-                *ppuVar3 = (u8 *)((uint)pVar___ & 0xffff0000 | uVar11 >> 0x10);
-                *puVar13 = *puVar13 & 0xffff0000 | uVar11 & 0xffff;
-              }
-              this->m_loc_ptr__ = (u8 *)(ppuVar3 + 1);
+        byte count = *this->m_reloc_ptr__;
+        
+        if (m_table_toggle == 0) {
+          this->m_loc_ptr__ +=
+              4 *
+              (uint)count;
+        } else {
+          for (int i = 0; i < (int)(uint)count; i++;) {
+            u8** ppuVar3 = (u8 **)this->m_loc_ptr__;
+            u8* pVar___ = *ppuVar3;
+            uint uVar12 = (uint)pVar___ >> 8 & 0xf;
+            uint* puVar13 = (uint *)(((uint)pVar___ >> 10 & 0x3c) + (int)ppuVar3);
+            if ((uint)pVar___ >> 0x18 == 0) {
+              *ppuVar3 = pVar___ + (int)this->m_base_ptr__;
             }
-          }
-
-          if (*count == 0xff) {
-            this->m_reloc_ptr__ = count + 1;
-            goto LAB_0026f9e8;
-          }
-          this->m_reloc_ptr__ = count + 1;
-          *(byte *)&this->m_table_toggle__ = m_table_toggle ^ 1;
-          relocCounter--;
-          if (count[1] == '\0') {
-            break;
-          }
-          if (relocCounter == 0) {
-            int currentCycle = (*(code *)kernel.read_clock_G)();
-            if (200000 < (uint)(currentCycle - startCycle)) {
-              return 0;
+            else {
+              uint uVar11 = *(int *)(this->m_link_block_ptr + uVar12 * 0x10 + 4) +
+                        (((uint)pVar___ & 0xff) << 0x10 |
+                        (uint)*(ushort *)puVar13);
+              if ((DebugSegment == 0) && (uVar12 == 1)) {
+                uVar11 = 0;
+              }
+              *ppuVar3 = (u8 *)((uint)pVar___ & 0xffff0000 | uVar11 >> 0x10);
+              *puVar13 = *puVar13 & 0xffff0000 | uVar11 & 0xffff;
             }
-            relocCounter = 0x400;
-          };
-          m_table_toggle = *(byte *)&this->m_table_toggle__;
+            this->m_loc_ptr__ = (u8 *)(ppuVar3 + 1);
+          }
         }
-      }
-      this->m_reloc_ptr__++;
-      this->m_segment_process++;
-      state_W = this->m_segment_process;
-    } else if (state_W != 2) { // else
-      update_goal_fns();
-      return 1;
-    } else if (state_W == 2) {
-      pbVar15 = this->m_reloc_ptr__;
-      uVar12 = *(uint *)(this->m_link_block_ptr + this->m_state * 0x10 + -4);
-      while (true) {
-        byte bVar1 = *pbVar15;
-        uVar11 = (uint)bVar1;
-        if (uVar11 == 0) {
+
+        if (count == 0xff) {
+          this->m_reloc_ptr__++;
+          goto LAB_0026f9e8;
+        }
+        this->m_reloc_ptr__++;
+        *(byte *)&this->m_table_toggle__ = m_table_toggle ^ 1;
+        relocCounter--;
+        if (this->m_reloc_ptr__[1] == '\0') {
           break;
         }
-        this->m_reloc_ptr__ = pbVar15 + 1;
-        Type *pTVar8;
-        if ((bVar1 & 0x80) == 0) {
-          short sVar4 = *(short *)(pbVar15 + 1);
-          this->m_reloc_ptr__ = pbVar15 + 3;
-          pTVar8 = (Type *)intern_from_c((int)sVar4,uVar11,(const char *)(pbVar15 + 3));
-          puVar17 = this->m_reloc_ptr__;
-        }
-        else {
-          u64 methods;
-          int n_methods_base = uVar11 & 0x3f;
-          int n_methods = n_methods_base * 4;
-          if ((uVar11 & 0x3f) == 0x3f) {
-            bVar1 = pbVar15[1];
-            this->m_reloc_ptr__ = pbVar15 + 2;
-            methods = (long)(int)((uint)bVar1 * 4 + 3);
+        if (relocCounter == 0) {
+          int currentCycle = (*(code *)kernel.read_clock_G)();
+          if (200000 < (uint)(currentCycle - startCycle)) {
+            return 0;
           }
-          else if ((long)n_methods != 0) {
-            methods = (long)(n_methods + 3);
-          }
-          else {
-            methods = (long)n_methods;
-          }
-          short* name = (short *)((int)this->m_reloc_ptr__ + 2);
-          short sVar4 = *(short *)this->m_reloc_ptr__;
-          this->m_reloc_ptr__ = (uint8_t *)name;
-          pTVar8 = intern_type_from_c((int)sVar4,uVar11,(const char *)name,methods);
-          puVar17 = this->m_reloc_ptr__;
+          relocCounter = 0x400;
         }
-        size_t sVar10 = strlen((char *)puVar17);
-        this->m_reloc_ptr__ = this->m_reloc_ptr__ + (int)sVar10 + 1;
-        code* symlink_function;
-        if ((uVar12 & 1) == 0) {
-          puVar17 = this->m_object_data;
-          symlink_function = (code *)symlink3_G;
-        }
-        else {
-          puVar17 = this->m_object_data;
-          symlink_function = (code *)symlink2_G;
-        }
-        puVar17 = (uint8_t *)(*symlink_function)(puVar17,pTVar8);
-        this->m_reloc_ptr__ = puVar17;
-        int currentCycle = (*(code *)kernel.read_clock_G)();
-        if (200000 < (uint)(currentCycle - startCycle)) {
-          return 0;
-        }
-        pbVar15 = this->m_reloc_ptr__;
+        m_table_toggle = *(byte *)&this->m_table_toggle__;
       }
-      this->m_segment_process = 0;
-      this->m_state++;
-      this->m_entry = this->m_object_data + 4;
-      goto LAB_0026f94c;
     }
-  } else {
+    this->m_reloc_ptr__++;
+    this->m_segment_process++;
+    state_W = this->m_segment_process;
+  } else if (state_W == 2) {
+    byte* pbVar15 = this->m_reloc_ptr__;
+    uint uVar12 = *(uint *)(this->m_link_block_ptr + this->m_state * 0x10 + -4);
+    while (true) {
+      byte bVar1 = *pbVar15;
+      uint uVar11 = (uint)bVar1;
+      if (uVar11 == 0) {
+        break;
+      }
+      this->m_reloc_ptr__ = pbVar15 + 1;
+      Type *goalObj;
+      if ((bVar1 & 0x80) == 0) {
+        short sVar4 = *(short *)(pbVar15 + 1);
+        this->m_reloc_ptr__ = pbVar15 + 3;
+        goalObj = (Type *)intern_from_c((int)sVar4,uVar11,(const char *)(pbVar15 + 3));
+        puVar17 = this->m_reloc_ptr__;
+      }
+      else {
+        u64 methods;
+        int n_methods_base = uVar11 & 0x3f;
+        int n_methods = n_methods_base * 4;
+        if ((uVar11 & 0x3f) == 0x3f) {
+          bVar1 = pbVar15[1];
+          this->m_reloc_ptr__ = pbVar15 + 2;
+          methods = (long)(int)((uint)bVar1 * 4 + 3);
+        }
+        else if ((long)n_methods != 0) {
+          methods = (long)(n_methods + 3);
+        }
+        else {
+          methods = (long)n_methods;
+        }
+        short* name = (short *)((int)this->m_reloc_ptr__ + 2);
+        short sVar4 = *(short *)this->m_reloc_ptr__;
+        this->m_reloc_ptr__ = (uint8_t *)name;
+        goalObj = intern_type_from_c((int)sVar4,uVar11,(const char *)name,methods);
+        puVar17 = this->m_reloc_ptr__;
+      }
+      this->m_reloc_ptr__ = this->m_reloc_ptr__ + (int)strlen((char *)puVar17) + 1;
+      code* symlink_function;
+      if ((uVar12 & 1) == 0) {
+        symlink_function = (code *)symlink3_G;
+      }
+      else {
+        symlink_function = (code *)symlink2_G;
+      }
+      this->m_reloc_ptr__ = (uint8_t *)(*symlink_function)(this->m_object_data, goalObj);
+      
+      int currentCycle = (*(code *)kernel.read_clock_G)();
+      if (200000 < (uint)(currentCycle - startCycle)) {
+        return 0;
+      }
+      pbVar15 = this->m_reloc_ptr__;
+    }
+    this->m_segment_process = 0;
+    this->m_state++;
+    this->m_entry = this->m_object_data + 4;
+    goto LAB_0026f94c;
+  } else if (state_W != 2) { // else
     update_goal_fns();
+    return 1;
   }
   return 1;
 }
