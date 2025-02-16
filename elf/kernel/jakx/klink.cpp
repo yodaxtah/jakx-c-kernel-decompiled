@@ -531,8 +531,7 @@ uint32_t jak3_work_opengoal(link_control* this) {
     }
   }
 
-endless_loop:
-  if ((int)this->m_state < (int)(this->m_code_start + 1) && this->m_segment_process == 0) {
+  while ((int)this->m_state < (int)(this->m_code_start + 1) && this->m_segment_process == 0) {
     ObjectFileHeader* m_link_block_ptr = (ObjectFileHeader *)this->m_link_block_ptr;
     if ((m_link_block_ptr->code_infos[this->m_state - 1].offset != 0) &&
         (m_link_block_ptr->code_infos[this->m_state - 1].size != 0)) {
@@ -545,140 +544,137 @@ endless_loop:
       this->m_object_data = puVar17;
       this->m_loc_ptr__ = puVar17 + -4;
       this->m_base_ptr__ = puVar17;
-      goto endless_loop_body;
-    } else {
-      this->m_segment_process = 0;
-      this->m_state++;
-      goto endless_loop;
-    }
-  }
 
-endless_loop_body:
-  if ((int)this->m_state - 1 >= (int)(this->m_code_start + 1)) {
-    update_goal_fns();
-    return 1;
-  }
+      if ((int)this->m_state - 1 >= (int)(this->m_code_start + 1)) {
+        update_goal_fns();
+        return 1;
+      }
 
-  uint32_t m_state = this->m_segment_process;
+      uint32_t m_state = this->m_segment_process;
 
-  if (m_state == 1) {
-    int relocCounter = 0x400;
-    if (*this->m_reloc_ptr__ != '\0') {
-      while (true) {
+      if (m_state == 1) {
+        int relocCounter = 0x400;
+        if (*this->m_reloc_ptr__ != '\0') {
+          while (true) {
 
-        byte count = *this->m_reloc_ptr__;
-        
-        if (this->m_table_toggle__ == 0) {
-          this->m_loc_ptr__ +=
-              4 *
-              (uint)count;
-        } else {
-          for (int i = 0; i < (int)(uint)count; i++;) {
-            u8** ppuVar3 = (u8 **)this->m_loc_ptr__;
-            u8* pVar___ = *ppuVar3;
-            uint uVar12 = (uint)pVar___ >> 8 & 0xf;
-            uint* puVar13 = (uint *)(((uint)pVar___ >> 10 & 0x3c) + (int)ppuVar3);
-            if ((uint)pVar___ >> 0x18 == 0) {
-              *ppuVar3 = pVar___ + (int)this->m_base_ptr__;
-            }
-            else {
-              uint uVar11 = *(int *)(this->m_link_block_ptr + uVar12 * 0x10 + 4) +
-                        (((uint)pVar___ & 0xff) << 0x10 |
-                        (uint)*(ushort *)puVar13);
-              if ((DebugSegment == 0) && (uVar12 == 1)) {
-                uVar11 = 0;
+            byte count = *this->m_reloc_ptr__;
+            
+            if (this->m_table_toggle__ == 0) {
+              this->m_loc_ptr__ +=
+                  4 *
+                  (uint)count;
+            } else {
+              for (int i = 0; i < (int)(uint)count; i++;) {
+                u8** ppuVar3 = (u8 **)this->m_loc_ptr__;
+                u8* pVar___ = *ppuVar3;
+                uint uVar12 = (uint)pVar___ >> 8 & 0xf;
+                uint* puVar13 = (uint *)(((uint)pVar___ >> 10 & 0x3c) + (int)ppuVar3);
+                if ((uint)pVar___ >> 0x18 == 0) {
+                  *ppuVar3 = pVar___ + (int)this->m_base_ptr__;
+                }
+                else {
+                  uint uVar11 = *(int *)(this->m_link_block_ptr + uVar12 * 0x10 + 4) +
+                            (((uint)pVar___ & 0xff) << 0x10 |
+                            (uint)*(ushort *)puVar13);
+                  if ((DebugSegment == 0) && (uVar12 == 1)) {
+                    uVar11 = 0;
+                  }
+                  *ppuVar3 = (u8 *)((uint)pVar___ & 0xffff0000 | uVar11 >> 0x10);
+                  *puVar13 = *puVar13 & 0xffff0000 | uVar11 & 0xffff;
+                }
+                this->m_loc_ptr__ = (u8 *)(ppuVar3 + 1);
               }
-              *ppuVar3 = (u8 *)((uint)pVar___ & 0xffff0000 | uVar11 >> 0x10);
-              *puVar13 = *puVar13 & 0xffff0000 | uVar11 & 0xffff;
             }
-            this->m_loc_ptr__ = (u8 *)(ppuVar3 + 1);
+
+            if (count == 0xff) {
+              this->m_reloc_ptr__++;
+              continue;
+            }
+            
+            this->m_reloc_ptr__++;
+
+            this->m_table_toggle__ = this->m_table_toggle__ ^ 1;
+            relocCounter--;
+            if (this->m_reloc_ptr__[1] == '\0') {
+              break;
+            }
+            if (relocCounter == 0) {
+              int currentCycle = (*(code *)kernel.read_clock_G)();
+              if (200000 < (uint)(currentCycle - startCycle)) {
+                return 0;
+              }
+              relocCounter = 0x400;
+            }
           }
         }
-
-        if (count == 0xff) {
-          this->m_reloc_ptr__++;
-          continue;
-        }
-        
         this->m_reloc_ptr__++;
-
-        this->m_table_toggle__ = this->m_table_toggle__ ^ 1;
-        relocCounter--;
-        if (this->m_reloc_ptr__[1] == '\0') {
-          break;
-        }
-        if (relocCounter == 0) {
+        this->m_segment_process++;
+        m_state = this->m_segment_process;
+      }
+      
+      else if (m_state == 2) {
+        byte* sub_link_ptr = this->m_reloc_ptr__;
+        uint uVar12 = *(uint *)(this->m_link_block_ptr + this->m_state * 0x10 + -4);
+        while (true) {
+          byte reloc = *sub_link_ptr;
+          if (*this->m_reloc_ptr__ == 0) {
+            break;
+          }
+          this->m_reloc_ptr__ = sub_link_ptr + 1;
+          Type* goalObj;
+          if ((reloc & 0x80) == 0) {
+            short sVar4 = *(short *)(sub_link_ptr + 1);
+            this->m_reloc_ptr__ = sub_link_ptr + 3;
+            char* sname = (const char *)this->m_reloc_ptr__;
+            goalObj = (Type *)intern_from_c((int)sVar4, (uint)reloc, sname);
+          }
+          else {
+            u64 methods;
+            int n_methods_base = (uint)reloc & 0x3f;
+            int n_methods = n_methods_base * 4;
+            if (((uint)reloc & 0x3f) == 0x3f) {
+              reloc = sub_link_ptr[1];
+              this->m_reloc_ptr__ = sub_link_ptr + 2;
+              methods = (long)(int)((uint)reloc * 4 + 3);
+            } else if ((long)n_methods != 0) {
+              methods = (long)(n_methods + 3);
+            } else {
+              methods = (long)n_methods;
+            }
+            this->m_reloc_ptr__ +=
+                2;
+            char* name = (char*)this->m_reloc_ptr__;
+            goalObj = intern_type_from_c((int)this->m_reloc_ptr__, (uint)reloc, name, methods);
+          }
+          this->m_reloc_ptr__ += (int)strlen((char *)this->m_reloc_ptr__) + 1;
+          code* symlink_function;
+          if ((uVar12 & 1) == 0) {
+            symlink_function = (code *)symlink3_G;
+          }
+          else {
+            symlink_function = (code *)symlink2_G;
+          }
+          this->m_reloc_ptr__ = (uint8_t *)(*symlink_function)(this->m_object_data, goalObj);
+          
           int currentCycle = (*(code *)kernel.read_clock_G)();
           if (200000 < (uint)(currentCycle - startCycle)) {
             return 0;
           }
-          relocCounter = 0x400;
+          sub_link_ptr = this->m_reloc_ptr__;
         }
+        this->m_segment_process = 0;
+        this->m_state++;
+        this->m_entry = this->m_object_data + 4;
+      } else {
+        update_goal_fns();
+        return 1;
       }
+    } else {
+      this->m_segment_process = 0;
+      this->m_state++;
     }
-    this->m_reloc_ptr__++;
-    this->m_segment_process++;
-    m_state = this->m_segment_process;
   }
-  
-  else if (m_state == 2) {
-    byte* sub_link_ptr = this->m_reloc_ptr__;
-    uint uVar12 = *(uint *)(this->m_link_block_ptr + this->m_state * 0x10 + -4);
-    while (true) {
-      byte reloc = *sub_link_ptr;
-      if (*this->m_reloc_ptr__ == 0) {
-        break;
-      }
-      this->m_reloc_ptr__ = sub_link_ptr + 1;
-      Type* goalObj;
-      if ((reloc & 0x80) == 0) {
-        short sVar4 = *(short *)(sub_link_ptr + 1);
-        this->m_reloc_ptr__ = sub_link_ptr + 3;
-        char* sname = (const char *)this->m_reloc_ptr__;
-        goalObj = (Type *)intern_from_c((int)sVar4, (uint)reloc, sname);
-      }
-      else {
-        u64 methods;
-        int n_methods_base = (uint)reloc & 0x3f;
-        int n_methods = n_methods_base * 4;
-        if (((uint)reloc & 0x3f) == 0x3f) {
-          reloc = sub_link_ptr[1];
-          this->m_reloc_ptr__ = sub_link_ptr + 2;
-          methods = (long)(int)((uint)reloc * 4 + 3);
-        } else if ((long)n_methods != 0) {
-          methods = (long)(n_methods + 3);
-        } else {
-          methods = (long)n_methods;
-        }
-        this->m_reloc_ptr__ +=
-            2;
-        char* name = (char*)this->m_reloc_ptr__;
-        goalObj = intern_type_from_c((int)this->m_reloc_ptr__, (uint)reloc, name, methods);
-      }
-      this->m_reloc_ptr__ += (int)strlen((char *)this->m_reloc_ptr__) + 1;
-      code* symlink_function;
-      if ((uVar12 & 1) == 0) {
-        symlink_function = (code *)symlink3_G;
-      }
-      else {
-        symlink_function = (code *)symlink2_G;
-      }
-      this->m_reloc_ptr__ = (uint8_t *)(*symlink_function)(this->m_object_data, goalObj);
-      
-      int currentCycle = (*(code *)kernel.read_clock_G)();
-      if (200000 < (uint)(currentCycle - startCycle)) {
-        return 0;
-      }
-      sub_link_ptr = this->m_reloc_ptr__;
-    }
-    this->m_segment_process = 0;
-    this->m_state++;
-    this->m_entry = this->m_object_data + 4;
-    goto endless_loop;
-  } else {
-    update_goal_fns();
-    return 1;
-  }
+
   return 1;
 }
 
