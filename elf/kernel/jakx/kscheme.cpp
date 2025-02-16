@@ -890,14 +890,18 @@ Type* intern_type_from_c(int a, int b, const char* name, u64 methods) {
   Type** symbol = (Type **)intern_from_c((int)(short)a, b, name);
   Type* sym_value = *(Type **)((int)symbol + -1);
   if (sym_value == nullptr) {
+    u64 n_methods = methods;
+
     if (methods == 0) {
-      methods = 0xc;
+      n_methods = 0xc;
     } else if (methods == 1) {
-      methods = 0x2c;
+      n_methods = 0x2c;
     }
-    Type* type = alloc_and_init_type(symbol,(u32)methods,false);
-    type->symbol = symbol;
-    type->num_methods = (u16)methods;
+
+    Type** casted_sym = symbol;
+    Type* type = alloc_and_init_type(casted_sym, (u32)n_methods, false);
+    type->symbol = casted_sym;
+    type->num_methods = (u16)n_methods;
     return type;
   } else {
     Type* type = sym_value;
@@ -905,7 +909,7 @@ Type* intern_type_from_c(int a, int b, const char* name, u64 methods) {
       MsgErr(
           "dkernel: trying to redefine a type \'%s\' with %d methods when it had %d, try "
           "restarting\n",
-          name, methods);
+          name, methods, type->num_methods);
     }
     return type;
   }
