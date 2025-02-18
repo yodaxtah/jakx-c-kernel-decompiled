@@ -96,11 +96,11 @@ char* MakeFileName(int type, const char* name, int new_string) {
       break;
 
     case 0x20:
-      // sprintf(buf, "%sfinal/%s.go", prefix, name);
+      sprintf(buf, "%sfinal/%s.go", prefix, name);
       break;
 
     case 0x21:
-      // sprintf(buf, "%sfinal/texture-page%d/%s.go", prefix, 0x8, name);
+      sprintf(buf, "%sfinal/texture-page%d/%s.go", prefix, 0x8, name);
       break;
 
     case 0x22:

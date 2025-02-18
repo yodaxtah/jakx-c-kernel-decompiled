@@ -259,7 +259,7 @@ s32 klength(u64 fs) {
   if (((*(byte *)&file_stream->flags ^ 1) & 1) != 0) {
     int end_seek = sceLseek(file_stream->file, 0, 2);
     int reset_seek = sceLseek(file_stream->file, 0, 0);
-    if (end_seek < 0 || !(-1 < reset_seek)) { // matches jak3's condition
+    if (reset_seek < 0 || end_seek < 0) {
       file_stream->flags |= 1;
     }
     return end_seek;

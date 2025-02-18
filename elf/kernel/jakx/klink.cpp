@@ -126,7 +126,7 @@ uint32_t jak3_work(link_control* this) {
   uint16_t m_version = this->m_link_hdr->version;
   *(undefined4 *)(this->m_link_hdr[-1].name + 0x37) = *(undefined4 *)(unaff_s7_lo + 0x1f);
   if (m_version == 5) {
-    rv = jak3_work_opengoal(this);
+    rv = jakx_work_v5(this);
   } else {
     rv = 0;
   }
@@ -444,7 +444,7 @@ uint32_t symlink_v3(Ptr<uint8_t> link, Ptr<uint8_t> data) {
 }
 }  // namespace
 
-uint32_t jak3_work_opengoal(link_control* this) {
+uint32_t jakx_work_v5(link_control* this) {
   int startCycle = (*(code *)kernel.read_clock_G)();
   ObjectFileHeader* ofh = (ObjectFileHeader*)this->m_link_block_ptr;
   if (this->m_state == 0) {
@@ -752,8 +752,7 @@ uint8_t* link_and_exec(uint8_t* data,
   do {
     done = jak3_work((link_control *)&stack0xffffff30);
   } while (done == 0);
-  long lVar1 = (long)(int)data;
-  jak3_finish((link_control *)&stack0xffffff30,SUB81(lVar1,0));
+  jak3_finish((link_control *)&stack0xffffff30, SUB81((long)(int)data, 0));
   uint8_t *lc.m_entry;
   return lc.m_entry;
 }
@@ -770,7 +769,7 @@ u32 link_busy() {
 void link_reset() {
   saved_link_control_WG.m_busy = 0;
 }
-uint64_t link_begin(u64 *args) {
+uint64_t link_begin(u64* args) {
   const char *in_a1_lo;
   int32_t in_a2_lo;
   kheapinfo *in_a3_lo;
@@ -779,7 +778,7 @@ uint64_t link_begin(u64 *args) {
              in_a3_lo, in_t0_lo);
   uint32_t work_result = jak3_work(&saved_link_control_WG);
   if (work_result != 0) {
-    jak3_finish(&saved_link_control_WG,(bool)SUB41(args,0));
+    jak3_finish(&saved_link_control_WG, (bool)SUB41(args, 0));
   }
   return (ulong)(work_result != 0);
 }

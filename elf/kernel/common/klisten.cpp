@@ -43,9 +43,9 @@ void ClearPending() {
         char* msg = PrintBufArea + 0x18;
         size_t size = strlen(PrintBufArea + 0x18);
         while (size > 0) {
-          size_t send_size = 64000;
-          if ((long)size < 64000) {
-            send_size = size;
+          size_t send_size = size;
+          if ((long)size > 64000) {
+            send_size = 64000;
           }
           SendFromBufferD(2, 0, msg, (int)send_size);
           size -= send_size;
@@ -67,7 +67,7 @@ void ClearPending() {
  */
 void SendAck() {
   if (MasterDebug != 0) {
-    SendFromBufferD(0,protoBlock.msg_id,
+    SendFromBufferD(0, protoBlock.msg_id,
                     &AckBufArea,
                     0);
   }

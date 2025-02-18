@@ -42,7 +42,7 @@ void kmalloc_init_globals_common() {
  */
 u8* ksmalloc(kheapinfo* heap, s32 size, u32 flags, char const* name) {
   u32 align = flags & 0xfff;
-  u8 *mem;
+  u8* mem;
 
   if ((flags & 0x1000) == 0) {
     // mem = (u8 *)malloc((long)(int)(size + align));
@@ -99,7 +99,7 @@ kheapinfo* kinitheap(kheapinfo* heap, u8* mem, s32 size) {
   heap->base = mem;
   heap->current = mem;
   heap->top = mem + size;
-  heap->top_base = mem + size;
+  heap->top_base = heap->top;
   memset(mem, 0, (long)size);
   return heap;
 }
@@ -134,11 +134,11 @@ u8* kmalloc(kheapinfo* heap, s32 size, u32 flags, char const* name) {
 
   if ((flags & 0x2000) == 0) {
     if (alignment_flag == 0x40)
-      memstart = 0xffffffc0 & (uint)(heap->current + 0x3f);
+      memstart = 0xffffffc0 & (uint)(heap->current + 0x40 - 1);
     else if (alignment_flag == 0x100)
-      memstart = 0xffffff00 & (uint)(heap->current + 0xff);
+      memstart = 0xffffff00 & (uint)(heap->current + 0x100 - 1);
     else
-      memstart = 0xfffffff0 & (uint)(heap->current + 0xf);
+      memstart = 0xfffffff0 & (uint)(heap->current + 0x10 - 1);
 
     if (size == 0) {
       return memstart;
@@ -158,9 +158,9 @@ u8* kmalloc(kheapinfo* heap, s32 size, u32 flags, char const* name) {
     }
     // This if statement wasn't in the code up until jak 3; why?
     if ((heap == &kglobalheapinfo) && ((char)kheaplogging != '\0')) {
-      if (strcmp(name,"string") == 0) {
-        MemItemsCount[0] = MemItemsCount[0] + 1;
-        MemItemsSize[0] = MemItemsSize[0] + size;
+      if (strcmp(name, "string") == 0) {
+        MemItemsCount[0]++;
+        MemItemsSize[0] += size;
       } else if (strcmp(name, "type") == 0) {
         MemItemsCount[1]++;
         MemItemsSize[1] += size;

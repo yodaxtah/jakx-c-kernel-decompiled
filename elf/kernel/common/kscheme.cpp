@@ -150,7 +150,7 @@ u64 call_goal_on_stack(Ptr<Function> f, u64 rsp, u64 st, void* offset) {
 /*!
  * Call a GOAL function with no arguments.
  */
-u64 call_goal_function(Function *func) {
+u64 call_goal_function(Function* func) {
   return (long)(*(code *)func)();
 }
 
@@ -160,7 +160,7 @@ u64 call_goal_function(Function *func) {
  */
 u64 print_structure(u32 s) {
   cprintf("#<structure @ #x%x>", (ulong)s);
-  return (long)(int)s;
+  return (u64)s;
 }
 
 /*!
@@ -204,7 +204,7 @@ u64 print_float(u32 f) {
   PrintPending = strend(str);
 
   ftoa(PrintPending, ff, -1, ' ', 4, 0);
-  return (long)(int)f;
+  return (u64)f;
 }
 
 /*!
@@ -212,14 +212,14 @@ u64 print_float(u32 f) {
  */
 u64 print_vu_function(u32 obj) {
   cprintf("#<compiled vu-function @ #x%x>", (long)(int)obj);
-  return (long)(int)obj;
+  return (u64)obj;
 }
 
 /*!
  * Copy method that does no copying.
  */
 u64 copy_fixed(u32 it) {
-  return (long)(int)it;
+  return (u64)it;
 }
 
 /*!
@@ -227,7 +227,7 @@ u64 copy_fixed(u32 it) {
  * size to copy.  So we do no copy and return a reference to the original data.
  */
 u64 copy_structure(u32 it, u32 unknown) {
-  return (long)(int)it;
+  return (u64)it;
 }
 
 /*!
@@ -262,7 +262,7 @@ u64 inspect_float(u32 f) {
 
   ftoa(PrintPending, ff, -1, ' ', 4, 0);
   cprintf("\n");
-  return (long)(int)f;
+  return (u64)f;
 }
 
 /*!
@@ -270,7 +270,7 @@ u64 inspect_float(u32 f) {
  */
 u64 inspect_structure(u32 obj) {
   cprintf("[%8x] structure\n", (long)(int)obj);
-  return (long)(int)obj;
+  return (u64)obj;
 }
 
 /*!
@@ -288,7 +288,7 @@ u64 inspect_vu_function(u32 obj) {
   VuFunction* vf = (VuFunction*)obj;
   cprintf("[%8x] vu-function\n\tlength: %d\n\torigin: #x%x\n\tqlength: %d\n", (long)(int)obj, vf->length,
           vf->origin, vf->qlength);
-  return (long)(int)obj;
+  return (u64)obj;
 }
 
 /*!

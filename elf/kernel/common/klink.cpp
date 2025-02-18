@@ -248,11 +248,10 @@ u8* c_symlink2(u8* objData, u8* linkObj, u8* relocTable) {
     relocPtr = next_reloc;
     objPtr = (u8 *)((int)objPtr + (result & 0xfffffffc));
     u32 objValue = *(u8 **)objPtr;
-    if (objValue == &_gp_4) {
+    if (objValue == 0xffffffff) {
       *(u8 **)objPtr = linkObj;
     } else {
-      *(u8 **)objPtr =
-           (u8 *)((uint)objValue & 0xffff0000 | (int)(objValue + (int)linkObj) - unaff_s7_lo & 0xffffU);
+      *(u8 **)objPtr = (u8 *)((uint)objValue & 0xffff0000 | (int)(objValue + (int)linkObj) - unaff_s7_lo & 0xffffU);
     }
   } while (*relocPtr != 0);
 

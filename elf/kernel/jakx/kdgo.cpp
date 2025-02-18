@@ -33,7 +33,7 @@ void kdgo_init_globals() {
  * DONE,
  * MODIFIED : Added print statement to indicate when DGO load starts.
  */
-void BeginLoadingDGO(const char *name,u8 *buffer1,u8 *buffer2,u8 *currentHeap) {
+void BeginLoadingDGO(const char* name, u8* buffer1, u8* buffer2, u8* currentHeap) {
   uint msgID = sMsgNum;
   RPC_Dgo_Cmd* mess = sMsg + sMsgNum;
   sMsgNum = sMsgNum ^ 1;
@@ -107,8 +107,8 @@ void ContinueLoadingDGO(u8 b1, u8* b2, u8* heapPtr) {
  * This does not use the mutli-threaded linker and will block until the entire file is done.
  */
 void load_and_link_dgo(u64 name_gstr, u64 heap_info, u64 flag, u64 buffer_size) {
-  const char * name = (const char *)((int)name_gstr + 4);
-  kheapinfo * heap = (kheapinfo *)heap_info;
+  const char* name = (const char*)((int)name_gstr + 4);
+  kheapinfo* heap = (kheapinfo*)heap_info;
   load_and_link_dgo_from_c(name, heap, (u32)flag, (s32)buffer_size, false);
 }
 
@@ -177,13 +177,14 @@ LAB_00270d58:
   if (POWERING_OFF_W == false) {
     setStallMsg_GW(oldShowStall);
     return;
+  } else {
+    KernelShutdown(3);
+    ShutdownMachine(3);
+    Msg(6, "load_and_link_dgo_from_c: cannot continue; load aborted\n");
+    do {
+                      /* WARNING: Do nothing block with infinite loop */
+    } while( true );
   }
-  KernelShutdown(3);
-  ShutdownMachine(3);
-  Msg(6, "load_and_link_dgo_from_c: cannot continue; load aborted\n");
-  do {
-                    /* WARNING: Do nothing block with infinite loop */
-  } while( true );
 }
 
 }  // namespace jak3

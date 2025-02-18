@@ -98,7 +98,7 @@ void GoalProtoHandler(int event, int param, void* opt) {
     } break;
 
     case 4:
-      if (pb->send_remaining < 1) {
+      if (pb->send_remaining <= 0) {
         pb->send_status = 0;
       } else {
         s32 a = pb->send_remaining;
@@ -127,8 +127,9 @@ void GoalProtoHandler(int event, int param, void* opt) {
  * removed
  */
 s32 SendFromBufferD(s32 msg_kind, u64 msg_id, char* data, s32 size) {
-  do {
-  } while (protoBlock.send_status > 0);
+  while (protoBlock.send_status > 0) {
+    ;
+  }
 
   for (s32 i = 0; i < 10; i++) {
     ListenerMessageHeader* header = (ListenerMessageHeader*)((uint)(data - 0x18) | 0x20000000);
@@ -149,13 +150,15 @@ s32 SendFromBufferD(s32 msg_kind, u64 msg_id, char* data, s32 size) {
     header->u6 = 0;
     header->msg_size = size;
     header->msg_id = msg_id;
+
     long rv = sceDeci2ReqSend(protoBlock.socket, 0x48);
     if (rv < 0) {
       printf("1sceDeci2ReqSend fail, reason code = %08x\n", rv);
       return -6;
     }
-    do {
-    } while (protoBlock.send_status > 0);
+    while (protoBlock.send_status > 0) {
+      ;
+    }
 
     if (protoBlock.send_status > -1) {
       break;

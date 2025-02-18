@@ -58,7 +58,8 @@ void kprint_init_globals_common() {
  * Allocates buffers.
  */
 void init_output() {
-  bool use_debug = (MasterDebug == 0) && (DebugSegment == 0);
+  bool use_debug;
+  use_debug = MasterDebug == 0 && DebugSegment == 0);
 
   if (use_debug) {
     MessBufArea = kmalloc(kdebugheap, 0x80000, 0x1100,
@@ -101,7 +102,8 @@ void clear_print() {
 void reset_output() {
   if (MasterDebug != 0) {
     undefined *unaff_s7_lo;
-    sprintf((char *)(OutputBufArea + 0x18), "reset #x%x\n", unaff_s7_lo);
+    sprintf((char *)(OutputBufArea + 0x18), "reset #x%x\n",
+            unaff_s7_lo);
 
     OutputPending = OutputBufArea + 0x18;
   }
@@ -122,7 +124,7 @@ void output_unload(const char* name) {
 /*!
  * Buffer message to compiler indicating some object file has been loaded.
  */
-void output_segment_load(const char* name, void* link_block, u32 flags) {
+void output_segment_load(const char* name, u8* link_block, u32 flags) {
   if (MasterDebug != 0) {
     char* buffer = strend((char *)(OutputBufArea + 0x18));
     char true_str[] = "t";

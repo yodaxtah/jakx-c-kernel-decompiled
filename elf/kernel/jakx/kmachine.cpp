@@ -185,10 +185,10 @@ s32 InitIOP() {
       && reboot_G_isodrv_G_overlord_S != 0
       && isodrv_G_reboot_G != 0
   ) {
-    cd_S_INITIALIZE_CD_W = 0;
+    cd_S_INITIALIZE_CD_W = false;
   }
   else {
-    cd_S_INITIALIZE_CD_W = 1;
+    cd_S_INITIALIZE_CD_W = true;
   }
   Msg(6, "dkernel: boot:%d dbg:%d mem:%d syms:%d fs:%d mod:%d ovl:%d ioprp:%d cd:%d dnas:%d\n",
       DiskBoot, MasterDebug, DebugSegment, DebugSymbols, fs_S_FS_INITIALIZED_W, modsrc_S,
@@ -394,25 +394,26 @@ s32 InitIOP() {
 }
 
 int InitMachine() {
-  int iVar2 = FUN_00268b40();
-  int iVar6 = iVar2 + -0x4000;
-  u8* heap_start = (u8 *)malloc((long)iVar6);
+  int global_heap_end_W = FUN_00268b40();
+
+  s32 global_heap_size = global_heap_end_W + -0x4000;
+  u8* heap_start = (u8 *)malloc((long)global_heap_size);
   if (heap_start == nullptr) {
     MsgErr("dkernel: out of memory, cannot allocate global heap; exiting\n");
     return -1;
   }
   else {
-    s32 global_heap_size = 0x5000000;
-    if (!((MasterDebug != 0 || DebugSegment != 0) && (0x4ffffff < (ulong)(long)iVar6))) {
-      global_heap_size = iVar6;
+    s32 global_heap_size__ = 0x5000000;
+    if (!((MasterDebug != 0 || DebugSegment != 0) && (0x4ffffff < (ulong)(long)global_heap_size))) {
+      global_heap_size__ = global_heap_size;
     }
-    kinitheap(kglobalheap, heap_start, global_heap_size);
+    kinitheap(kglobalheap, heap_start, global_heap_size__);
 
     kmemopen_from_c(kglobalheap, "global");
     kmemopen_from_c(kglobalheap, "scheme-globals");
 
-    if ((MasterDebug != 0 || DebugSegment != 0) && (0x4ffffff < (ulong)(long)iVar6)) {
-      kinitheap(kdebugheap, heap_start + 0x5000000, iVar2 + -0x5004000);
+    if ((MasterDebug != 0 || DebugSegment != 0) && (0x4ffffff < (ulong)(long)global_heap_size)) {
+      kinitheap(kdebugheap, heap_start + 0x5000000, global_heap_end_W + -0x5004000);
     } else {
       kdebugheap = 0;
     }
@@ -471,10 +472,10 @@ int InitMachine() {
 int StopIOP_G() {
   int result = Is_RPC_Initialized_G();
   if ((result != 0) && (IOP_RUNNING_W != false)) {                                                 
-    StopIOPSendBuffer[2] = 0x10; // TODO: this doesn't look right
-    StopIOPSendBuffer[3] = 0;
+    x[2] = 0x10; // TODO: this doesn't look right
+    x[3] = 0;
     RpcSync(1);
-    result = RpcCallNoCallback(1,0,false,StopIOPSendBuffer,0x30,nullptr,0);
+    result = RpcCallNoCallback(1, 0, false, x, 0x30, nullptr, 0);
     IOP_RUNNING_W = false;
   }
   return result;
@@ -740,6 +741,7 @@ void InitMachineScheme() {
                              0xd,
                              0x400000, (bool)in_t0_lo);
     *EnableMethodSet = *EnableMethodSet + -1;
+    ;
 
     *(int *)(kernel_packages + -1) =
         (int)new_pair(unaff_s7_lo + 0xa0,*(u32 *)(unaff_s7_lo + 0x6f),

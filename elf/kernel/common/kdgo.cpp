@@ -84,7 +84,7 @@ s32 RpcCall(s32 rpcChannel,
     RpcCallEndFunctionArgs_W[rpcChannel].callback = callback;
     RpcCallEndFunctionArgs_W[rpcChannel].fourth = 0; // in_stack_00000008;
     RpcCallEndFunctionArgs_W[rpcChannel].third = 0; // in_stack_00000000;
-    return SifCallRpc(cd_G_rpc + rpcChannel, fno, (int)async, sendBuff, sendSize, recvBuff, recvSize, RpcCallEndFunction_W, RpcCallEndFunctionArgs_W + rpcChannel);
+    return SifCallRpc(&cd_G_rpc[rpcChannel], fno, (int)async, sendBuff, sendSize, recvBuff, recvSize, RpcCallEndFunction_W, RpcCallEndFunctionArgs_W + rpcChannel);
   }
   return -1;
 }
@@ -124,7 +124,7 @@ struct GoalStackArgs {
  */
 u32 RpcBusy(s32 channel) {
   if (channel < numberOfRpcChannels) {
-    return sceSifCheckStatRpc(cd_G_rpc + channel) != 0;
+    return sceSifCheckStatRpc(&cd_G_rpc[channel]) != 0;
   } else {
     return 1;
   }
@@ -162,24 +162,17 @@ s32 RpcBind(s32 channel, s32 id) {
   if (channel < numberOfRpcChannels) {
     bool displayedWarning = false;
     while (true) {
-      if (SifBindRpc(cd_G_rpc + channel, id, 0) < 0) {
+      if (SifBindRpc(&cd_G_rpc[channel], id, 0) < 0) {
         MsgErr("dkernel: RpcBind() error; bind failed on port #%d id 0x%08x\n", channel, id);
         return -1;
-      }
-      if (cd_G_rpc[channel].server != nullptr) {
+      } else if (cd_G_rpc[channel].server != nullptr) {
         MsgErr("dkernel: RpcBind() port #%d id 0x%08x bound\n", channel, id);
         return 0;
-      }
-      if (!displayedWarning) {
+      } else if (!displayedWarning) {
         displayedWarning = true;
         MsgErr("dkernel: RpcBind() warning; port #%d id 0x%08x not responding; retrying...\n", channel, id);
       }
       sceKernelDelayThread_G(10000);
-      // it might seem like looping here is a bad idea (unclear if sceSifBindRpc can be called
-      // multiple times!) but this actually happens sometimes, at least on development hardware!
-      // (also, it's not clear that the "serve" field having data in it really means anything - maybe
-      // the sceSifBindRpc doesn't wait for the connection to be fully set up?  This seems likely
-      // because they had to put that little delay in there before checking.)
     }
   }
   else {
@@ -196,7 +189,7 @@ s32 InitRPC() {
   s32 sVar1;
   int semaId;
   int iVar3;
-  ee_sema_t eStack_40;
+  ee_sema_t someSema;
   
   if (RPC_Initialized_G) {
     MsgErr("dkernel: InitRPC() error; multiple initializations attempted");
@@ -215,10 +208,10 @@ s32 InitRPC() {
       }
     }
     for (int i = 0; i < numberOfRpcChannels; ++i) {
-      memset(&eStack_40, 0, 0x18);
-      eStack_40.init_count = 1;
-      eStack_40.max_count = 1;
-      semaId = CreateSema(&eStack_40);
+      memset(&someSema, 0, 0x18);
+      someSema.init_count = 1;
+      someSema.max_count = 1;
+      semaId = CreateSema(&someSema);
       RpcCallEndFunctionArgs_W[i].sema_id = semaId;
       if (semaId < 0) {
         for (int j = i; j > 0; --j) {
@@ -238,7 +231,7 @@ s32 InitRPC() {
  * DONE, EXACT.
  */
 int StopIOP_G() {
-  if (Is_RPC_Initialized_G() != 0 && IOP_RUNNING_W) {                                                 
+  if (Is_RPC_Initialized_G() != 0 && IOP_RUNNING_W) {
     x[2] = 0x10;
     x[3] = 0;
     // RpcSync(1); // TODO: PLAYER_RPC_CHANNEL at 1? Previously at 0.
@@ -265,7 +258,7 @@ void LoadDGOTest() {
 
   BeginLoadingDGO("TEST.DGO", (u8 *)0x4800000, (u8 *)0x4c00000, (u8 *)0x4000000);
   while (true) {
-    u8 *dest_buffer;
+    u8* dest_buffer;
     do {
       dest_buffer = GetNextDGO(&lastObject);
     } while (dest_buffer == nullptr);

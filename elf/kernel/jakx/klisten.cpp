@@ -46,7 +46,6 @@ void InitListener() {
   sync_dispatcher = intern_from_c(-1, 0, "sync-dispatcher");
   kernel_packages = intern_from_c(-1, 0, "*kernel-packages*");
   print_column = intern_from_c(-1, 0, "*print-column*");
-
   int unaff_s7_lo;
   *(int *)((int)ListenerLinkBlock + -1) = unaff_s7_lo;
   *(int *)((int)ListenerFunction + -1) = unaff_s7_lo;
@@ -54,7 +53,7 @@ void InitListener() {
 
   *(int *)((int)kernel_packages + -1) =
       new_pair(unaff_s7_lo + 0xa0, *(u32 *)(unaff_s7_lo + 0x6f),
-             (u32)make_string_from_c("kernel"), *(u32 *)((int)kernel_packages + -1));
+               (u32)make_string_from_c("kernel"), *(u32 *)((int)kernel_packages + -1));
   //  if (MasterDebug != 0) {
   //    SendFromBufferD(0, 0, &AckBufArea, 0);
   //  }

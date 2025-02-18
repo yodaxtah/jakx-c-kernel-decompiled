@@ -786,8 +786,8 @@ u32 MC_check_result() {
 void MC_get_status(s32 slot, mc_slot_info* info) {
   s32 sema_id = DAT_002d3908_mc_sema_id;
   WaitSema(DAT_002d3908_mc_sema_id);
-  if (((uint)slot < 2) && (info != (mc_slot_info *)0x0)) {
-    FUN_00271098(&DAT_00283740 + slot * 0x8c0,info);
+  if (((uint)slot < 2) && (info != nullptr)) {
+    FUN_00271098(&DAT_00283740 + slot * 0x8c0, info);
   }
   SignalSema(sema_id);
   return;
@@ -886,12 +886,12 @@ int MC_shutdown_G(void) {
     iVar2 = iVar1 + 1;
     if ((&DAT_00283860)[iVar1 * 0x230] != -1) {
       FUN_001c7ee8((&DAT_00283860)[iVar1 * 0x230]);
-      (&DAT_00283860)[iVar1 * 0x230] = 0xffffffff;
+      (&DAT_00283860)[iVar1 * 0x230] = -1;
     }
     iVar1 = iVar2;
   } while (iVar2 < 2);
   sceMc2End();
   iVar1 = FUN_00273910_memory_card();
-  MC_INITIALIZED_S = 0;
+  MC_INITIALIZED_S = false;
   return iVar1;
 }

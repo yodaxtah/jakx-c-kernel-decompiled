@@ -12,7 +12,7 @@
  * DONE, removed call to FlushCache(0);
  */
 u32 ReceiveToBuffer(char* buff) {
-  if (0x17 >= protoBlock.last_receive_size) {
+  if (protoBlock.last_receive_size < 0x18) {
     return -1;
   }
 
@@ -74,7 +74,7 @@ char* WaitForMessageAndAck() {
   if (MasterDebug == 0) {
     MessCount = -1;
   } else {
-    MessCount = ReceiveToBuffer((char *)(MessBufArea + 0x18));
+    MessCount = ReceiveToBuffer((char*)(MessBufArea + 0x18));
   }
 
   if (MessCount < 0) {
