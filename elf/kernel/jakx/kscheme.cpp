@@ -1922,8 +1922,10 @@ int InitHeapAndSymbol() {
   kernel_version = *(uint *)((int)intern_from_c(-1, 0, "*kernel-version*") + -1);
   if (kernel_version == 0 || ((kernel_version >> 0x13) != 0x16)) {
     MsgErr("\n");
-    MsgErr("dkernel: compiled C kernel version is %d.%d but the goal kernel is %d.%d!\n\tfrom the go al> prompt (:mch) then mkee your kernel in linux.\n"
-           , 0x16, 0, kernel_version >> 0x13, kernel_version >> 3 & 0xffff);
+    MsgErr("dkernel: compiled C kernel version is %d.%d but"
+           " the goal kernel is %d.%d!\n\tfrom the goal> prompt (:mch) then mkee your kernel in linux.\n",
+           0x16, 0, kernel_version >> 0x13,
+           kernel_version >> 3 & 0xffff);
     return -1;
   }
 
