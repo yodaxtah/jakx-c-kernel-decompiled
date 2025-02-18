@@ -1935,64 +1935,52 @@ int InitHeapAndSymbol() {
 }
 
 // TBD SKIPPED
-u64 load(u32 file_name_in,u32 heap_in) {
-  undefined4 uVar1;
-  char *__src;
-  u64 uVar2;
+u64 load(u32 file_name_in, u32 heap_in) {
   int unaff_s7_lo;
   undefined4 unaff_s7_hi;
-  char acStack_120 [256];
+  char loadName [256];
   
-  uVar1 = *(undefined4 *)(unaff_s7_lo + 0xab);
+  undefined4 temp = *(undefined4 *)(unaff_s7_lo + 0xab);
   *(u32 *)(unaff_s7_lo + 0xab) = heap_in;
-  __src = DecodeFileName((const char* )(file_name_in + 4));
-  strcpy(acStack_120,__src);
-  uVar2 = load_and_link((const char* )(file_name_in + 4),acStack_120,(kheapinfo *)heap_in,0xf);
-  *(undefined4 *)(unaff_s7_lo + 0xab) = uVar1;
-  if ((uVar2 & 0xfffffffffff00000) == 0xfffffffffff00000) {
-    uVar2 = CONCAT44(unaff_s7_hi,unaff_s7_lo);
+  strcpy(loadName, DecodeFileName((const char* )(file_name_in + 4)));
+  u64 returnValue = load_and_link((const char* )(file_name_in + 4), loadName, (kheapinfo *)heap_in, 0xf);
+  *(undefined4 *)(unaff_s7_lo + 0xab) = temp;
+  if ((returnValue & 0xfffffffffff00000) == 0xfffffffffff00000) {
+    returnValue = CONCAT44(unaff_s7_hi, unaff_s7_lo);
   }
-  return uVar2;
+  return returnValue;
 }
 
 // TBD SKIPPED
 u64 loadb(u32 file_name_in, u32 heap_in, u32 param3) {
-  char *__src;
-  u8 *puVar1;
-  ulong uVar2;
   u64 unaff_s7;
-  char acStack_120 [256];
+  char loadName [256];
   
-  __src = DecodeFileName((const char* )(file_name_in + 4));
-  strcpy(acStack_120,__src);
-  puVar1 = FileLoad(acStack_120,(kheapinfo *)heap_in,(u8 *)0x0,0x40,(s32 *)param3);
-  uVar2 = (long)(int)puVar1;
+  strcpy(loadName, DecodeFileName((const char* )(file_name_in + 4)));
+  u8* puVar1 = FileLoad(loadName, (kheapinfo *)heap_in, (u8 *)0x0, 0x40, (s32 *)param3);
+  ulong returnValue = (long)(int)puVar1;
   if (((long)(int)puVar1 & 0xfffffffffff00000U) == 0xfffffffffff00000) {
-    uVar2 = unaff_s7;
+    returnValue = unaff_s7;
   }
-  return uVar2;
+  return returnValue;
 }
 
 // TBD SKIPPED
-u64 loadc(const char* file_name,kheapinfo *heap,u32 flags) {
-  undefined4 uVar1;
-  char *__src;
-  u64 uVar2;
+u64 loadc(const char* file_name, kheapinfo *heap, u32 flags) {
   int unaff_s7_lo;
   undefined4 unaff_s7_hi;
-  char acStack_130 [256];
+  char loadName [256];
   
-  uVar1 = *(undefined4 *)(unaff_s7_lo + 0xab);
+  undefined4 temp = *(undefined4 *)(unaff_s7_lo + 0xab);
   *(kheapinfo **)(unaff_s7_lo + 0xab) = heap;
   printf("****** CALL TO loadc() ******\n");
-  __src = MakeFileName(3,file_name,0);
-  strcpy(acStack_130,__src);
-  uVar2 = load_and_link(file_name,acStack_130,heap,flags);
-  *(undefined4 *)(unaff_s7_lo + 0xab) = uVar1;
-  if ((uVar2 & 0xfffffffffff00000) == 0xfffffffffff00000) {
-    uVar2 = CONCAT44(unaff_s7_hi,unaff_s7_lo);
+  strcpy(loadName, MakeFileName(3, file_name, 0));
+  u64 returnValue = load_and_link(file_name, loadName, heap, flags);
+  *(undefined4 *)(unaff_s7_lo + 0xab) = temp;
+  if ((returnValue & 0xfffffffffff00000) == 0xfffffffffff00000) {
+    returnValue = CONCAT44(unaff_s7_hi, unaff_s7_lo);
   }
-  return uVar2;
+  return returnValue;
 }
 
 u64 loado(u32 file_name_in, u32 heap_in) {
