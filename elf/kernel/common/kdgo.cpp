@@ -26,25 +26,17 @@ void kdgo_init_globals() {
   sShowStallMsg = 1;
 }
 
-// TDB
 int RpcCallEndFunction_W(long param_1) {
-  int in_v0_lo;
-  int iVar1;
-  int *piVar2;
-  
   if (param_1 != 0) {
-    piVar2 = (int *)param_1;
-    if ((code *)piVar2[1] == nullptr) {
-      iVar1 = *piVar2;
+    int* args = (int*)param_1;
+    if ((code *)args[1] != nullptr) {
+      (*(code *)args[1])(args[2], args[3]);
     }
-    else {
-      (*(code *)piVar2[1])(piVar2[2],piVar2[3]);
-      iVar1 = *piVar2;
-    }
-    iVar1 = iSignalSema(iVar1);
-    return iVar1;
+    return iSignalSema(*args);
+  } else {
+    int in_v0_lo;
+    return in_v0_lo;
   }
-  return in_v0_lo;
 }
 
 /*!
