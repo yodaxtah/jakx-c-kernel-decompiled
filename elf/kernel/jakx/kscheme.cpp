@@ -112,11 +112,9 @@ u64 alloc_from_heap(u32 heap_symbol, u32 type, s32 size, u32 pp) {
       return 0;
     }
   } else if (heap_symbol_ == (long)(unaff_s7_lo + 0xb8)) {
-    // TBD
-    void *__s = *(void **)(unaff_s7_lo + 0xbb);
-    heap_symbol_ = (u64)(int)__s;
-    *(int *)(unaff_s7_lo + 0xbb) = *(int *)(unaff_s7_lo + 0xbb) + aligned_size;
-    memset(__s, 0, (long)aligned_size);
+    heap_symbol_ = (u64)(int)*(void **)(unaff_s7_lo + 0xbb);
+    *(int *)(unaff_s7_lo + 0xbb) += aligned_size;
+    memset((void *)heap_symbol_, 0, (long)aligned_size);
     return heap_symbol_;
   } else {
     memset((void *)heap_symbol_, 0, (long)aligned_size);
