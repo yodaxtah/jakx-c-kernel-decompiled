@@ -143,7 +143,7 @@ void InitParms(int argc, const char** argv) {
       DebugSymbols = 0;
     }
 
-    if ((arg == "-level") && (1 < argc)) {
+    if ((arg == "-level") && (i + 1 < argc)) {
       std::string levelName = argv[++i];
       std::string symbolId = argv[++i];
       Msg(6, "dkernel: level %s %s\n", levelName.c_str(), symbolId.c_str());
@@ -151,7 +151,7 @@ void InitParms(int argc, const char** argv) {
       DebugBootLevelID = DecodeSymbolId(atoi(argv[2])) + 1;
     }
 
-    if ((arg == "-user") && (1 < argc)) {
+    if ((arg == "-user") && (i + 1 < argc)) {
       i++;
       std::string userName = argv[i];
       Msg(6, "dkernel: user %s\n", userName.c_str());
@@ -159,7 +159,7 @@ void InitParms(int argc, const char** argv) {
     }
 
     if (arg == "-art") {
-      if (1 < argc) { // FIXME
+      if (i + 1 < argc) { // FIXME
         i++;
         std::string artGroupName = argv[i];
         Msg(6, "dkernel: art-group %s\n", artGroupName);
