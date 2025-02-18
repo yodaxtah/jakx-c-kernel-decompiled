@@ -798,6 +798,7 @@ uint64_t link_resume() {
  * IT IS VERY FAST
  * but it may use the scratchpad.  It is implemented in GOAL, and falls back to normal C memcpy
  * if GOAL isn't loaded, or if the alignment isn't good enough.
+ * TBD.
  */
 void ultimate_memcpy_G(void* dst, void* src, uint32_t size) {
   code *pcVar1;

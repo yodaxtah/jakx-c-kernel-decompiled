@@ -23,7 +23,7 @@ void klisten_init_globals() {
  * Changed slightly, it will also print to stdout if there's no compiler connected.
  */
 void ClearPending() {
-  if (MasterDebug == 0) {
+  if (MasterDebug == 0) { // TODO: why is ListenerStatus gone?
     if (PrintPending != nullptr) {
       size_t size = strlen(PrintBufArea + 0x18);
       if ((long)size > 0) {
@@ -33,7 +33,7 @@ void ClearPending() {
     }
   } else {
     if (ListenerStatus != 0) {
-      if (OutputPending != 0) {
+      if (OutputPending != 0) { // TODO: why is the loop gone here?
         size_t size = strlen((char *)(OutputBufArea + 0x18));
         SendFromBuffer((char *)(OutputBufArea + 0x18), (s32)size);
         clear_output();

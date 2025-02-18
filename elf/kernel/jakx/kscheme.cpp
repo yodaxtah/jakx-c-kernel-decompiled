@@ -99,7 +99,7 @@ u64 alloc_from_heap(u32 heap_symbol, u32 type, s32 size, u32 pp) {
 
     return (long)(int)kmalloc(heap_ptr, size, 0x1000, gstr);
   } else if (heap_symbol_ == (long)(unaff_s7_lo + 100)) {
-    u32 start = *(u32 *)(unaff_s6_lo + 0x74);
+    u32 start = *(u32 *)(unaff_s6_lo + 0x74); // TODO: Why not +0x64 and +0x60?
     u32 heapEnd = *(u32 *)(unaff_s6_lo + 0x70);
     u32 allocEnd = start + aligned_size;
 
@@ -1184,7 +1184,7 @@ u64 print_object(u32 obj) {
     return (u64)(int)print_binteger((ulong)obj);
   } else {
     if ((obj_ < (ulong)(long)SymbolTable2 || 0x7ffffff < obj_) &&
-        (0x7bfff < obj - 0x84000)) {
+        (0x7bfff < obj - 0x84000)) { // TODO: why should this match: obj < 0x84000 || 0x100000 <= obj?
     cprintf("#<invalid object #x%x>", obj_);
     } else if ((obj_ & 7) == 2) {
       return print_pair(obj);
@@ -1209,7 +1209,7 @@ u64 print_basic(u32 obj) {
   undefined4 unaff_s7_hi;
   ulong obj_ = (ulong)(int)obj;
   if (((obj_ < (ulong)(long)SymbolTable2 || 0x7ffffff < obj_) &&
-       (0x7bfff < obj - 0x84000))
+       (0x7bfff < obj - 0x84000)) // TODO: why should this match obj < 0x84000 || 0x100000 <= obj
       || ((obj_ & 7) != 4)) {
     if (obj_ == CONCAT44(unaff_s7_hi, unaff_s7_lo)) {
       cprintf("#f");
@@ -1373,7 +1373,7 @@ u64 inspect_object(u32 obj) {
     return (u64)(int)inspect_binteger((ulong)obj);
   } else {
     if (((obj_ < (ulong)(long)SymbolTable2) || (0x7ffffff < obj_)) &&
-        (0x7bfff < obj - 0x84000)) {
+        (0x7bfff < obj - 0x84000)) { // TODO: how does this match obj < 0x84000 || 0x100000 <= obj?
       cprintf("#<invalid object #x%x>\n", obj_);
     } else if (obj_ & 7 == 2) {
       return inspect_pair(obj);
@@ -1519,7 +1519,7 @@ int InitHeapAndSymbol() {
   u8 *symbol_table;
   u8 *SymbolString_;
   u8 *value;
-  Type *iVar1;
+  Type *iVar1; // TBD
   Type *iVar16;
   Type *iVar17;
   Type *iVar18;

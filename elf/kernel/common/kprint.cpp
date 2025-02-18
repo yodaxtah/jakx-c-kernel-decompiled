@@ -59,7 +59,7 @@ void kprint_init_globals_common() {
  */
 void init_output() {
   bool use_debug;
-  use_debug = MasterDebug == 0 && DebugSegment == 0);
+  use_debug = MasterDebug == 0 && DebugSegment == 0; // TODO: Why Jak2 and not Jak3?
 
   if (use_debug) {
     MessBufArea = kmalloc(kdebugheap, 0x80000, 0x1100,
@@ -133,7 +133,7 @@ void output_segment_load(const char* name, u8* link_block, u32 flags) {
     ObjectFileHeader* lbp = (ObjectFileHeader*)link_block;
     sprintf(buffer, "load \"%s\" %s #x%x #x%x #x%x\n", name, flag_str,
             lbp->code_infos[0].offset + 4, lbp->code_infos[1].offset + 4, lbp->code_infos[2].offset + 4);
-    // Why +4? The struct SegmentInfo might itself be nested at 0x4 in another one:
+    // TODO: Why +4? The struct SegmentInfo might itself be nested at 0x4 in another one:
     // ObjectFileHeader --contains--> SomeStruct of 16 bytes --contains--> SegmentInfo.
     OutputPending = OutputBufArea + 0x18;
   }

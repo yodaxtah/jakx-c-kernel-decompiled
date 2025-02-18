@@ -35,7 +35,7 @@ char* DecodeFileName(const char* name) {
     } else if (strncmp(name, "$FINAL/", 6) == 0) {
       result = MakeFileName(0x20, name + 6, 0);
     } else if (strncmp(name, "$CODE/", 6) == 0) {
-      result = MakeFileName(strncmp(name, "$CODE/", 6), name + 6, 0);
+      result = MakeFileName(strncmp(name, "$CODE/", 6), name + 6, 0); // TODO: why strncmp here?
     } else if (strncmp(name, "$RES/", 5) == 0) {
       result = MakeFileName(0x3b, name + 5, 0);
     } else if (strncmp(name, "$MISC/", 6) == 0) {

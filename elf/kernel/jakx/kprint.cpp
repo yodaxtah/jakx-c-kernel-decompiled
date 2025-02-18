@@ -23,6 +23,7 @@
  *
  * This function is a disaster. For now, it's copied from jak1 and then jak 2, with the obvious
  * fixes made, but it's probably worth another pass.
+ * Note: compare this file with kprint.compare.cpp; I reordered the cases.
  */
 s32 format_impl_jak3(uint64_t* args) {
   int unaff_s7_lo;

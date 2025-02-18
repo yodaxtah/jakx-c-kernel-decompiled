@@ -739,7 +739,7 @@ void InitMachineScheme() {
     undefined in_t0_lo;
     load_and_link_dgo_from_c("game", kglobalheap,
                              0xd,
-                             0x400000, (bool)in_t0_lo);
+                             0x400000, (bool)in_t0_lo); // FIXME: why will this result in false while in jak3 it is true?
     *EnableMethodSet = *EnableMethodSet + -1;
     ;
 

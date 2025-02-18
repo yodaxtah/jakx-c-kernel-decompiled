@@ -126,7 +126,7 @@ void load_and_link_dgo_from_c(const char* name,
   u8* buffer2 = kmalloc(heap, bufferSize, 0x2040, "dgo-buffer-2");
   u8* buffer1 = kmalloc(heap, bufferSize, 0x2040, "dgo-buffer-2");
   
-  undefined fileName_a8;
+  undefined fileName_a8; // TBD
   char fileName_b4 [4];
   char fileName_b0 [8];
   kstrcpyup(fileName_b0, name);
@@ -143,11 +143,11 @@ void load_and_link_dgo_from_c(const char* name,
       (u8*)((uint)(heap->current + 0x3f) & 0xffffffc0));
 
     u32 lastObjectLoaded = 0;
-    while (true) {
+    while (true) { // TBD
       int32_t* dgoObj;
       do {
         if ((lastObjectLoaded != 0) || (POWERING_OFF_W != false)) {
-          goto LAB_00270d58;
+          goto LAB_00270d58; // TBD
         }
         dgoObj = (int32_t *)GetNextDGO(&lastObjectLoaded);
       } while (dgoObj == nullptr);
@@ -173,7 +173,7 @@ void load_and_link_dgo_from_c(const char* name,
       }
     }
   }
-LAB_00270d58:
+LAB_00270d58: // TBD
   if (POWERING_OFF_W == false) {
     setStallMsg_GW(oldShowStall);
     return;

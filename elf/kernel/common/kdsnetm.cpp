@@ -73,7 +73,7 @@ void GoalProtoHandler(int event, int param, void* opt) {
         s32 received =
             sceDeci2ExRecv(pb->socket, (void *)((int)pb->receive_buffer) + pb->receive_progress, (u16)param);
 
-        if (-1 < received) {
+        if (-1 < received) { // FIXME: why is this opposite to other 
           pb->receive_progress += received;
         }
       } else {
@@ -160,7 +160,7 @@ s32 SendFromBufferD(s32 msg_kind, u64 msg_id, char* data, s32 size) {
       ;
     }
 
-    if (protoBlock.send_status > -1) {
+    if (protoBlock.send_status > -1) { // TODO: Why not check 0 anymore?
       break;
     }
   }

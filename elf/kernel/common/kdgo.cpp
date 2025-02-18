@@ -194,7 +194,7 @@ s32 InitRPC() {
       RpcCallEndFunctionArgs_W[i].callback = nullptr;
       RpcCallEndFunctionArgs_W[i].third = 0;
     }
-    for (int i = 0; i < 6; ++i) { // TODO: why is it 6 here?
+    for (int i = 0; i < 6; ++i) { // FIXME: why is it 6 here? Why is RpcChannels_W of length 6 and RpcCallEndFunctionArgs_W of length 7?
       if (!RpcBind(RpcChannels_W[i].channel, RpcChannels_W[i].id)) {
         return -1;
       }
@@ -226,7 +226,7 @@ int StopIOP_G() {
   if (Is_RPC_Initialized_G() != 0 && IOP_RUNNING_W) {
     x[2] = 0x10;
     x[3] = 0;
-    // RpcSync(1); // TODO: PLAYER_RPC_CHANNEL at 1? Previously at 0.
+    // RpcSync(1); // FIXME: PLAYER_RPC_CHANNEL at 1? Previously at 0.
     IOP_RUNNING_W = false;
     return RpcCall(1, 0, false, &x, 0x30, nullptr, 0);
   } else {

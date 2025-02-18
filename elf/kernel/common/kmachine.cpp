@@ -59,7 +59,7 @@ void kmachine_init_globals_common() {
  * DONE, EXACT
  */
 void InitCD() {
-  if (cd_S_INITIALIZE_CD_W != '\0') {
+  if (cd_S_INITIALIZE_CD_W) {
     s32 result;
     while (true) {
       strlen("dkernel: Initializing DVD drive...\n");

@@ -788,6 +788,7 @@ void MC_get_status(s32 slot, mc_slot_info* info) {
   WaitSema(DAT_002d3908_mc_sema_id);
   if (((uint)slot < 2) && (info != nullptr)) {
     FUN_00271098(&DAT_00283740 + slot * 0x8c0, info);
+    // NOTE: 0x8c0 is perhaps the type size of the memory card slot, containing 4 saves?
   }
   SignalSema(sema_id);
   return;

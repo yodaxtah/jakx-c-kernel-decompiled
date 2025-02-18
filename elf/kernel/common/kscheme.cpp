@@ -42,6 +42,9 @@ void kscheme_init_globals_common() {
 
 /*!
  * Initialize CRC Table.
+ * NOTE: this is a differnt version.
+ * Jak 3 uses CRC Polynomial, whereas Jak X uses reversed CRC Polynomial
+ * according to Perplexity: https://www.perplexity.ai/search/do-these-two-functions-fill-th-3MdJow3IT2ieoRBdHZapKA#0
  * DONE.
  */
 void CCrc32.Init_T(uint *table_W) {
