@@ -153,9 +153,8 @@ u8* kmalloc(kheapinfo* heap, s32 size, u32 flags, char const* name) {
     }
 
     heap->current = memend;
-    if ((flags & 0x1000) != 0) {
+    if ((flags & 0x1000) != 0)
       memset(memstart, 0, size);
-    }
     // This if statement wasn't in the code up until jak 3; why?
     if ((heap == &kglobalheapinfo) && ((char)kheaplogging != '\0')) {
       if (strcmp(name, "string") == 0) {
