@@ -130,7 +130,10 @@ Less important details to check:
     SignalSema(sema_id);
   }
   ```
-  [ ] Attempt to find `cb_reprobe_format`, `cb_unformat`, `cb_reprobe_createfile`, `cb_reprobe_save`, ... (some of which are listed in [kmemcard.h](./elf/kernel/common/kmemcard.h)).
+- [ ] Attempt to find `cb_reprobe_format`, `cb_unformat`, `cb_reprobe_createfile`, `cb_reprobe_save`, ... (some of which are listed in [kmemcard.h](./elf/kernel/common/kmemcard.h)).
+- [ ] Find the exact start of the array at 00283740 of 0x8c0 sized elements? Also see `sceMc2Init_G_Proxy` where `uVar6 * 0x230` as well as `uVar6 * 0x8c0` occur.
+- [ ] Find the exact start of the array over 00283864, 00283874 of 0x230 sized elements (see `mc_get_secrets_S`)
+- [ ] Find the exact start of the array over 00283860 of 0x230 sized elements (see `MC_shutdown_G`)
 - [ ] ... many more that I forgot to write down.
 
 ## Exporting C++
