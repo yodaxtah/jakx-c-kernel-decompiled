@@ -1519,22 +1519,6 @@ int InitHeapAndSymbol() {
   u8 *symbol_table;
   u8 *SymbolString_;
   u8 *value;
-  Type *iVar1; // TBD
-  Type *iVar16;
-  Type *iVar17;
-  Type *iVar18;
-  Type *iVar10;
-  Type *iVar19;
-  Type *iVar20;
-  Type *iVar10_00;
-  Type *iVar10_01;
-  Type *iVar10_02;
-  Type *iVar10_03;
-  Type *iVar12;
-  Type *iVar11;
-  Type *iVar13;
-  Type *iVar14;
-  Type *iVar15;
   
   symbol_table =
       kmalloc(&kglobalheapinfo, 0x10000, 0x1000, "symbol-table");
@@ -1705,52 +1689,42 @@ int InitHeapAndSymbol() {
 
   set_fixed_type(FIX_SYM_OBJECT_TYPE, "object", (u32 *)(symbol_table + 0x801d), 0x900000004, 
                  (u32)print_object_func, (u32)inspect_object_func);
-  iVar12 = *(Type **)(symbol_table + 0x801c);
-  iVar11 = *(Type **)(symbol_table + 0x801c);
-  iVar12->new_method = *(Function **)(symbol_table + 0x8094);
-  iVar15 = *(Type **)(symbol_table + 0x801c);
-  iVar11->delete_method = delete_illegal_func;
-  iVar12->asize_of_method = *(Function **)(symbol_table + 0x80c0);
-  print_object_func = make_function_from_c(copy_fixed, (bool)0x60);
-  iVar15->copy_method = print_object_func;
+  Type* object_type = *(Type **)(symbol_table + 0x801c);
+  object_type->new_method = *(Function **)(symbol_table + 0x8094);
+  object_type->delete_method = delete_illegal_func;
+  object_type->asize_of_method =
+      *(Function **)(symbol_table + 0x80c0);
+  object_type->copy_method = print_object_func = make_function_from_c(copy_fixed, (bool)0x60);
 
   set_fixed_type(FIX_SYM_STRUCTURE, "structure", (u32 *)(symbol_table + 0x801d),
                  0x900000004, (u32)make_function_from_c(print_structure, (bool)0x60),
                  (u32)make_function_from_c(inspect_structure, (bool)0x60));
-  iVar14 = *(Type **)(symbol_table + 0x806c);
-  print_object_func = make_function_from_c(new_structure, (bool)0x68);
-  iVar14->new_method = print_object_func;
-  iVar13 = *(Type **)(symbol_table + 0x806c);
-  print_object_func = make_function_from_c(delete_structure, (bool)0x68);
-  iVar13->delete_method = print_object_func;
+  Type* structure_type = *(Type **)(symbol_table + 0x806c);
+  structure_type->new_method = make_function_from_c(new_structure, (bool)0x68);
+  structure_type->delete_method = make_function_from_c(delete_structure, (bool)0x68);
 
   set_fixed_type(FIX_SYM_BASIC, "basic", (u32 *)(symbol_table + 0x806d),
                  0x900000004, (u32)make_function_from_c(print_basic, (bool)0x68),
                  (u32)make_function_from_c(inspect_basic, (bool)0x68));
-  iVar17 = *(Type **)(symbol_table + 0x800c);
-  print_object_func = make_function_from_c(new_basic, (bool)0x78);
-  iVar1 = *(Type **)(symbol_table + 0x800c);
-  iVar17->new_method = print_object_func;
-  iVar16 = *(Type **)(symbol_table + 0x800c);
-  iVar1->delete_method = *(Function **)(symbol_table + 0x8098);
-  iVar16->asize_of_method = *(Function **)(symbol_table + 0x80c4);
-  iVar1->copy_method = *(Function **)(symbol_table + 0x80c8);
+  Type* basic_type = *(Type **)(symbol_table + 0x800c);
+  basic_type->new_method = make_function_from_c(new_basic, (bool)0x78);
+  basic_type->delete_method = *(Function **)(symbol_table + 0x8098);
+  basic_type->asize_of_method = *(Function **)(symbol_table + 0x80c4);
+  basic_type->copy_method = *(Function **)(symbol_table + 0x80c8);
 
   set_fixed_type(FIX_SYM_SYMBOL_TYPE, "symbol", (u32 *)(symbol_table + 0x801d),
                  0x900000004, (u32)make_function_from_c(print_symbol, (bool)0x78),
                  (u32)make_function_from_c(inspect_symbol, (bool)0x78));
-  iVar19 = *(Type **)(symbol_table + 0x8014);
+  Type* sym_type = *(Type **)(symbol_table + 0x8014);
   *(Function **)(*(int *)(symbol_table + 0x8014) + 0x10) = new_illegal_func;
-  iVar19->delete_method = delete_illegal_func;
+  sym_type->delete_method = delete_illegal_func;
 
   set_fixed_type(FIX_SYM_TYPE_TYPE, "type", (u32 *)(symbol_table + 0x800d),
                  0x900000038, (u32)make_function_from_c(print_type, (bool)0x80),
                  (u32)make_function_from_c(inspect_type, (bool)0x80));
-  iVar18 = *(Type **)(symbol_table + 0x8018);
-  print_object_func = make_function_from_c(new_type, (bool)0x88);
-  iVar10 = *(Type **)(symbol_table + 0x8018);
-  iVar18->new_method = print_object_func;
-  iVar10->delete_method = delete_illegal_func;
+  Type* type_type = *(Type **)(symbol_table + 0x8018);
+  type_type->new_method = make_function_from_c(new_type, (bool)0x88);
+  type_type->delete_method = delete_illegal_func;
 
   set_fixed_type(FIX_SYM_STRING_TYPE, "string", (u32 *)(symbol_table + 0x800d),
                  0x900000008, (u32)make_function_from_c(print_string, (bool)0x88),
@@ -1759,9 +1733,9 @@ int InitHeapAndSymbol() {
 
   set_fixed_type(FIX_SYM_FUNCTION_TYPE, "function", (u32 *)(symbol_table + 0x800d), 0x900000004, 
                  (u32)print_object_func, 0);
-  iVar10_03 = *(Type **)(symbol_table + 0x8008);
+  Type* function_type = *(Type **)(symbol_table + 0x8008);
   *(Function **)(*(int *)(symbol_table + 0x8008) + 0x10) = new_illegal_func;
-  iVar10_03->delete_method = delete_illegal_func;
+  function_type->delete_method = delete_illegal_func;
 
   set_fixed_type(FIX_SYM_VU_FUNCTION, "vu-function", (u32 *)(symbol_table + 0x806d),
                  0x900000010, (u32)make_function_from_c(print_vu_function, (bool)0x98),
@@ -1771,9 +1745,9 @@ int InitHeapAndSymbol() {
   set_fixed_type(FIX_SYM_LINK_BLOCK, "link-block", (u32 *)(symbol_table + 0x800d),
                  0x90000000c, 0, 
                  (u32)make_function_from_c(inspect_link_block, (bool)0xa8));
-  iVar20 = *(Type **)(symbol_table + 0x8020);
+  Type* link_block_type = *(Type **)(symbol_table + 0x8020);
   *(Function **)(*(int *)(symbol_table + 0x8020) + 0x10) = new_illegal_func;
-  iVar20->delete_method = delete_illegal_func;
+  link_block_type->delete_method = delete_illegal_func;
 
   set_fixed_type(FIX_SYM_HEAP, "kheap", (u32 *)(symbol_table + 0x806d),
                  0x900000010, 0, (u32)make_function_from_c(kheapstatus, (bool)0xb8));
@@ -1784,12 +1758,10 @@ int InitHeapAndSymbol() {
   set_fixed_type(FIX_SYM_PAIR_TYPE, "pair", (u32 *)(symbol_table + 0x801d),
                  0x900000008, (u32)make_function_from_c(print_pair, (bool)0xd0),
                  (u32)make_function_from_c(inspect_pair, (bool)0xd0));
-  iVar10_00 = *(Type **)(symbol_table + 0x8070);
-  delete_illegal_func = make_function_from_c(new_pair, (bool)0xd8);
-  iVar10_00->new_method = delete_illegal_func;
-  iVar10_01 = *(Type **)(symbol_table + 0x8070);
-  delete_illegal_func = make_function_from_c(delete_pair, (bool)0xd8);
-  iVar10_01->delete_method = delete_illegal_func;
+  (*(Type **)(symbol_table + 0x8070))->new_method =
+      make_function_from_c(new_pair, (bool)0xd8);
+  (*(Type **)(symbol_table + 0x8070))->delete_method =
+      make_function_from_c(delete_pair, (bool)0xd8);
 
   set_fixed_type(FIX_SYM_PROCESS_TREE, "process-tree", (u32 *)(symbol_table + 0x800d),
                  0xf0000002c, 0, 0);
@@ -1848,9 +1820,9 @@ int InitHeapAndSymbol() {
                  0x900000008, 0, 0);
   set_fixed_type(FIX_SYM_UINT128, "uint128", (u32 *)(symbol_table + 0x802d),
                  0x900000010, 0, 0);
-  iVar10_02 = *(Type **)(symbol_table + 0x801c);
-  new_illegal_func = make_function_from_c(alloc_heap_object, (bool)200);
-  iVar10_02->new_method = new_illegal_func;
+
+  (*(Type **)(symbol_table + 0x801c))->new_method =
+      make_function_from_c(alloc_heap_object, (bool)200);
 
   make_function_symbol_from_c("string->symbol", intern);
   make_function_symbol_from_c("symbol->string", symbol_to_string_from_c);
@@ -1902,6 +1874,7 @@ int InitHeapAndSymbol() {
 
   KernelDebug = (int)intern_from_c(-1, 0, "*kernel-debug*") + -1;
   *(undefined4 *)(KernelDebug) = 0;
+
   *(undefined4 *)((int)intern_from_c(-1, 0, "*boot-video-mode*") + -1) = 1;
   *(undefined4 *)((int)intern_from_c(-1, 0, "*video-mode*") + -1) = 1;
 
