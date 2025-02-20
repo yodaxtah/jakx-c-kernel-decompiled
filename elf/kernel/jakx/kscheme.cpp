@@ -625,7 +625,7 @@ u32* find_symbol_in_area(const char* name, u32 start, u32 end) {
   for (u32 i = start; i < end; i += 4) {
     int unaff_s7_lo;
     int str = *(int *)(i + (SymbolString - unaff_s7_lo));
-    if ((str != 0) && !strcmp((char *)(iVar1 + 4), name)) {
+    if ((str != 0) && !strcmp((char *)(str + 4), name)) {
       return (u32*)i;
     }
   }
