@@ -39,7 +39,7 @@ void BeginLoadingDGO(const char* name, u8* buffer1, u8* buffer2, u8* currentHeap
   sMsgNum = sMsgNum ^ 1;
   RpcSync(4);
 
-  sMsg[msgID].result = 0x29a; // why is this result? Swap with status?
+  sMsg[msgID].status = 666;
 
   sMsg[msgID].buffer1 = (uint32_t)buffer1;
   sMsg[msgID].buffer2 = (uint32_t)buffer2;
@@ -67,12 +67,12 @@ u8* GetNextDGO(u32* lastObjectFlag) {
   RpcSync(4);
   u8* buffer = nullptr;
   if (sLastMsg != nullptr) {
-    if (sLastMsg->result == 2 || sLastMsg->result == 0) { // Should be status
+    if (sLastMsg->status == 2 || sLastMsg->status == 0) {
       buffer =
           (u8 *)sLastMsg->buffer1;
     }
 
-    if (sLastMsg->result == 2) { // Should be status
+    if (sLastMsg->status == 2) {
       *lastObjectFlag = 0;
     }
 
@@ -94,7 +94,7 @@ void ContinueLoadingDGO(u8 b1, u8* b2, u8* heapPtr) {
   u32 msgID = sMsgNum;
   RPC_Dgo_Cmd* sendBuff = sMsg + sMsgNum;
   sMsgNum = sMsgNum ^ 1;
-  sMsg[msgID].result = 0x29a; // Should be status
+  sMsg[msgID].status = 666;
   sMsg[msgID].buffer1 = (int)(char)b1;
   sMsg[msgID].buffer2 = (uint32_t)b2;
   sendBuff->buffer_heap_top = (uint32_t)heapPtr;
