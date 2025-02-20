@@ -307,7 +307,8 @@ s32 FileSave(char* name, u8* data, s32 size) {
     sceClose(fd);
     return -6;
   }
-  else if (size != 0) {
+
+  if (size != 0) {
     int writeOffset = 0;
     do {
       int chunkSize = 0x1000000;
