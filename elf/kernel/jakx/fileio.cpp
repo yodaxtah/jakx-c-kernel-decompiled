@@ -27,7 +27,7 @@ char* DecodeFileName(const char* name) {
       result = MakeFileName(0x30, name + 0xb, 0);
     } else if (strncmp(name, "$LEVEL/", 7) == 0) {
       size_t len = strlen(name);
-      if (name[(int)len + -4] == '.') {
+      if (name[(int)len - 4] == '.') {
         result = MakeFileName(0x35, name + 7, 0);
       } else {
         result = MakeFileName(0x27, name + 7, 0);
