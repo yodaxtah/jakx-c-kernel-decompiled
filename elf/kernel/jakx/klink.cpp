@@ -540,12 +540,12 @@ uint32_t jakx_work_v5(link_control* this) {
       puVar17 = (uint8_t *)
                 m_link_block_ptr->code_infos[this->m_state - 2].unknown_0xc;
       this->m_segment_process = 1;
-      this->m_reloc_ptr__ = puVar17;
-      *(undefined *)&this->m_table_toggle__ = 0;
+      this->m_reloc_ptr = puVar17;
+      *(undefined *)&this->m_table_toggle = 0;
       puVar17 = (uint8_t *)m_link_block_ptr->code_infos[this->m_state - 1].offset;
       this->m_object_data = puVar17;
-      this->m_loc_ptr__ = puVar17 + -4;
-      this->m_base_ptr__ = puVar17;
+      this->m_loc_ptr = puVar17 + -4;
+      this->m_base_ptr = puVar17;
 
       if ((int)this->m_state - 1 >= (int)(this->m_code_start + 1)) {
         update_goal_fns();
@@ -557,24 +557,24 @@ uint32_t jakx_work_v5(link_control* this) {
       // NOTE: resembles jak3_work_v2_v4, jak3_work_v5
       if (m_state == 1) {
         int relocCounter = 0x400;
-        if (*this->m_reloc_ptr__ != '\0') {
+        if (*this->m_reloc_ptr != '\0') {
           while (true) {
 
-            u8 count = *this->m_reloc_ptr__;
+            u8 count = *this->m_reloc_ptr;
             
-            if (this->m_table_toggle__ == 0) {
-              this->m_loc_ptr__ +=
+            if (this->m_table_toggle == 0) {
+              this->m_loc_ptr +=
                   4 *
                   (uint)count;
             } else {
               for (int i = 0; i < (int)(uint)count; i++;) {
                 // NOTE: resembles jak3_work_v5
-                u8** ppuVar3 = (u8 **)this->m_loc_ptr__;
+                u8** ppuVar3 = (u8 **)this->m_loc_ptr;
                 u8* pVar___ = *ppuVar3;
                 uint uVar12 = (uint)pVar___ >> 8 & 0xf;
                 uint* puVar13 = (uint *)(((uint)pVar___ >> 10 & 0x3c) + (int)ppuVar3);
                 if ((uint)pVar___ >> 0x18 == 0) {
-                  *ppuVar3 = pVar___ + (int)this->m_base_ptr__;
+                  *ppuVar3 = pVar___ + (int)this->m_base_ptr;
                 }
                 else {
                   uint uVar11 = *(int *)(this->m_link_block_ptr + uVar12 * 0x10 + 4) +
@@ -586,20 +586,20 @@ uint32_t jakx_work_v5(link_control* this) {
                   *ppuVar3 = (u8 *)((uint)pVar___ & 0xffff0000 | uVar11 >> 0x10);
                   *puVar13 = *puVar13 & 0xffff0000 | uVar11 & 0xffff;
                 }
-                this->m_loc_ptr__ = (u8 *)(ppuVar3 + 1);
+                this->m_loc_ptr = (u8 *)(ppuVar3 + 1);
               }
             }
 
             if (count == 0xff) {
-              this->m_reloc_ptr__++;
+              this->m_reloc_ptr++;
               continue;
             }
             
-            this->m_reloc_ptr__++;
-            this->m_table_toggle__ = this->m_table_toggle__ ^ 1;
+            this->m_reloc_ptr++;
+            this->m_table_toggle = this->m_table_toggle ^ 1;
 
             relocCounter--;
-            if (this->m_reloc_ptr__[1] == '\0') {
+            if (this->m_reloc_ptr[1] == '\0') {
               break;
             }
             // NOTE: resembles jak3_work_v2_v4
@@ -612,25 +612,25 @@ uint32_t jakx_work_v5(link_control* this) {
             }
           }
         }
-        this->m_reloc_ptr__++;
+        this->m_reloc_ptr++;
         this->m_segment_process++;
         m_state = this->m_segment_process;
       }
       
       // NOTE: resembles jak3_work_v2_v4, jak3_work_v5
       if (m_state == 2) {
-        byte* sub_link_ptr = this->m_reloc_ptr__;
+        byte* sub_link_ptr = this->m_reloc_ptr;
         while (true) {
           byte reloc = *sub_link_ptr;
-          if (*this->m_reloc_ptr__ == 0) {
+          if (*this->m_reloc_ptr == 0) {
             break;
           }
-          this->m_reloc_ptr__ = sub_link_ptr + 1;
+          this->m_reloc_ptr = sub_link_ptr + 1;
           Type* goalObj;
           if ((reloc & 0x80) == 0) {
             short sVar4 = *(short *)(sub_link_ptr + 1);
-            this->m_reloc_ptr__ = sub_link_ptr + 3;
-            char* sname = (const char *)this->m_reloc_ptr__;
+            this->m_reloc_ptr = sub_link_ptr + 3;
+            char* sname = (const char *)this->m_reloc_ptr;
             goalObj = (Type *)intern_from_c((int)sVar4, (uint)reloc, sname);
           }
           else {
@@ -639,30 +639,30 @@ uint32_t jakx_work_v5(link_control* this) {
             int n_methods = n_methods_base * 4;
             if (n_methods_base == 0x3f) {
               reloc = sub_link_ptr[1];
-              this->m_reloc_ptr__ = sub_link_ptr + 2;
+              this->m_reloc_ptr = sub_link_ptr + 2;
               n_methods = (long)(int)((uint)reloc * 4 + 3);
             } else if ((long)n_methods != 0) {
               n_methods += 3;
             }
-            this->m_reloc_ptr__ +=
+            this->m_reloc_ptr +=
                 2;
-            char* name = (char*)this->m_reloc_ptr__;
-            goalObj = intern_type_from_c((int)this->m_reloc_ptr__, (uint)reloc, name, n_methods);
+            char* name = (char*)this->m_reloc_ptr;
+            goalObj = intern_type_from_c((int)this->m_reloc_ptr, (uint)reloc, name, n_methods);
           }
-          this->m_reloc_ptr__ += (int)strlen((char *)this->m_reloc_ptr__) + 1;
+          this->m_reloc_ptr += (int)strlen((char *)this->m_reloc_ptr) + 1;
           uint symlink_version = (uint)*(this->m_link_block_ptr + this->m_state * 0x10 - 4);
           code* symlink_function = (((symlink_version) & 1) == 0)
             ? (code *)symlink3_G
             : (code *)symlink2_G
             ;
-          this->m_reloc_ptr__ = (uint8_t *)(*symlink_function)(this->m_object_data, goalObj);
+          this->m_reloc_ptr = (uint8_t *)(*symlink_function)(this->m_object_data, goalObj);
           
           // NOTE: resembles jak3_work_v2_v4
           int currentCycle = (*(code *)kernel.read_clock_G)();
           if (200000 < (uint)(currentCycle - startCycle)) {
             return 0;
           }
-          sub_link_ptr = this->m_reloc_ptr__;
+          sub_link_ptr = this->m_reloc_ptr;
         }
         this->m_segment_process = 0;
         this->m_state++;
