@@ -126,31 +126,26 @@ void load_and_link_dgo_from_c(const char* name,
   u8* buffer2 = kmalloc(heap, bufferSize, 0x2040, "dgo-buffer-2");
   u8* buffer1 = kmalloc(heap, bufferSize, 0x2040, "dgo-buffer-2");
   
-  undefined fileName_a8; // TBD
-  char fileName_b4 [4];
-  char fileName_b0 [8];
-  kstrcpyup(fileName_b0, name);
-  if (fileName_b4[(int)strlen(fileName_b0)] != '.') {
-    fileName_a8 = 0;
-    strcat(fileName_b0, ".CGO");
+  char fileName[16];
+  kstrcpyup(fileName + 4, name); // TODO: This is different because the prefix is DGO_ maybe?
+  if ((fileName + 12)[(int)strlen(fileName + 4)] != '.') { // FIXME: How does this match len(name) - 4?
+    fileName = '\0';
+    strcat(fileName + 4, ".CGO");
   }
 
   bool oldShowStall = setStallMsg_GW(false);
 
-  if (POWERING_OFF_W == false) {
+  if (!POWERING_OFF_W) {
     BeginLoadingDGO(
       acStack_b0, buffer1, buffer2,
       (u8*)((uint)(heap->current + 0x3f) & 0xffffffc0));
 
     u32 lastObjectLoaded = 0;
-    while (true) { // TBD
-      int32_t* dgoObj;
-      do {
-        if ((lastObjectLoaded != 0) || (POWERING_OFF_W != false)) {
-          goto LAB_00270d58; // TBD
-        }
-        dgoObj = (int32_t *)GetNextDGO(&lastObjectLoaded);
-      } while (dgoObj == nullptr);
+    while (lastObjectLoaded == 0 && !POWERING_OFF_W) { // TBD
+      int32_t* dgoObj = (int32_t *)GetNextDGO(&lastObjectLoaded);
+      if (dgoObj == nullptr) {
+        continue;
+      }
 
       if (lastObjectLoaded != 0) {
         heap->top = oldHeapTop;
@@ -163,8 +158,12 @@ void load_and_link_dgo_from_c(const char* name,
 
       char objName[64];
       strcpy(objName, (char *)(dgoObj + 1));
-      undefined in_t1_lo;
-      link_and_exec(obj, objName, objSize, heap, linkFlag, (bool)in_t1_lo);
+      ;
+      {
+        undefined in_t1_lo;
+        link_and_exec(obj, objName, objSize, heap, linkFlag, (bool)in_t1_lo);
+      }
+
       if (lastObjectLoaded != 0) {
         break;
       }
@@ -173,17 +172,16 @@ void load_and_link_dgo_from_c(const char* name,
       }
     }
   }
-LAB_00270d58: // TBD
-  if (POWERING_OFF_W == false) {
+
+  if (!POWERING_OFF_W) {
     setStallMsg_GW(oldShowStall);
-    return;
   } else {
     KernelShutdown(3);
     ShutdownMachine(3);
     Msg(6, "load_and_link_dgo_from_c: cannot continue; load aborted\n");
-    do {
-                      /* WARNING: Do nothing block with infinite loop */
-    } while( true );
+    while (true) {
+      ; /* WARNING: Do nothing block with infinite loop */
+    }
   }
 }
 
