@@ -41,7 +41,7 @@ using namespace ee;
  * DONE
  * Modified to use std::string, and removed call to fflush.
  */
-void InitParms(int argc, const char** argv) {  
+void InitParms(int argc, const char** argv) {
   for (int i = 1; i < argc; i++) {
     std::string arg = argv[i];
 
