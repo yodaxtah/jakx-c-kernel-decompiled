@@ -214,7 +214,7 @@ u64 make_string(u32 size) {
   int unaff_s7_lo;
   u64 mem =
       alloc_heap_object(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP, *(u32 *)(unaff_s7_lo + 0xf),
-                        mem_size + 8, in_a3_lo);
+                        mem_size + BASIC_OFFSET + 4, in_a3_lo);
 
   if (mem != 0) {
     *(u32*)mem = size;
@@ -237,7 +237,7 @@ u64 make_string_from_c(const char* c_str) {
   int unaff_s7_lo;
   u64 mem =
       alloc_heap_object(unaff_s7_lo + 0xa0, *(u32 *)(unaff_s7_lo + 0xf),
-                        mem_size + 8, in_a3_lo);
+                        mem_size + BASIC_OFFSET + 4, in_a3_lo);
 
   *(int *)mem = (int)str_size;
 
@@ -255,7 +255,7 @@ u64 make_debug_string_from_c(const char* c_str) {
   u32 in_a3_lo;
   int unaff_s7_lo;
   u64 mem = alloc_heap_object(unaff_s7_lo + 0xa4, *(u32 *)(unaff_s7_lo + 0xf),
-                              mem_size + 8, in_a3_lo);
+                              mem_size + BASIC_OFFSET + 4, in_a3_lo);
   
   *(int *)mem = (int)str_size;
 
