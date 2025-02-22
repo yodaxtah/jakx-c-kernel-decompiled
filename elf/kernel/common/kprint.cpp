@@ -221,7 +221,7 @@ char* round(float x, s32* param1, char* start, char* sEnd, char padchar, s32 *pa
   float local_40 [4];
 
   if (x == 0.00000000) {
-    f = (float)(padchar - 0x30);
+    f = (float)(padchar - '0');
   } else {
     modf((double)(long)(int)local_40,(double *)start);  // Why is this not ':'?
   }
