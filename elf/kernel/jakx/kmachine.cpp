@@ -49,7 +49,7 @@ void InitParms(int argc, const char** argv) {
       Msg(6, "dkernel: cd mode\n");
       reboot_G_isodrv_G_overlord_S = 0;
       modsrc_S = 0;
-      fs_S_FS_INITIALIZED_W = (char **)0x0;
+      fs_S_FS_INITIALIZED_W = 0;
       isodrv_G_reboot_G = 0;
     }
 
@@ -57,13 +57,13 @@ void InitParms(int argc, const char** argv) {
       Msg(6, "dkernel: cd local-overlord mode\n");
       reboot_G_isodrv_G_overlord_S = 1;
       modsrc_S = 0;
-      fs_S_FS_INITIALIZED_W = (char **)0x0;
+      fs_S_FS_INITIALIZED_W = 0;
       isodrv_G_reboot_G = 0;
     }
 
     if (arg == "-cddata") {
       Msg(6, "dkernel: cddata mode\n");
-      fs_S_FS_INITIALIZED_W = (char **)0x0;
+      fs_S_FS_INITIALIZED_W = 0;
       isodrv_G_reboot_G = 1;
       modsrc_S = 1;
       reboot_G_isodrv_G_overlord_S = 1;
@@ -91,7 +91,7 @@ void InitParms(int argc, const char** argv) {
 
     if (arg == "-fakeiso") {
       Msg(6, "dkernel: fakeiso mode\n");
-      fs_S_FS_INITIALIZED_W = (char **)0x1;
+      fs_S_FS_INITIALIZED_W = 1;
       isodrv_G_reboot_G = 1;
       modsrc_S = 1;
       reboot_G_isodrv_G_overlord_S = 1;
@@ -180,7 +180,7 @@ void InitParms(int argc, const char** argv) {
 s32 InitIOP() {
   FUN_0027c260_usb();
   if (dnas_S_DNAS_INITIALIZED_W == 0
-      && fs_S_FS_INITIALIZED_W != nullptr
+      && fs_S_FS_INITIALIZED_W != 0
       && modsrc_S != 0
       && reboot_G_isodrv_G_overlord_S != 0
       && isodrv_G_reboot_G != 0
@@ -278,7 +278,7 @@ s32 InitIOP() {
     } while (itArray != (Idk1248Data*)"dkernel: boot:%d dbg:%d mem:%d syms:%d fs:%d mod:%d ovl:%d ioprp:%d cd:%d dnas:%d\n"); // this string is just at end(itArray)
 
     for (int i = 0; i < 12; i++) {
-      MakeVagwadPath_S(acStack_5b0, fs_S_FS_INITIALIZED_W != nullptr, i);
+      MakeVagwadPath_S(acStack_5b0, fs_S_FS_INITIALIZED_W != 0, i);
       if (underlordRpcCall0_W(acStack_5b0, auStack_1b0) == 0) {
         AUDIO_LANGUAGE_MASK_G |= (&local_170[0].value1)[i]; // treat array of 3 structs as array of 12 elements
       }
@@ -334,7 +334,7 @@ s32 InitIOP() {
 
     char cStack_130;
     char acStack_12f [255];
-    strcpy(&cStack_130, ISO_TYPE_STRINGS_W[(int)fs_S_FS_INITIALIZED_W]);
+    strcpy(&cStack_130, ISO_TYPE_STRINGS_W[fs_S_FS_INITIALIZED_W]);
     size_t length = strlen(&cStack_130);
     char* pcVar7 = acStack_12f + (int)length;
     char *moduleName_W;
