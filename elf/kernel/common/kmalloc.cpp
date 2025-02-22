@@ -186,9 +186,8 @@ u8* kmalloc(kheapinfo* heap, s32 size, u32 flags, char const* name) {
 
     heap->top = memstart;
 
-    if ((flags & 0x1000) != 0) {
+    if ((flags & 0x1000) != 0)
       memset(memstart, 0, size);
-    }
 
     if ((heap == &kglobalheapinfo) && ((char)kheaplogging != '\0')) {
       if (strcmp(name, "string") == 0) {
