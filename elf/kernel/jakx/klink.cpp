@@ -799,7 +799,7 @@ uint64_t link_resume() {
  * IT IS VERY FAST
  * but it may use the scratchpad.  It is implemented in GOAL, and falls back to normal C memcpy
  * if GOAL isn't loaded, or if the alignment isn't good enough.
- * TBD.
+ * DONE.
  */
 void ultimate_memcpy_G(void* dst, void* src, uint32_t size) {
   if ((src < dst) && ((int)((int)dst - size) < (int)src)) {
@@ -807,22 +807,20 @@ void ultimate_memcpy_G(void* dst, void* src, uint32_t size) {
       *(undefined *)((int)dst + i) = *(undefined *)((int)src + i);
     }
   } else {
-    code* sym_val = gfunc_774;
     if ((((uint)dst & 0xf) == 0) && (((uint)src & 0xf) == 0) && (((ulong)(int)size & 0xf) == 0) && (ulong)(int)size > 0xfff) {
       if (gfunc_774 == nullptr) {
         int unaff_s7_lo;
-        sym_val = *(code **)(unaff_s7_lo + FIX_SYM_ULTIMATE_MEMCPY - 1);
+        code* sym_val = *(code **)(unaff_s7_lo + FIX_SYM_ULTIMATE_MEMCPY - 1);
         if (sym_val == nullptr) {
           memcpy(dst, src, (ulong)(int)size);
           return;
         }
+        gfunc_774 = sym_val;
       }
+      (*gfunc_774)();
     } else {
       memcpy(dst, src, (ulong)(int)size);
-      return;
     }
-    gfunc_774 = sym_val;
-    (*gfunc_774)();
   }
 }
 
