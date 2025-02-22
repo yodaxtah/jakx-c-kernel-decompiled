@@ -129,7 +129,7 @@ void output_segment_load(const char* name, u8* link_block, u32 flags) {
     char* buffer = strend((char *)(OutputBufArea + 0x18)); // SIZEOF
     char true_str[] = "t";
     char false_str[] = "nil";
-    char* flag_str = ((flags & 2) != 0) ? true_str : false_str;
+    char* flag_str = ((flags & LINK_FLAG_OUTPUT_TRUE) != 0) ? true_str : false_str;
     ObjectFileHeader* lbp = (ObjectFileHeader*)link_block;
     sprintf(buffer, "load \"%s\" %s #x%x #x%x #x%x\n", name, flag_str,
             lbp->code_infos[0].offset + 4, lbp->code_infos[1].offset + 4, lbp->code_infos[2].offset + 4);

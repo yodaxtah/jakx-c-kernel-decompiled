@@ -42,7 +42,7 @@ u32 ReceiveToBuffer(char* buff) {
  * DONE, EXACT
  */
 s32 SendFromBuffer(char* buff, s32 size) {
-  return SendFromBufferD(1, 0, buff, size);
+  return SendFromBufferD(MSG_OUTPUT, 0, buff, size);
 }
 
 /*!
