@@ -34,17 +34,18 @@ void ClearPending() {
   } else {
     if (ListenerStatus != 0) {
       if (OutputPending != 0) { // TODO: why is the loop gone here?
-        size_t size = strlen((char *)(OutputBufArea + 0x18)); // SIZEOF
-        SendFromBuffer((char *)(OutputBufArea + 0x18), (s32)size); // SIZEOF
+        char* msg = (char *)(OutputBufArea + 0x18); // SIZEOF
+        size_t size = strlen(msg);
+        SendFromBuffer(msg, (s32)size);
         clear_output();
       }
 
       if (PrintPending != nullptr) {
         char* msg = PrintBufArea + 0x18; // SIZEOF
-        size_t size = strlen(PrintBufArea + 0x18); // SIZEOF
+        size_t size = strlen(msg);
         while (size > 0) {
           size_t send_size = size;
-          if ((long)size > 64000) {
+          if ((long)send_size > 64000) {
             send_size = 64000;
           }
           SendFromBufferD(2, 0, msg, (int)send_size);
