@@ -802,25 +802,25 @@ uint64_t link_resume() {
  * TBD.
  */
 void ultimate_memcpy_G(void* dst, void* src, uint32_t size) {
-  code *pcVar1;
-  int unaff_s7_lo;
-  
   if ((src < dst) && ((int)((int)dst - size) < (int)src)) {
     for (int i = size - 1; i != -1; i--) {
       *(undefined *)((int)dst + i) = *(undefined *)((int)src + i);
     }
-  }
-  else {
-    if ((((((uint)src & 0xf) != 0) || (((uint)dst & 0xf) != 0)) || (((ulong)(int)size & 0xf) != 0)) ||
-       (((ulong)(int)size < 0x1000 ||
-        ((pcVar1 = DAT_002836f8, DAT_002836f8 == (code *)0x0 &&
-         (pcVar1 = *(code **)(unaff_s7_lo + 0x283), *(code **)(unaff_s7_lo + 0x283) == (code *)0x0))
-        )))) {
+  } else {
+    int unaff_s7_lo;
+    code *sym_val;
+    if ((((uint)dst & 0xf) != 0) ||
+        (((uint)src & 0xf) != 0) ||
+        (((ulong)(int)size & 0xf) != 0) ||
+        ((ulong)(int)size < 0x1000 ||
+        ((sym_val = gfunc_774, gfunc_774 == nullptr &&
+         (sym_val = *(code **)(unaff_s7_lo + FIX_SYM_ULTIMATE_MEMCPY - 1), *(code **)(unaff_s7_lo + FIX_SYM_ULTIMATE_MEMCPY - 1) == nullptr))
+        ))) {
       memcpy(dst, src, (ulong)(int)size);
       return;
     }
-    DAT_002836f8 = pcVar1;
-    (*DAT_002836f8)();
+    gfunc_774 = sym_val;
+    (*gfunc_774)();
   }
 }
 
