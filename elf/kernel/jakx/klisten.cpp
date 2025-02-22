@@ -52,7 +52,7 @@ void InitListener() {
   *(int *)((int)KernelFunction - 1) = unaff_s7_lo;
 
   *(int *)((int)kernel_packages - 1) =
-      new_pair(unaff_s7_lo + 0xa0, *(u32 *)(unaff_s7_lo + 0x6f),
+      new_pair(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP, *(u32 *)(unaff_s7_lo + FIX_SYM_PAIR_TYPE - 1),
                (u32)make_string_from_c("kernel"), *(u32 *)((int)kernel_packages - 1));
   //  if (MasterDebug != 0) {
   //    SendFromBufferD(0, 0, &AckBufArea, 0);
@@ -65,18 +65,18 @@ void InitListener() {
 void ProcessListenerMessage(char* msg) {
   ListenerStatus = 1;
   switch (protoBlock.msg_kind) {
-    case 1:
+    case LTT_MSG_POKE:
       ClearPending();
       break;
-    case 5:
+    case LTT_MSG_INSPECT:
       inspect_object(atoi(msg));
       ClearPending();
       break;
-    case 6:
+    case LTT_MSG_PRINT:
       print_object(atoi(msg));
       ClearPending();
       break;
-    case 7:
+    case LTT_MSG_PRINT_SYMBOLS:
       // TBD
       undefined4 unaff_s7_hi;
       int unaff_s7_lo;
@@ -102,16 +102,17 @@ void ProcessListenerMessage(char* msg) {
       }
       ClearPending();
       break;
-    case 8:
+    case LTT_MSG_RESET:
       KernelShutdown(1);
-    case 9: {
+    case LTT_MSG_CODE: {
       u8* buffer = kmalloc(kdebugheap, MessCount, 0, "listener-link-buf");
       memcpy(buffer, msg, (size_t)MessCount);
       *(u8 **)(ListenerLinkBlock - 1) = buffer + 4;
 
       undefined in_t1_lo; // TODO: why would this be true? I expect this to be false...
       *(uint8_t **)(ListenerFunction - 1) = link_and_exec(buffer, "*listener*", MessCount - *(int *)(buffer + 4), kdebugheap,
-                                                           0x10, (bool)in_t1_lo);
+                                                           LINK_FLAG_FORCE_DEBUG, (bool)in_t1_lo)
+                                                           ;
       return;
     } break;
     default:

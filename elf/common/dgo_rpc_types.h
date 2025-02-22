@@ -10,6 +10,7 @@
 
 constexpr PerGameVersion<int> DGO_RPC_ID(0xdeb4, 0xfab3, 0xfab3, 0xfab3);
 constexpr int DGO_RPC_CHANNEL = 3;
+constexpr int DGO_RPC_CHANNEL_PLUS_1 = 4;
 constexpr int DGO_RPC_LOAD_FNO = 0;
 constexpr int DGO_RPC_LOAD_NEXT_FNO = 1;
 constexpr int DGO_RPC_CANCEL_FNO = 2;

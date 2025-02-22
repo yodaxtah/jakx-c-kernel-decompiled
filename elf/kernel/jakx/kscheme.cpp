@@ -79,26 +79,26 @@ u64 alloc_from_heap(u32 heap_symbol, u32 type, s32 size, u32 pp) {
   u64 heap_symbol_ = (u64)(int)heap_symbol_;
   kheapinfo* heap_ptr = *(kheapinfo **)(heap_symbol_ - 1);
   s32 aligned_size = ((size + 0xf) / 0x10) * 0x10;
-  if (heap_symbol_ == (long)(unaff_s7_lo + 0xa0) ||
-      heap_symbol_ == (long)(unaff_s7_lo + 0xa4) ||
-      heap_symbol_ == (long)(unaff_s7_lo + 0xa8) ||
-      heap_symbol_ == (long)(unaff_s7_lo + 0xb0)) {
+  if (heap_symbol_ == (long)(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP) ||
+      heap_symbol_ == (long)(unaff_s7_lo + FIX_SYM_DEBUG) ||
+      heap_symbol_ == (long)(unaff_s7_lo + FIX_SYM_LOADING_LEVEL) ||
+      heap_symbol_ == (long)(unaff_s7_lo + FIX_SYM_PROCESS_LEVEL_HEAP)) {
     if (type == 0) {
-      return (long)(int)kmalloc(heap_ptr, size, 0x1000, "global-object");
+      return (long)(int)kmalloc(heap_ptr, size, KMALLOC_MEMSET, "global-object");
     }
 
     if (*(int *)type == 0) {
-      return (long)(int)kmalloc(heap_ptr, size, 0x1000, "global-object");
+      return (long)(int)kmalloc(heap_ptr, size, KMALLOC_MEMSET, "global-object");
     }
 
     char *gstr = (char *)(aligned_size + 4);
     gstr_len = *(int *)((*(int *)type - unaff_s7_lo) + SymbolString);
     if (gstr_len == 0) {
-      return (long)(int)kmalloc(heap_ptr, size, 0x1000, "global-object");
+      return (long)(int)kmalloc(heap_ptr, size, KMALLOC_MEMSET, "global-object");
     }
 
-    return (long)(int)kmalloc(heap_ptr, size, 0x1000, gstr);
-  } else if (heap_symbol_ == (long)(unaff_s7_lo + 100)) {
+    return (long)(int)kmalloc(heap_ptr, size, KMALLOC_MEMSET, gstr);
+  } else if (heap_symbol_ == (long)(unaff_s7_lo + FIX_SYM_PROCESS_TYPE)) {
     u32 start = *(u32 *)(unaff_s6_lo + 0x74); // TODO: Why not +0x64 and +0x60?
     u32 heapEnd = *(u32 *)(unaff_s6_lo + 0x70);
     u32 allocEnd = start + aligned_size;
@@ -111,8 +111,8 @@ u64 alloc_from_heap(u32 heap_symbol, u32 type, s32 size, u32 pp) {
       MsgErr("kmalloc: !alloc mem in heap for #<process @ #x%x> (%d bytes / %d bytes free)\n");
       return 0;
     }
-  } else if (heap_symbol_ == (long)(unaff_s7_lo + 0xb8)) {
-    heap_symbol_ = (u64)(int)*(void **)(unaff_s7_lo + 0xbb);
+  } else if (heap_symbol_ == (long)(unaff_s7_lo + FIX_SYM_SCRATCH)) {
+    heap_symbol_ = (u64)(int)*(void **)(unaff_s7_lo + FIX_SYM_SCRATCH - 4);
     *(int *)(unaff_s7_lo + 0xbb) += aligned_size;
     memset((void *)heap_symbol_, 0, (long)aligned_size);
     return heap_symbol_;
@@ -213,7 +213,7 @@ u64 make_string(u32 size) {
   u32 in_a3_lo;
   int unaff_s7_lo;
   u64 mem =
-      alloc_heap_object(unaff_s7_lo + 0xa0, *(u32 *)(unaff_s7_lo + 0xf),
+      alloc_heap_object(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP, *(u32 *)(unaff_s7_lo + 0xf),
                         mem_size + 8, in_a3_lo);
 
   if (mem != 0) {
@@ -495,7 +495,7 @@ Function* make_function_from_c(void *func, bool arg3_is_pp) {
   undefined4 *mem;
   int unaff_s7_lo;
   
-  u64 uVar1 = alloc_heap_object(unaff_s7_lo + 0xa0, *(u32 *)(unaff_s7_lo + 7), 0x50, in_a3_lo);
+  u64 uVar1 = alloc_heap_object(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP, *(u32 *)(unaff_s7_lo + 7), 0x50, in_a3_lo);
   mem = (undefined4 *)uVar1;
   mem[0] = 0x67bdffc0;
   mem[1] = 0xffbf0000;
@@ -536,7 +536,7 @@ Ptr<Function> make_stack_arg_function_from_c(void* func) {
 u64 make_nothing_func() {
   u32 in_a3_lo;
   int unaff_s7_lo;
-  undefined4* mem = (undefined4 *)alloc_heap_object(unaff_s7_lo + 0xa0,
+  undefined4* mem = (undefined4 *)alloc_heap_object(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP,
                                                     *(u32 *)(unaff_s7_lo + 7), 0x14, in_a3_lo);
 
   mem[0] = 0x3e00008;
@@ -553,7 +553,7 @@ u64 make_nothing_func() {
 u64 make_zero_func() {
   u32 in_a3_lo;
   int unaff_s7_lo;
-  undefined4* mem = alloc_heap_object(unaff_s7_lo + 0xa0,
+  undefined4* mem = alloc_heap_object(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP,
                                       *(u32 *)(unaff_s7_lo + 7), 0x14, in_a3_lo);
   mem[0] = 0x3e00008;
   mem[1] = 0x24020000;
@@ -748,7 +748,7 @@ u32* intern_from_c(int sym_id, int flags, const char* name) {
   }
 
   int unaff_s7_lo;
-  if (symbol == (u32*)(unaff_s7_lo + -7)) {
+  if (symbol == (u32*)(unaff_s7_lo + S7_OFF_FIX_SYM_EMPTY_PAIR)) {
     kheaplogging = false;
     return symbol;
   }
@@ -862,7 +862,7 @@ Type* alloc_and_init_type(Type** sym,
     if (type_list_ptr == nullptr) {
       MsgErr("dkernel: trying to init loading level type \'%s\' while type-list is undefined\n",
              *(int *)(sym + (SymbolString - unaff_s7_lo)) + 4);
-      type_mem = alloc_heap_object(unaff_s7_lo + 0xa0, u32_in_fixed_sym_FIX_SYM_TYPE_TYPE_,
+      type_mem = alloc_heap_object(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP, u32_in_fixed_sym_FIX_SYM_TYPE_TYPE_,
                                    type_size, in_a3_lo);
     } else {
       type_mem = alloc_heap_object(unaff_s7_lo + 0xa8,
@@ -872,7 +872,7 @@ Type* alloc_and_init_type(Type** sym,
       type_mem->memusage_method = (Function *)old_head;
     }
   } else {
-    type_mem = alloc_heap_object(unaff_s7_lo + 0xa0,
+    type_mem = alloc_heap_object(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP,
                                  u32_in_fixed_sym_FIX_SYM_TYPE_TYPE_, type_size, in_a3_lo);
   }
 
@@ -1109,7 +1109,7 @@ u64 call_method_of_type(u32 arg, Type* type, u32 method_id) {
   u64 arg_ = (u64)(int)arg;
   if ((((type < SymbolTable2) || ((Type *)0x7ffffff < type)) &&
        ((Function **)0x7bfff < &type[-0x289e].print_method))
-      || (((uint)type & 7) != 4)) {
+      || (((uint)type & OFFSET_MASK) != BASIC_OFFSET)) {
     cprintf("#<#x%x has invalid type ptr #x%x>\n", arg_, type);
   } else {
     int unaff_s7_lo;
@@ -1180,18 +1180,18 @@ u64 call_method_of_type_arg2(u32 arg, Type* type, u32 method_id, u32 a1, u32 a2)
  */
 u64 print_object(u32 obj) {
   u64 obj_ = (u64)(int)obj;
-  if ((obj_ & 7) == 0) {
+  if ((obj_ & OFFSET_MASK) == 0) {
     return (u64)(int)print_binteger((ulong)obj);
   } else {
     if ((obj_ < (ulong)(long)SymbolTable2 || 0x7ffffff < obj_) &&
         (0x7bfff < obj - 0x84000)) { // TODO: why should this match: obj < 0x84000 || 0x100000 <= obj?
     cprintf("#<invalid object #x%x>", obj_);
-    } else if ((obj_ & 7) == 2) {
+    } else if ((obj_ & OFFSET_MASK) == 2) {
       return print_pair(obj);
     } else if ((obj_ & 1 != 0) && obj_ >= (ulong)(long)SymbolTable2 &&
                obj_ < (ulong)(long)LastSymbol) {
       return print_symbol(obj);
-    } else if ((obj_ & 7) == 4) {
+    } else if ((obj_ & OFFSET_MASK) == 4) {
       return call_method_of_type(obj,*(Type **)(obj - 4),2);
     } else {
       cprintf("#<unknown type %d @ #x%x>", obj_ & 7, obj_);
@@ -1210,7 +1210,7 @@ u64 print_basic(u32 obj) {
   ulong obj_ = (ulong)(int)obj;
   if (((obj_ < (ulong)(long)SymbolTable2 || 0x7ffffff < obj_) &&
        (0x7bfff < obj - 0x84000)) // TODO: why should this match obj < 0x84000 || 0x100000 <= obj
-      || ((obj_ & 7) != 4)) {
+      || ((obj_ & OFFSET_MASK) != BASIC_OFFSET)) {
     if (obj_ == CONCAT44(unaff_s7_hi, unaff_s7_lo)) {
       cprintf("#f");
     } else {
@@ -1229,25 +1229,25 @@ u64 print_basic(u32 obj) {
 u64 print_pair(u32 obj) {
   int unaff_s7_lo;
   ulong obj_ = (ulong)(int)obj;
-  if (obj_ == (long)(unaff_s7_lo + -7)) {
+  if (obj_ == (long)(unaff_s7_lo + S7_OFF_FIX_SYM_EMPTY_PAIR)) {
     cprintf("()");
   } else {
     undefined4 unaff_s7_hi;
     if ((long)*(int *)(CollapseQuote + -1) == CONCAT44(unaff_s7_hi,unaff_s7_lo)
-        || ((obj_ & 7) != 2)
-        || *(int *)(obj - 2) != unaff_s7_lo + 0xe8
+        || ((obj_ & OFFSET_MASK) != 2)
+        || *(int *)(obj - 2) != unaff_s7_lo + FIX_SYM_QUOTE
         || (*(uint *)(obj + 2) & 7) != 2
-        || (long)*(int *)(*(uint *)(obj + 2) + 2) != (long)(unaff_s7_lo + -7)
+        || (long)*(int *)(*(uint *)(obj + 2) + 2) != (long)(unaff_s7_lo + S7_OFF_FIX_SYM_EMPTY_PAIR)
         ) {
       cprintf("(");
       u32 toPrint = (u32)obj_;
       for (;;) {
-        if ((toPrint & 7) == 2) {
+        if ((toPrint & OFFSET_MASK) == PAIR_OFFSET) {
           print_object(*(u32 *)(toPrint - 2));
 
           ulong cdr = (ulong)*(int *)(toPrint + 2);
           toPrint = (u32)cdr;
-          if (cdr == (long)(unaff_s7_lo + -7)) {
+          if (cdr == (long)(unaff_s7_lo + S7_OFF_FIX_SYM_EMPTY_PAIR)) {
             cprintf(")");
             return obj_;
           } else {
@@ -1294,7 +1294,7 @@ u64 print_type(u32 obj) {
   ulong obj_ = (ulong)(int)obj;
   if (((obj_ < (ulong)(long)SymbolTable2 || 0x7ffffff < obj_) &&
        (0x7bfff < obj - 0x84000))
-      || ((obj_ & 7) != 4 || (*(int *)(obj - 4) != *(int *)(unaff_s7_lo + 0x17)))) {
+      || ((obj_ & OFFSET_MASK) != BASIC_OFFSET || (*(int *)(obj - 4) != *(int *)(unaff_s7_lo + 0x17)))) {
     cprintf("#<invalid type #x%x>", obj_);
   } else {
     cprintf("%s", (long)(*(int *)((*(int *)obj - unaff_s7_lo) + SymbolString) + 4));
@@ -1310,7 +1310,7 @@ u64 print_string(u32 obj) {
   undefined4 unaff_s7_hi;
   ulong obj_ = (ulong)(int)obj;
   if ((((obj_ < (ulong)(long)SymbolTable2) || (0x7ffffff < obj_)) && (0x7bfff < obj - 0x84000)) ||
-     (((obj_ & 7) != 4 || (*(int *)(obj - 4) != *(int *)(unaff_s7_lo + 0xf))))) {
+     (((obj_ & OFFSET_MASK) != BASIC_OFFSET || (*(int *)(obj - 4) != *(int *)(unaff_s7_lo + 0xf))))) {
     if (obj_ == CONCAT44(unaff_s7_hi,unaff_s7_lo)) {
       cprintf("#f");
 
@@ -1369,22 +1369,22 @@ u64 inspect_symbol(u32 obj);
  */
 u64 inspect_object(u32 obj) {
   u64 obj_ = (u64)(int)obj;
-  if (obj_ & 7 == 0) {
+  if (obj_ & OFFSET_MASK == BINTEGER_OFFSET) {
     return (u64)(int)inspect_binteger((ulong)obj);
   } else {
     if (((obj_ < (ulong)(long)SymbolTable2) || (0x7ffffff < obj_)) &&
         (0x7bfff < obj - 0x84000)) { // TODO: how does this match obj < 0x84000 || 0x100000 <= obj?
       cprintf("#<invalid object #x%x>\n", obj_);
-    } else if (obj_ & 7 == 2) {
+    } else if (obj_ & OFFSET_MASK == PAIR_OFFSET) {
       return inspect_pair(obj);
     } else if ((obj_ & 1) != 0 && obj_ >= (ulong)(long)SymbolTable2 &&
                obj_ < (ulong)(long)LastSymbol) {
       return inspect_symbol(obj);
-    } else if (obj_ & 7 == 4) {
-      return call_method_of_type(obj, *(Type **)(obj - 4),
-                                 3);
+    } else if (obj_ & OFFSET_MASK == BASIC_OFFSET) {
+      return call_method_of_type(obj, *(Type **)(obj - BASIC_OFFSET),
+                                 GOAL_INSPECT_METHOD);
     } else {
-      cprintf("#<unknown type %d @ #x%x>", obj_ & 7, obj_);
+      cprintf("#<unknown type %d @ #x%x>", obj_ & OFFSET_MASK, obj_);
     }
   }
   return obj_;
@@ -1409,9 +1409,9 @@ u64 inspect_string(u32 obj) {
   ulong obj_ = (ulong)(int)obj;
   if (((obj_ < (ulong)(long)SymbolTable2 || 0x7ffffff < obj_) &&
       (0x7bfff < obj - 0x84000))
-      || ((obj_ & 7) != 4 ||
+      || ((obj_ & OFFSET_MASK) != BASIC_OFFSET ||
       *(int *)(obj - 4) != *(int *)(unaff_s7_lo + 0xf))) {
-    cprintf("#<invalid string #x%x>\n",obj_);
+    cprintf("#<invalid string #x%x>\n", obj_);
   } else {
     const char* str = (const char*)obj;
     cprintf("[%8x] string\n\tallocated-length: %d\n\tdata: \"%s\"\n", obj_, *(undefined4 *)str, str + 4);
@@ -1445,9 +1445,9 @@ u64 inspect_type(u32 obj) {
   ulong obj_ = (ulong)(int)obj;
   if (((obj_ < (ulong)(long)SymbolTable2 || 0x7ffffff < obj_) &&
        (0x7bfff < obj - 0x84000))
-      || ((obj_ & 7) != 4 ||
+      || ((obj_ & OFFSET_MASK) != BASIC_OFFSET ||
       *(int *)(obj - 4) != *(int *)(unaff_s7_lo + 0x17))) {
-    cprintf("#<invalid type #x%x>\n",obj_);
+    cprintf("#<invalid type #x%x>\n", obj_);
   } else {
     Type* typ = (Type*)obj;
 
@@ -1474,7 +1474,7 @@ u64 inspect_basic(u32 obj) {
   ulong obj_ = (ulong)(int)obj;
   if (((obj_ < (ulong)(long)SymbolTable2 || 0x7ffffff < obj_) &&
        (0x7bfff < obj - 0x84000))
-      || ((obj_ & 7) != 4)) {
+      || ((obj_ & OFFSET_MASK) != BASIC_OFFSET)) {
     if (obj_ == unaff_s7) {
       return inspect_symbol(obj);
     } else {
@@ -1517,10 +1517,10 @@ u64 pack_type_flag(u64 methods, u64 heap_base, u64 size) {
 
 int InitHeapAndSymbol() {
   u8* symbol_table =
-      kmalloc(&kglobalheapinfo, 0x10000, 0x1000, "symbol-table");
+      kmalloc(&kglobalheapinfo, 4 * GOAL_MAX_SYMBOLS, KMALLOC_MEMSET, "symbol-table");
   u8* SymbolString_ =
-      kmalloc(&kglobalheapinfo, 0x10000, 0x1000, "string-table");
-  SymbolString = SymbolString_ + 0x8000;
+      kmalloc(&kglobalheapinfo, 4 * GOAL_MAX_SYMBOLS, KMALLOC_MEMSET, "string-table");
+  SymbolString += 2 * GOAL_MAX_SYMBOLS;
   LastSymbol = symbol_table + 0xff00;
   SymbolTable2 = symbol_table + 5;
   u8* s7 = symbol_table + 0x8001;
@@ -1884,7 +1884,7 @@ int InitHeapAndSymbol() {
 
   *EnableMethodSet = *EnableMethodSet + 1;
   load_and_link_dgo_from_c("kernel", &kglobalheapinfo,
-                          0xd,
+                          LINK_FLAG_OUTPUT_LOAD | LINK_FLAG_EXECUTE | LINK_FLAG_PRINT_LOGIN,
                           0x400000, (bool)0); // TODO: false?
   *EnableMethodSet = *EnableMethodSet + -1;
 
@@ -1945,7 +1945,7 @@ u64 loadc(const char* file_name, kheapinfo *heap, u32 flags) {
   undefined4 temp = *(undefined4 *)(unaff_s7_lo + 0xab);
   *(kheapinfo **)(unaff_s7_lo + 0xab) = heap;
   printf("****** CALL TO loadc() ******\n");
-  strcpy(loadName, MakeFileName(3, file_name, 0));
+  strcpy(loadName, MakeFileName(CODE_FILE_TYPE, file_name, 0));
   u64 returnValue = load_and_link(file_name, loadName, heap, flags);
   *(undefined4 *)(unaff_s7_lo + 0xab) = temp;
   if ((returnValue & 0xfffffffffff00000) == 0xfffffffffff00000) {
@@ -1957,7 +1957,7 @@ u64 loadc(const char* file_name, kheapinfo *heap, u32 flags) {
 u64 loado(u32 file_name_in, u32 heap_in) {
   char loadName[256];
   printf("****** CALL TO loado(%s) ******\n", (const char* )(file_name_in + 4));
-  strcpy(loadName, MakeFileName(0x20, (const char* )(file_name_in + 4), 0));
+  strcpy(loadName, MakeFileName(DATA_FILE_TYPE, (const char* )(file_name_in + 4), 0));
   ulong returnValue = load_and_link((const char* )(file_name_in + 4), loadName, (kheapinfo *)heap_in, 8);
 
   if ((returnValue & 0xfffffffffff00000) == 0xfffffffffff00000) {
@@ -1978,7 +1978,7 @@ u64 unload(u32 name) {
 
 s64 load_and_link(const char* filename, char* decode_name, kheapinfo* heap, u32 flags) {
   int32_t sz[4];
-  u8* data = FileLoad(decode_name, heap, (u8 *)0x0, 0x40, sz);
+  u8* data = FileLoad(decode_name, heap, nullptr, KMALLOC_ALIGN_64, sz);
   ulong rv = (ulong)(int)data;
   if ((rv & 0xfffffffffff00000) != 0xfffffffffff00000) {
     return (ulong)(int)link_and_exec(data, decode_name, sz[0], heap, flags, false);

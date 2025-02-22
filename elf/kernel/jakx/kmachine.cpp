@@ -598,9 +598,9 @@ u64 kopen(u64 fs, u64 name, u64 mode) {
   if (!strcmp((char *)(symbol_to_cstring_mode), "read")) {
     file_stream->file = sceOpen(buffer,1);
   } else if (!strcmp((char *)(symbol_to_cstring_mode), "append")) {
-    file_stream->file = sceOpen(buffer, 0x202);
+    file_stream->file = sceOpen(buffer, SCE_CREAT | SCE_WRONLY);
   } else {
-    file_stream->file = sceOpen(buffer, 0x602);
+    file_stream->file = sceOpen(buffer, SCE_TRUNC | SCE_CREAT | SCE_WRONLY);
   }
 
   return fs;
@@ -738,19 +738,19 @@ void InitMachineScheme() {
     *EnableMethodSet = *EnableMethodSet + 1;
     undefined in_t0_lo;
     load_and_link_dgo_from_c("game", kglobalheap,
-                             0xd,
+                             LINK_FLAG_OUTPUT_LOAD | LINK_FLAG_EXECUTE | LINK_FLAG_PRINT_LOGIN,
                              0x400000, (bool)in_t0_lo); // FIXME: why will this result in false while in jak3 it is true?
     *EnableMethodSet = *EnableMethodSet + -1;
     ;
 
     *(int *)(kernel_packages + -1) =
-        (int)new_pair(unaff_s7_lo + 0xa0,*(u32 *)(unaff_s7_lo + 0x6f),
+        (int)new_pair(unaff_s7_lo + 0xa0,*(u32 *)(unaff_s7_lo + FIX_SYM_PAIR_TYPE - 1),
                  (u32)make_string_from_c("engine"), *(u32 *)(kernel_packages + -1));
     *(int *)(kernel_packages + -1) =
-        (int)new_pair(unaff_s7_lo + 0xa0,*(u32 *)(unaff_s7_lo + 0x6f),
+        (int)new_pair(unaff_s7_lo + 0xa0,*(u32 *)(unaff_s7_lo + FIX_SYM_PAIR_TYPE - 1),
                  (u32)make_string_from_c("game"), *(u32 *)(kernel_packages + -1));
     *(int *)(kernel_packages + -1) =
-        (int)new_pair(unaff_s7_lo + 0xa0,*(u32 *)(unaff_s7_lo + 0x6f),
+        (int)new_pair(unaff_s7_lo + 0xa0,*(u32 *)(unaff_s7_lo + FIX_SYM_PAIR_TYPE - 1),
                  (u32)make_string_from_c("common"), *(u32 *)(kernel_packages + -1));
     call_goal_function_by_name("play-boot");
   }

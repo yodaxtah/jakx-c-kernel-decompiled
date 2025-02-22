@@ -62,18 +62,18 @@ void init_output() {
   use_debug = MasterDebug == 0 && DebugSegment == 0; // TODO: Why Jak2 and not Jak3?
 
   if (use_debug) {
-    MessBufArea = kmalloc(kdebugheap, 0x80000, 0x1100,
+    MessBufArea = kmalloc(kdebugheap, DEBUG_MESSAGE_BUFFER_SIZE, KMALLOC_MEMSET | KMALLOC_ALIGN_256,
                           "mess-buf");
-    OutputBufArea = kmalloc(kdebugheap, 0x80000,
-                            0x1100, "output-buf");
-    PrintBufArea = kmalloc(kdebugheap, 0x200000, 0x1100,
-                          "print-buf");
+    OutputBufArea = kmalloc(kdebugheap, DEBUG_OUTPUT_BUFFER_SIZE,
+                            KMALLOC_MEMSET | KMALLOC_ALIGN_256, "output-buf");
+    PrintBufArea = kmalloc(kdebugheap, DEBUG_PRINT_BUFFER_SIZE, KMALLOC_MEMSET | KMALLOC_ALIGN_256,
+                           "print-buf");
   } else {
     MessBufArea = nullptr;
     OutputBufArea = nullptr;
 
     PrintBufArea =
-        kmalloc(kglobalheapinfo, 0x2000, 0x1100, "print-buf");
+        kmalloc(kglobalheapinfo, PRINT_BUFFER_SIZE, KMALLOC_MEMSET | KMALLOC_ALIGN_256, "print-buf");
   }
 }
 
@@ -82,7 +82,7 @@ void init_output() {
  */
 void clear_output() {
   if (MasterDebug != 0) {
-    strcpy((char *)(OutputBufArea + 0x18), "");
+    strcpy((char *)(OutputBufArea + 0x18), ""); // SIZEOF
     OutputPending = 0;
   }
 }
@@ -91,7 +91,7 @@ void clear_output() {
  * Clear all data in the print buffer
  */
 void clear_print() {
-  PrintBufArea[0x18] = 0;
+  PrintBufArea[0x18] = 0; // SIZEOF
   PrintPending = nullptr;
 }
 
@@ -102,10 +102,10 @@ void clear_print() {
 void reset_output() {
   if (MasterDebug != 0) {
     undefined *unaff_s7_lo;
-    sprintf((char *)(OutputBufArea + 0x18), "reset #x%x\n",
+    sprintf((char *)(OutputBufArea + 0x18), "reset #x%x\n", // SIZEOF
             unaff_s7_lo);
 
-    OutputPending = OutputBufArea + 0x18;
+    OutputPending = OutputBufArea + 0x18; // SIZEOF
   }
 }
 
@@ -115,9 +115,9 @@ void reset_output() {
  */
 void output_unload(const char* name) {
   if (MasterDebug != 0) {
-    sprintf(strend((char *)(OutputBufArea + 0x18)),
+    sprintf(strend((char *)(OutputBufArea + 0x18)), // SIZEOF
             "unload \"%s\"\n", name);
-    OutputPending = OutputBufArea + 0x18;
+    OutputPending = OutputBufArea + 0x18; // SIZEOF
   }
 }
 
@@ -126,7 +126,7 @@ void output_unload(const char* name) {
  */
 void output_segment_load(const char* name, u8* link_block, u32 flags) {
   if (MasterDebug != 0) {
-    char* buffer = strend((char *)(OutputBufArea + 0x18));
+    char* buffer = strend((char *)(OutputBufArea + 0x18)); // SIZEOF
     char true_str[] = "t";
     char false_str[] = "nil";
     char* flag_str = ((flags & 2) != 0) ? true_str : false_str;
@@ -135,7 +135,7 @@ void output_segment_load(const char* name, u8* link_block, u32 flags) {
             lbp->code_infos[0].offset + 4, lbp->code_infos[1].offset + 4, lbp->code_infos[2].offset + 4);
     // TODO: Why +4? The struct SegmentInfo might itself be nested at 0x4 in another one:
     // ObjectFileHeader --contains--> SomeStruct of 16 bytes --contains--> SegmentInfo.
-    OutputPending = OutputBufArea + 0x18;
+    OutputPending = OutputBufArea + 0x18; // SIZEOF
   }
 }
 
@@ -150,7 +150,7 @@ void cprintf(const char* format, ...) {
   va_start(args, format);
   char* str = PrintPending;
   if (PrintPending == nullptr)
-    str = PrintBufArea + 0x18;
+    str = PrintBufArea + 0x18; // SIZEOF
   PrintPending = strend(str);
   vsprintf(PrintPending, format, args);
 

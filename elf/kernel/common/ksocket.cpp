@@ -12,7 +12,7 @@
  * DONE, removed call to FlushCache(0);
  */
 u32 ReceiveToBuffer(char* buff) {
-  if (protoBlock.last_receive_size < 0x18) {
+  if (protoBlock.last_receive_size < 0x18) { // SIZEOF
     return -1;
   }
 
@@ -20,7 +20,7 @@ u32 ReceiveToBuffer(char* buff) {
   ListenerMessageHeader* gbuff = protoBlock.receive_buffer;
   u32 msg_size = gbuff->msg_size;
 
-  if (gbuff->deci2_header.proto == 0xe042) {
+  if (gbuff->deci2_header.proto == DECI2_PROTOCOL) {
     *(undefined *)((int)&protoBlock.receive_buffer[1].deci2_header.len + msg_size) = 0;
     protoBlock.msg_kind = (u32)(ushort)gbuff->msg_kind;
     protoBlock.msg_id = gbuff->msg_id;
@@ -74,14 +74,14 @@ char* WaitForMessageAndAck() {
   if (MasterDebug == 0) {
     MessCount = -1;
   } else {
-    MessCount = ReceiveToBuffer((char*)(MessBufArea + 0x18));
+    MessCount = ReceiveToBuffer((char*)(MessBufArea + 0x18)); // SIZEOF
   }
 
   if (MessCount < 0) {
     return nullptr;
   }
 
-  return MessBufArea + 0x18;
+  return MessBufArea + 0x18; // SIZEOF
 }
 
 /*!

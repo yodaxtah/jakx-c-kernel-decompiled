@@ -41,8 +41,8 @@ s32 format_impl_jak3(uint64_t* args) {
   ulong original_dest = (ulong)(int)args;
 
   char* print_temp = PrintPending;
-  if (PrintPending == (char *)0x0) {
-    print_temp = PrintBufArea + 0x18;
+  if (PrintPending == nullptr) {
+    print_temp = PrintBufArea + 0x18; // SIZEOF
   }
   PrintPending = (char *)strend(print_temp);
 
@@ -375,7 +375,7 @@ s32 format_impl_jak3(uint64_t* args) {
           *output_ptr = 0;
           u32 in = (u32)arg_regs[arg_reg_idx++];
 
-          if ((((uint)in & 0x7) == 0x4) && (*(int *)(in - 4) == *(int *)(unaff_s7_lo + 0xf))) {
+          if ((((uint)in & 0x7) == 0x4) && (*(int *)(in - 4) == *(int *)(unaff_s7_lo + FIX_SYM_STRING_TYPE - 1))) {
             cprintf("%s", in + 4);
           } else {
             print_object(in);
@@ -510,15 +510,15 @@ s32 format_impl_jak3(uint64_t* args) {
     *PrintPendingLocal__ = 0;
     return 0;
   } else {
-    if ((original_dest & 7) == 4) {
-      if (*(int *)((int)args - 4) == *(int *)(unaff_s7_lo + 0xf)) {
+    if ((original_dest & OFFSET_MASK) == BASIC_OFFSET) {
+      if (*(int *)((int)args - 4) == *(int *)(unaff_s7_lo + FIX_SYM_STRING_TYPE - 1)) {
         u32 len = (long)*(int *)args;
         char* str = (char *)((int)args + 4);
         strncat(str, PrintPendingLocal__, len);
         PrintPending = PrintPendingLocal__;
         *PrintPendingLocal__ = 0;
         return 0;
-      } else if (*(int *)((int)args - 4) == *(int *)(unaff_s7_lo + 0x8b)) {
+      } else if (*(int *)((int)args - 4) == *(int *)(unaff_s7_lo + FIX_SYM_FILE_STREAM - 1)) {
         size_t len = strlen(PrintPendingLocal__);
         sceWrite((long)*(int *)((int)args + 12), PrintPendingLocal__, (int)len);
 

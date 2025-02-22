@@ -200,7 +200,7 @@ s32 InitRPC() {
       }
     }
     for (int i = 0; i < numberOfRpcChannels; ++i) {
-      memset(&someSema, 0, 0x18);
+      memset(&someSema, 0, 0x18); // MACRO
       someSema.init_count = 1;
       someSema.max_count = 1;
       semaId = CreateSema(&someSema);

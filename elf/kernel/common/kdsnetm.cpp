@@ -24,7 +24,7 @@ void kdsnetm_init_globals_common() {
  * DONE, EXACT
  */
 void InitGoalProto() {
-  protoBlock.socket = sceDeci2Open(0xe042, &protoBlock, GoalProtoHandler);
+  protoBlock.socket = sceDeci2Open(DECI2_PROTOCOL, &protoBlock, GoalProtoHandler);
   if (protoBlock.socket < 0) {
     MsgErr("gproto: open proto error\n");
   } else {
@@ -69,7 +69,7 @@ void GoalProtoHandler(int event, int param, void* opt) {
 
   switch (event) {
     case 1:
-      if (pb->receive_progress + param < 0x80001) {
+      if (pb->receive_progress + param <= DEBUG_MESSAGE_BUFFER_SIZE) {
         s32 received =
             sceDeci2ExRecv(pb->socket, (void *)((int)pb->receive_buffer) + pb->receive_progress, (u16)param);
 
@@ -132,17 +132,17 @@ s32 SendFromBufferD(s32 msg_kind, u64 msg_id, char* data, s32 size) {
   }
 
   for (s32 i = 0; i < 10; i++) {
-    ListenerMessageHeader* header = (ListenerMessageHeader*)((uint)(data - 0x18) | 0x20000000);
-    protoBlock.send_remaining = size + 0x18;
+    ListenerMessageHeader* header = (ListenerMessageHeader*)((uint)(data - 0x18) | 0x20000000); // SIZEOF
+    protoBlock.send_remaining = size + 0x18; // SIZEOF
     protoBlock.send_buffer = header;
     protoBlock.send_ptr = (u8*)header;
 
-    protoBlock.send_status = size + 0x18;
+    protoBlock.send_status = size + 0x18; // SIZEOF
     // FlushCache(0);
 
     header->deci2_header.len = protoBlock.send_remaining;
     header->deci2_header.rsvd = 0;
-    header->deci2_header.proto = 0xe042;
+    header->deci2_header.proto = DECI2_PROTOCOL;
     header->deci2_header.src = 'E';
     header->deci2_header.dst = 'H';
 

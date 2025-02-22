@@ -37,9 +37,9 @@ void BeginLoadingDGO(const char* name, u8* buffer1, u8* buffer2, u8* currentHeap
   uint msgID = sMsgNum;
   RPC_Dgo_Cmd* mess = sMsg + sMsgNum;
   sMsgNum = sMsgNum ^ 1;
-  RpcSync(4);
+  RpcSync(DGO_RPC_CHANNEL_PLUS_1);
 
-  sMsg[msgID].status = 666;
+  sMsg[msgID].status = DGO_RPC_RESULT_INIT;
 
   sMsg[msgID].buffer1 = (uint32_t)buffer1;
   sMsg[msgID].buffer2 = (uint32_t)buffer2;
@@ -50,8 +50,8 @@ void BeginLoadingDGO(const char* name, u8* buffer1, u8* buffer2, u8* currentHeap
   cgo_id++;
 
   strcpy(sMsg[msgID].name, name);
-  RpcCallNoCallback(4, 0, true, mess, 0x40, mess,
-          0x40);
+  RpcCallNoCallback(DGO_RPC_CHANNEL_PLUS_1, DGO_RPC_LOAD_FNO, true, mess, 0x40, mess, // SIZEOF
+          0x40); // SIZEOF
   sLastMsg = mess;
 }
 
@@ -64,15 +64,15 @@ void BeginLoadingDGO(const char* name, u8* buffer1, u8* buffer2, u8* currentHeap
  */
 u8* GetNextDGO(u32* lastObjectFlag) {
   *lastObjectFlag = 1;
-  RpcSync(4);
+  RpcSync(DGO_RPC_CHANNEL_PLUS_1);
   u8* buffer = nullptr;
   if (sLastMsg != nullptr) {
-    if (sLastMsg->status == 2 || sLastMsg->status == 0) {
+    if (sLastMsg->status == DGO_RPC_RESULT_MORE || sLastMsg->status == DGO_RPC_RESULT_DONE) {
       buffer =
           (u8 *)sLastMsg->buffer1;
     }
 
-    if (sLastMsg->status == 2) {
+    if (sLastMsg->status == DGO_RPC_RESULT_MOR) {
       *lastObjectFlag = 0;
     }
 
@@ -94,12 +94,12 @@ void ContinueLoadingDGO(u8 b1, u8* b2, u8* heapPtr) {
   u32 msgID = sMsgNum;
   RPC_Dgo_Cmd* sendBuff = sMsg + sMsgNum;
   sMsgNum = sMsgNum ^ 1;
-  sMsg[msgID].status = 666;
+  sMsg[msgID].status = DGO_RPC_RESULT_INIT;
   sMsg[msgID].buffer1 = (int)(char)b1;
   sMsg[msgID].buffer2 = (uint32_t)b2;
   sendBuff->buffer_heap_top = (uint32_t)heapPtr;
-  RpcCallNoCallback(4, 1, true, sendBuff, 0x40,
-          sendBuff, 0x40);
+  RpcCallNoCallback(DGO_RPC_CHANNEL_PLUS_1, DGO_RPC_LOAD_NEXT_FNO, true, sendBuff, 0x40, // SIZEOF
+          sendBuff, 0x40); // SIZEOF
   sLastMsg = sendBuff;
 }
 /*!
@@ -123,8 +123,8 @@ void load_and_link_dgo_from_c(const char* name,
                               bool jump_from_c_to_goal) {
   u8* oldHeapTop = heap->top;
 
-  u8* buffer2 = kmalloc(heap, bufferSize, 0x2040, "dgo-buffer-2");
-  u8* buffer1 = kmalloc(heap, bufferSize, 0x2040, "dgo-buffer-2");
+  u8* buffer2 = kmalloc(heap, bufferSize, KMALLOC_TOP | KMALLOC_ALIGN_64, "dgo-buffer-2");
+  u8* buffer1 = kmalloc(heap, bufferSize, KMALLOC_TOP | KMALLOC_ALIGN_64, "dgo-buffer-2");
 
   char fileName[16];
   kstrcpyup(fileName + 4, name); // TODO: This is different because the prefix is DGO_ maybe?

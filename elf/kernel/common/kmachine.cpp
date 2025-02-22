@@ -257,8 +257,8 @@ void InstallDebugHandler() {
 s32 klength(u64 fs) {
   FileStream* file_stream = (FileStream*)fs;
   if (((*(byte *)&file_stream->flags ^ 1) & 1) != 0) {
-    int end_seek = sceLseek(file_stream->file, 0, 2);
-    int reset_seek = sceLseek(file_stream->file, 0, 0);
+    int end_seek = sceLseek(file_stream->file, 0, SCE_SEEK_END);
+    int reset_seek = sceLseek(file_stream->file, 0, SCE_SEEK_SET);
     if (reset_seek < 0 || end_seek < 0) {
       file_stream->flags |= 1;
     }
