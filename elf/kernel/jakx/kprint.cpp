@@ -176,10 +176,118 @@ s32 format_impl_jak3(uint64_t* args) {
           }
           break;
 
-        case '~':  // tilde escape
-          *output_ptr = '~';
+        default:
+          MsgErr("format: unknown code 0x%02x\n", format_ptr[1]);
+          MsgErr("input was %s\n", format_cstring);
+          // ASSERT(false);
+          goto copy_char_hack;
+          break;
+
+        case 'A':  // print a boxed object
+        case 'a':  // pad,padchar (like ) ~8,'0A
+        {
+          s8 arg0 = argument_data[0].data[0];
+          s32 desired_length = arg0;
+          *output_ptr = 0;
+          u32 in = arg_regs[arg_reg_idx++];
+          jak3::print_object(in);
+          if (desired_length != -1) {
+            s32 print_len = strlen(output_ptr);
+            if (desired_length < print_len) {
+              // too long!
+              if (desired_length > 1) {  // mark with tilde that we will truncate
+                output_ptr[desired_length - 1] = '~';
+              }
+              output_ptr[desired_length] = 0;  // and truncate
+            } else if (print_len < desired_length) {
+              // too short
+              if (justify == 0) {
+                char pad = ' ';
+                if (argument_data[1].data[0] != -1) {
+                  pad = argument_data[1].data[0];
+                }
+                kstrinsert(output_ptr, pad, desired_length - print_len);
+              } else {
+                ASSERT(false);
+                // output_ptr = strend(output_ptr);
+                // while(0 < (desired_length - print_len)) {
+                //   char pad = ' ';
+                //   if(argument_data[0].data[1] != -1) {
+                //     pad = argument_data[0].data[1];
+                //   }
+                //   output_ptr[0] = pad;
+                //   output_ptr++;
+                // }
+                // *output_ptr = 0;
+              }
+            }
+          }
+          output_ptr = strend(output_ptr);
+
+        } break;
+
+        case 'B':  // integer 64, pad padchar
+        case 'b': {
+          char pad = '0';
+          if (argument_data[1].data[0] != -1) {
+            pad = argument_data[1].data[0];
+          }
+          u64 in = arg_regs[arg_reg_idx++];
+          kitoa(output_ptr, in, 2, argument_data[0].data[0], pad, 0);
+          output_ptr = strend(output_ptr);
+        } break;
+
+        case 'C':  // character
+        case 'c':
+          *output_ptr = arg_regs[arg_reg_idx++];
           output_ptr++;
           break;
+
+        case 'D':  // integer 64, pad padchar
+        case 'd': {
+          char pad = ' ';
+          if (argument_data[1].data[0] != -1) {
+            pad = argument_data[1].data[0];
+          }
+          u64 in = arg_regs[arg_reg_idx++];
+          kitoa(output_ptr, in, 10, argument_data[0].data[0], pad, 0);
+          output_ptr = strend(output_ptr);
+        } break;
+
+        case 'E':  // time seconds
+        case 'e': {
+          s64 in = arg_regs[arg_reg_idx++];
+          s8 pad_length = argument_data[0].data[0];
+          s8 pad_char = argument_data[0].data[1];
+          if (pad_char == -1)
+            pad_char = ' ';
+          s8 precision = argument_data[0].data[2];
+          if (precision == -1)
+            precision = 4;
+          float value;
+          if (in < 0) {
+            ASSERT(false);  // i don't get this one
+          } else {
+            value = in;
+          }
+          ftoa(output_ptr, value / 300.f, pad_length, pad_char, precision, 0);
+          output_ptr = strend(output_ptr);
+        } break;
+
+        case 'F':  // float 12 pad, 4 precision
+        {
+          float in = *(float*)&arg_regs[arg_reg_idx++];
+            ftoa(output_ptr, in, 0xc, ' ', 4, 0);
+            output_ptr = strend(output_ptr);
+          } break;
+
+        case 'G':  // like %s, prints a C string
+        case 'g': {
+          *output_ptr = 0;
+          u32 in = arg_regs[arg_reg_idx++];
+          kstrcat(output_ptr, Ptr<char>(in).c());
+          output_ptr = strend(output_ptr);
+        } break;
 
           // pass through arguments
         case 'H':  // 23 -> 48, H
@@ -209,11 +317,38 @@ s32 format_impl_jak3(uint64_t* args) {
           output_ptr++;
           break;
 
-        case 'G':  // like %s, prints a C string
-        case 'g': {
+        case 'I':  // like ~P, but calls inpsect
+        case 'i': {
           *output_ptr = 0;
-          u32 in = arg_regs[arg_reg_idx++];
-          kstrcat(output_ptr, Ptr<char>(in).c());
+          s8 arg0 = argument_data[0].data[0];
+          u64 in = arg_regs[arg_reg_idx++];
+          if (arg0 == -1) {
+            inspect_object(in);
+          } else {
+            auto sym = find_symbol_from_c(-1, argument_data[0].data);
+            if (sym.offset) {
+              Ptr<Type> type(sym->value());
+              if (type.offset) {
+                call_method_of_type(in, type, GOAL_INSPECT_METHOD);
+              }
+            } else {
+              ASSERT(false);  // bad type
+            }
+          }
+          output_ptr = strend(output_ptr);
+        } break;
+
+        case 'M':  // distance meters
+        case 'm': {
+          float in = *(float*)&arg_regs[arg_reg_idx++];
+          s8 pad_length = argument_data[0].data[0];
+          s8 pad_char = argument_data[1].data[0];
+          if (pad_char == -1)
+            pad_char = ' ';
+          s8 precision = argument_data[2].data[0];
+          if (precision == -1)
+            precision = 4;
+          ftoa(output_ptr, in / 4096.f, pad_length, pad_char, precision, 0);
           output_ptr = strend(output_ptr);
         } break;
 
@@ -227,48 +362,44 @@ s32 format_impl_jak3(uint64_t* args) {
           output_ptr++;
         } break;
 
-        case 'A':  // print a boxed object
-        case 'a':  // pad,padchar (like ) ~8,'0A
-        {
-          s8 arg0 = argument_data[0].data[0];
-          s32 desired_length = arg0;
+        case 'P':  // like ~A, but can specify type explicitly
+        case 'p': {
           *output_ptr = 0;
-          u32 in = arg_regs[arg_reg_idx++];
-          jak3::print_object(in);
-          if (desired_length != -1) {
-            s32 print_len = strlen(output_ptr);
-            if (desired_length < print_len) {
-              // too long!
-              if (desired_length > 1) {  // mark with tilde that we will truncate
-                output_ptr[desired_length - 1] = '~';
+          s8 arg0 = argument_data[0].data[0];
+          u64 in = arg_regs[arg_reg_idx++];
+          if (arg0 == -1) {
+            jak3::print_object(in);
+          } else {
+            auto sym = jak3::find_symbol_from_c(-1, argument_data[0].data);
+            if (sym.offset) {
+              Ptr<Type> type(sym->value());
+              if (type.offset) {
+                call_method_of_type(in, type, GOAL_PRINT_METHOD);
               }
-              output_ptr[desired_length] = 0;  // and truncate
-            } else if (print_len < desired_length) {
-              // too short
-              if (justify == 0) {
-                char pad = ' ';
-                if (argument_data[1].data[0] != -1) {
-                  pad = argument_data[1].data[0];
-                }
-                kstrinsert(output_ptr, pad, desired_length - print_len);
-              } else {
-                ASSERT(false);
-                //                output_ptr = strend(output_ptr);
-                //                while(0 < (desired_length - print_len)) {
-                //                  char pad = ' ';
-                //                  if(argument_data[0].data[1] != -1) {
-                //                    pad = argument_data[0].data[1];
-                //                  }
-                //                  output_ptr[0] = pad;
-                //                  output_ptr++;
-                //
-                //                }
-                //                *output_ptr = 0;
-              }
+            } else {
+              ASSERT(false);  // bad type.
             }
           }
           output_ptr = strend(output_ptr);
+        } break;
 
+        case 'Q':  // not yet implemented.  hopefully andy gavin finishes this one soon.
+        case 'q':
+          ASSERT(false);
+          break;
+
+        case 'R':  // rotation degrees
+        case 'r': {
+          float in = *(float*)&arg_regs[arg_reg_idx++];
+          s8 pad_length = argument_data[0].data[0];
+          s8 pad_char = argument_data[1].data[0];
+          if (pad_char == -1)
+            pad_char = ' ';
+          s8 precision = argument_data[2].data[0];
+          if (precision == -1)
+            precision = 4;
+          ftoa(output_ptr, in * 360.f / 65536.f, pad_length, pad_char, precision, 0);
+          output_ptr = strend(output_ptr);
         } break;
 
         case 'S':  // like A, but strings are printed without quotes
@@ -304,77 +435,30 @@ s32 format_impl_jak3(uint64_t* args) {
 
               } else {
                 ASSERT(false);
-                //                output_ptr = strend(output_ptr);
-                //                u32 l140 = 0;
-                //                while(l140 < (desired_length - print_len)) {
-                //                  char* l108 = output_ptr;
-                //
-                //                  char pad = ' ';
-                //                  if(argument_data[0].data[1] != -1) {
-                //                    pad = argument_data[0].data[1];
-                //                  }
-                //                  output_ptr[0] = pad;
-                //                  output_ptr++;
-                //                }
-                //                *output_ptr = 0;
+                // output_ptr = strend(output_ptr);
+                // u32 l140 = 0;
+                // while(l140 < (desired_length - print_len)) {
+                //   char* l108 = output_ptr;
+
+                //   char pad = ' ';
+                //   if(argument_data[0].data[1] != -1) {
+                //     pad = argument_data[0].data[1];
+                //   }
+                //   output_ptr[0] = pad;
+                //   output_ptr++;
+                // }
+                // *output_ptr = 0;
               }
             }
           }
           output_ptr = strend(output_ptr);
         } break;
 
-        case 'C':  // character
-        case 'c':
-          *output_ptr = arg_regs[arg_reg_idx++];
-          output_ptr++;
-          break;
-
-        case 'P':  // like ~A, but can specify type explicitly
-        case 'p': {
-          *output_ptr = 0;
-          s8 arg0 = argument_data[0].data[0];
-          u64 in = arg_regs[arg_reg_idx++];
-          if (arg0 == -1) {
-            jak3::print_object(in);
-          } else {
-            auto sym = jak3::find_symbol_from_c(-1, argument_data[0].data);
-            if (sym.offset) {
-              Ptr<Type> type(sym->value());
-              if (type.offset) {
-                call_method_of_type(in, type, GOAL_PRINT_METHOD);
-              }
-            } else {
-              ASSERT(false);  // bad type.
-            }
-          }
+        case 'T':
+        case 't': {
+          sprintf(output_ptr, "\t");
           output_ptr = strend(output_ptr);
         } break;
-
-        case 'I':  // like ~P, but calls inpsect
-        case 'i': {
-          *output_ptr = 0;
-          s8 arg0 = argument_data[0].data[0];
-          u64 in = arg_regs[arg_reg_idx++];
-          if (arg0 == -1) {
-            inspect_object(in);
-          } else {
-            auto sym = find_symbol_from_c(-1, argument_data[0].data);
-            if (sym.offset) {
-              Ptr<Type> type(sym->value());
-              if (type.offset) {
-                call_method_of_type(in, type, GOAL_INSPECT_METHOD);
-              }
-            } else {
-              ASSERT(false);  // bad type
-            }
-          }
-          output_ptr = strend(output_ptr);
-        } break;
-
-        case 'Q':  // not yet implemented.  hopefully andy gavin finishes this one soon.
-        case 'q':
-          ASSERT(false);
-          break;
 
         case 'X':  // hex, 64 bit, pad padchar
         case 'x': {
@@ -384,35 +468,6 @@ s32 format_impl_jak3(uint64_t* args) {
           }
           u64 in = arg_regs[arg_reg_idx++];
           kitoa(output_ptr, in, 16, argument_data[0].data[0], pad, 0);
-          output_ptr = strend(output_ptr);
-        } break;
-
-        case 'D':  // integer 64, pad padchar
-        case 'd': {
-          char pad = ' ';
-          if (argument_data[1].data[0] != -1) {
-            pad = argument_data[1].data[0];
-          }
-          u64 in = arg_regs[arg_reg_idx++];
-          kitoa(output_ptr, in, 10, argument_data[0].data[0], pad, 0);
-          output_ptr = strend(output_ptr);
-        } break;
-
-        case 'B':  // integer 64, pad padchar
-        case 'b': {
-          char pad = '0';
-          if (argument_data[1].data[0] != -1) {
-            pad = argument_data[1].data[0];
-          }
-          u64 in = arg_regs[arg_reg_idx++];
-          kitoa(output_ptr, in, 2, argument_data[0].data[0], pad, 0);
-          output_ptr = strend(output_ptr);
-        } break;
-
-        case 'F':  // float 12 pad, 4 precision
-        {
-          float in = *(float*)&arg_regs[arg_reg_idx++];
-          ftoa(output_ptr, in, 0xc, ' ', 4, 0);
           output_ptr = strend(output_ptr);
         } break;
 
@@ -430,65 +485,9 @@ s32 format_impl_jak3(uint64_t* args) {
           output_ptr = strend(output_ptr);
         } break;
 
-        case 'R':  // rotation degrees
-        case 'r': {
-          float in = *(float*)&arg_regs[arg_reg_idx++];
-          s8 pad_length = argument_data[0].data[0];
-          s8 pad_char = argument_data[1].data[0];
-          if (pad_char == -1)
-            pad_char = ' ';
-          s8 precision = argument_data[2].data[0];
-          if (precision == -1)
-            precision = 4;
-          ftoa(output_ptr, in * 360.f / 65536.f, pad_length, pad_char, precision, 0);
-          output_ptr = strend(output_ptr);
-        } break;
-
-        case 'M':  // distance meters
-        case 'm': {
-          float in = *(float*)&arg_regs[arg_reg_idx++];
-          s8 pad_length = argument_data[0].data[0];
-          s8 pad_char = argument_data[1].data[0];
-          if (pad_char == -1)
-            pad_char = ' ';
-          s8 precision = argument_data[2].data[0];
-          if (precision == -1)
-            precision = 4;
-          ftoa(output_ptr, in / 4096.f, pad_length, pad_char, precision, 0);
-          output_ptr = strend(output_ptr);
-        } break;
-
-        case 'E':  // time seconds
-        case 'e': {
-          s64 in = arg_regs[arg_reg_idx++];
-          s8 pad_length = argument_data[0].data[0];
-          s8 pad_char = argument_data[0].data[1];
-          if (pad_char == -1)
-            pad_char = ' ';
-          s8 precision = argument_data[0].data[2];
-          if (precision == -1)
-            precision = 4;
-          float value;
-          if (in < 0) {
-            ASSERT(false);  // i don't get this one
-          } else {
-            value = in;
-          }
-          ftoa(output_ptr, value / 300.f, pad_length, pad_char, precision, 0);
-          output_ptr = strend(output_ptr);
-        } break;
-
-        case 'T':
-        case 't': {
-          sprintf(output_ptr, "\t");
-          output_ptr = strend(output_ptr);
-        } break;
-
-        default:
-          MsgErr("format: unknown code 0x%02x\n", format_ptr[1]);
-          MsgErr("input was %s\n", format_cstring);
-          // ASSERT(false);
-          goto copy_char_hack;
+        case '~':  // tilde escape
+          *output_ptr = '~';
+          output_ptr++;
           break;
       }
       format_ptr++;
