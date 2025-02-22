@@ -68,7 +68,7 @@ void GoalProtoHandler(int event, int param, void* opt) {
   pb->most_recent_param = param;
 
   switch (event) {
-    case 1:
+    case DECI2_READ:
       if (pb->receive_progress + param <= DEBUG_MESSAGE_BUFFER_SIZE) {
         s32 received =
             sceDeci2ExRecv(pb->socket, (void *)((int)pb->receive_buffer) + pb->receive_progress, (u16)param);
@@ -82,12 +82,12 @@ void GoalProtoHandler(int event, int param, void* opt) {
       }
       break;
 
-    case 2:
+    case DECI2_READDONE:
       pb->last_receive_size = pb->receive_progress;
       pb->receive_progress = 0;
       break;
 
-    case 3: {
+    case DECI2_WRITE: {
       s32 sent = sceDeci2ExSend(pb->socket, pb->send_ptr, (u16)pb->send_remaining);
       if (sent < 0) {
         pb->send_status = sent;
@@ -97,7 +97,7 @@ void GoalProtoHandler(int event, int param, void* opt) {
       }
     } break;
 
-    case 4:
+    case DECI2_WRITEDONE:
       if (pb->send_remaining <= 0) {
         pb->send_status = 0;
       } else {
@@ -109,7 +109,7 @@ void GoalProtoHandler(int event, int param, void* opt) {
       }
       break;
 
-    case 5:
+    case DECI2_CHSTATUS:
       break;
 
     default:
