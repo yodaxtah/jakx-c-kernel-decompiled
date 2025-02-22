@@ -126,7 +126,7 @@ int sql_query_sync(String* string_in) {
   
   if (MasterDebug == 0) {
     int unaff_s7_lo;
-    return unaff_s7_lo + -7;
+    return unaff_s7_lo - 7;
   }
   else {
     int unaff_s7_lo;

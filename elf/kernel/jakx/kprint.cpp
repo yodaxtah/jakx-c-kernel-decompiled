@@ -292,7 +292,7 @@ s32 format_impl_jak3(uint64_t* args) {
           } else {
             u32* sym = find_symbol_from_c(-1, (const_char *)&argument_data);
             if (sym != nullptr) {
-              Type* type = *(Type **)((int)sym + -1);
+              Type* type = *(Type **)((int)sym - 1);
               if (type != nullptr) {
                 call_method_of_type(in, type, 3);
               }
@@ -337,7 +337,7 @@ s32 format_impl_jak3(uint64_t* args) {
           } else {
             u32* sym = find_symbol_from_c(-1, (const_char *)&argument_data);
             if (sym != nullptr) {
-              Type* type = *(Type **)((int)sym + -1);
+              Type* type = *(Type **)((int)sym - 1);
               if (type != nullptr) {
                 call_method_of_type(in, type, 2);
               }

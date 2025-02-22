@@ -544,7 +544,7 @@ uint32_t jakx_work_v5(link_control* this) {
       *(undefined *)&this->m_table_toggle = 0;
       puVar17 = (uint8_t *)m_link_block_ptr->code_infos[this->m_state - 1].offset;
       this->m_object_data = puVar17;
-      this->m_loc_ptr = puVar17 + -4;
+      this->m_loc_ptr = puVar17 - 4;
       this->m_base_ptr = puVar17;
 
       if ((int)this->m_state - 1 >= (int)(this->m_code_start + 1)) {
@@ -702,7 +702,7 @@ void jak3_finish(link_control* this, bool jump_from_c_to_goal) {
     code* m_entry = (code *)this->m_entry;
     if (this->m_entry != (code *)0x0) {
 
-      if (*(int *)(this->m_entry + -4) == *(int *)(unaff_s7_lo + 7) && (this->m_flags & 5) != 0) {
+      if (*(int *)(this->m_entry - 4) == *(int *)(unaff_s7_lo + 7) && (this->m_flags & 5) != 0) {
         if ((this->m_flags & 4) == 0) {
           (**(code **)(unaff_s7_lo + 0x93))();
         } else {
@@ -715,7 +715,7 @@ void jak3_finish(link_control* this, bool jump_from_c_to_goal) {
         }
       } else if ((this->m_flags & LINK_FLAG_EXECUTE) != 0) {
         char* name = basename(this->m_object_name);
-        call_method_of_type_arg2((u32)this->m_entry, *(Type **)(this->m_entry + -4), 7, (u32)this->m_heap,
+        call_method_of_type_arg2((u32)this->m_entry, *(Type **)(this->m_entry - 4), 7, (u32)this->m_heap,
                                  (u32)name);
       }
     }

@@ -396,7 +396,7 @@ s32 InitIOP() {
 int InitMachine() {
   int global_heap_end_W = FUN_00268b40();
 
-  s32 global_heap_size = global_heap_end_W + -0x4000;
+  s32 global_heap_size = global_heap_end_W - 0x4000;
   u8* heap_start = (u8 *)malloc((long)global_heap_size);
   if (heap_start == nullptr) {
     MsgErr("dkernel: out of memory, cannot allocate global heap; exiting\n");
@@ -413,7 +413,7 @@ int InitMachine() {
     kmemopen_from_c(kglobalheap, "scheme-globals");
 
     if ((MasterDebug != 0 || DebugSegment != 0) && (0x4ffffff < (ulong)(long)global_heap_size)) {
-      kinitheap(kdebugheap, heap_start + 0x5000000, global_heap_end_W + -0x5004000);
+      kinitheap(kdebugheap, heap_start + 0x5000000, global_heap_end_W - 0x5004000);
     } else {
       kdebugheap = 0;
     }
@@ -616,7 +616,7 @@ void PutDisplayEnv(u32 ptr) {
   }
   else {
     uVar1 = *(uint *)ptr;
-    count_618 = count_618 + -1;
+    count_618 = count_618 - 1;
     *(uint *)ptr = uVar1 & 0xfffffffd;
     sceGsPutDispEnv();
     *(uint *)ptr = *(uint *)ptr & 0xfffffffd | (uVar1 >> 1 & 1) << 1;
@@ -718,21 +718,21 @@ void InitMachineScheme() {
   make_function_symbol_from_c("rpc-busy?", RpcBusy);
   make_function_symbol_from_c("test-load-dgo-c", LoadDGOTest);
 
-  *(undefined4 *)((int)intern_from_c(-1, 0, "*stack-top*") + -1) = 0x7ffc000;
-  *(undefined4 *)((int)intern_from_c(-1, 0, "*stack-base*") + -1) = 0x7ffffff;
-  *(undefined4 *)((int)intern_from_c(-1, 0, "*stack-size*") + -1) = 0x4000;
-  *(u32 **)((int)intern_from_c(-1, 0, "*kernel-boot-message*") + -1) = intern_from_c(-1, 0, DebugBootMessage);
-  *(String **)((int)intern_from_c(-1, 0, "*user*") + -1) = make_string_from_c(DebugBootUser);
+  *(undefined4 *)((int)intern_from_c(-1, 0, "*stack-top*") - 1) = 0x7ffc000;
+  *(undefined4 *)((int)intern_from_c(-1, 0, "*stack-base*") - 1) = 0x7ffffff;
+  *(undefined4 *)((int)intern_from_c(-1, 0, "*stack-size*") - 1) = 0x4000;
+  *(u32 **)((int)intern_from_c(-1, 0, "*kernel-boot-message*") - 1) = intern_from_c(-1, 0, DebugBootMessage);
+  *(String **)((int)intern_from_c(-1, 0, "*user*") - 1) = make_string_from_c(DebugBootUser);
   if (DiskBoot != 0) {
-    *(u32 **)((int)intern_from_c(-1, 0, "*kernel-boot-mode*") + -1) = intern_from_c(-1, 0, "boot");
+    *(u32 **)((int)intern_from_c(-1, 0, "*kernel-boot-mode*") - 1) = intern_from_c(-1, 0, "boot");
   }
   int unaff_s7_lo;
   if (strcmp(DebugBootLevel, "#f") == 0) {
-    *(int *)((int)intern_from_c(-1, 0, "*kernel-boot-level*") + -1) = unaff_s7_lo;
+    *(int *)((int)intern_from_c(-1, 0, "*kernel-boot-level*") - 1) = unaff_s7_lo;
   } else {
-    *(undefined4 *)((int)intern_from_c(-1, 0, "*kernel-boot-level*") + -1) = *(undefined4 *)((int)intern_from_c((int)(short)DebugBootLevelID, 0x40, DebugBootLevel) + (SymbolString - unaff_s7_lo));
+    *(undefined4 *)((int)intern_from_c(-1, 0, "*kernel-boot-level*") - 1) = *(undefined4 *)((int)intern_from_c((int)(short)DebugBootLevelID, 0x40, DebugBootLevel) + (SymbolString - unaff_s7_lo));
   }
-  *(String **)((int)intern_from_c(-1, 0, "*kernel-boot-art-group*") + -1) = make_string_from_c(DebugBootArtGroup);
+  *(String **)((int)intern_from_c(-1, 0, "*kernel-boot-art-group*") - 1) = make_string_from_c(DebugBootArtGroup);
 
   if (DiskBoot != 0) {
     *EnableMethodSet = *EnableMethodSet + 1;
@@ -740,18 +740,18 @@ void InitMachineScheme() {
     load_and_link_dgo_from_c("game", kglobalheap,
                              LINK_FLAG_OUTPUT_LOAD | LINK_FLAG_EXECUTE | LINK_FLAG_PRINT_LOGIN,
                              0x400000, (bool)in_t0_lo); // FIXME: why will this result in false while in jak3 it is true?
-    *EnableMethodSet = *EnableMethodSet + -1;
+    *EnableMethodSet = *EnableMethodSet - 1;
     ;
 
-    *(int *)(kernel_packages + -1) =
+    *(int *)(kernel_packages - 1) =
         (int)new_pair(unaff_s7_lo + 0xa0,*(u32 *)(unaff_s7_lo + FIX_SYM_PAIR_TYPE - 1),
-                 (u32)make_string_from_c("engine"), *(u32 *)(kernel_packages + -1));
-    *(int *)(kernel_packages + -1) =
+                 (u32)make_string_from_c("engine"), *(u32 *)(kernel_packages - 1));
+    *(int *)(kernel_packages - 1) =
         (int)new_pair(unaff_s7_lo + 0xa0,*(u32 *)(unaff_s7_lo + FIX_SYM_PAIR_TYPE - 1),
-                 (u32)make_string_from_c("game"), *(u32 *)(kernel_packages + -1));
-    *(int *)(kernel_packages + -1) =
+                 (u32)make_string_from_c("game"), *(u32 *)(kernel_packages - 1));
+    *(int *)(kernel_packages - 1) =
         (int)new_pair(unaff_s7_lo + 0xa0,*(u32 *)(unaff_s7_lo + FIX_SYM_PAIR_TYPE - 1),
-                 (u32)make_string_from_c("common"), *(u32 *)(kernel_packages + -1));
+                 (u32)make_string_from_c("common"), *(u32 *)(kernel_packages - 1));
     call_goal_function_by_name("play-boot");
   }
 }

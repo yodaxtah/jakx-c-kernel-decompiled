@@ -588,7 +588,7 @@ u64 symbol_to_string_from_c(u32 sym) {
 void* make_function_symbol_from_c(const char* name, void* f) {
   u32* sym = intern_from_c(-1, 0, name);
   Function* func = make_function_from_c(f, false);
-  *(Function **)((int)sym + -1) = func;
+  *(Function **)((int)sym - 1) = func;
   return func;
 }
 
@@ -604,7 +604,7 @@ Ptr<Function> make_stack_arg_function_symbol_from_c(const char* name, void* f) {
 }
 
 u32 make_raw_function_symbol_from_c(const char* name, u32 value) {
-  *(u32 *)((int)intern_from_c(-1, 0, name) + -1) = value;
+  *(u32 *)((int)intern_from_c(-1, 0, name) - 1) = value;
   return value;
 }
 
@@ -612,7 +612,7 @@ u32* set_fixed_symbol(FixedSymbolOffset offset, const char* name, u32 value) {
   int unaff_s7_lo;
   u32* sym = (u32*)(unaff_s7_lo + offset);
   ;
-  *(u32*)((int)sym + -1) = value;
+  *(u32*)((int)sym - 1) = value;
 
   kheaplogging = true;
   *(String **)((int)sym + (SymbolString - unaff_s7_lo)) = make_string_from_c(name);
@@ -710,7 +710,7 @@ u32* find_symbol_from_c(uint16_t sym_id, const char* name) {
       return lookup_result;
     }
   } else {
-    u32* sym = (u32 *)(unaff_s7_lo + extended_sym_id + -1);
+    u32* sym = (u32 *)(unaff_s7_lo + extended_sym_id - 1);
     if (sym != (u32 *)(unaff_s7_lo - 7)) {
       int existing_name = = *(int *)((int)sym + (SymbolString - unaff_s7_lo));
       if (existing_name != 0 && existing_name != UnknownName && strcmp((char *)(existing_name + 4), name)) { // TODO: Why not !strcmp in Jak X like Jak 3?
@@ -858,7 +858,7 @@ Type* alloc_and_init_type(Type** sym,
 
   if (!force_global_type &&
       *(int *)(unaff_s7_lo + 0xa7) != *(int *)(unaff_s7_lo + 0x9f)) {
-    Type** type_list_ptr = *(Type ***)(LevelTypeList + -1);
+    Type** type_list_ptr = *(Type ***)(LevelTypeList - 1);
     if (type_list_ptr == nullptr) {
       MsgErr("dkernel: trying to init loading level type \'%s\' while type-list is undefined\n",
              *(int *)(sym + (SymbolString - unaff_s7_lo)) + 4);
@@ -877,7 +877,7 @@ Type* alloc_and_init_type(Type** sym,
   }
 
   Type* the_type = (Type*)type_mem;
-  *(Type**)(sym + -1) = the_type;
+  *(Type**)(sym - 1) = the_type;
   the_type->allocated_size = (u16)type_size;
   the_type->padded_size = (u16)type_size;
   kheaplogging = false;
@@ -890,7 +890,7 @@ Type* alloc_and_init_type(Type** sym,
  */
 Type* intern_type_from_c(int a, int b, const char* name, u64 methods) {
   Type** symbol = (Type **)intern_from_c((int)(short)a, b, name);
-  Type* sym_value = *(Type **)((int)symbol + -1);
+  Type* sym_value = *(Type **)((int)symbol - 1);
 
   if (sym_value == nullptr) {
     u64 n_methods = methods;
@@ -937,7 +937,7 @@ Type* set_fixed_type(FixedSymbolTypeOffset offset,
   int unaff_s7_lo;
   kheaplogging = true;
   Type** type_symbol = (Type **)(unaff_s7_lo + offset);
-  Type* symbol_value = *(Type **)((int)type_symbol + -1);
+  Type* symbol_value = *(Type **)((int)type_symbol - 1);
 
   kheaplogging = false;
   *(String **)((int)type_symbol + (SymbolString - unaff_s7_lo)) = make_string_from_c(name);
@@ -951,7 +951,7 @@ Type* set_fixed_type(FixedSymbolTypeOffset offset,
   symbol_value->symbol = type_symbol;
   symbol_value[-1].memusage_method = *(Function **)(unaff_s7_lo + 0x17);
 
-  Type* parent_type = *(Type **)((int)parent_symbol + -1);
+  Type* parent_type = *(Type **)((int)parent_symbol - 1);
   set_type_values(symbol_value, parent_type, flags);
 
   symbol_value->new_method = parent_type->new_method;
@@ -1007,8 +1007,8 @@ Type* new_type(u32 symbol, Type* parent, u64 flags) {
 
     undefined4 unaff_s7_hi;
     if (original_type_list_value_ != 0 && (original_type_list_value_ == CONCAT44(unaff_s7_hi,unaff_s7_lo) ||
-                                           (((ulong)(long)SymbolTable2 <= original_type_list_value_ && original_type_list_value_ < 0x8000000 || original_type_list_value + -0x84000 < (Function *)0x7c000) &&
-                                            ((original_type_list_value_ & 7) == 4 && *(int *)(original_type_list_value + -4) == *(int *)(unaff_s7_lo + 0x17))))) {
+                                           (((ulong)(long)SymbolTable2 <= original_type_list_value_ && original_type_list_value_ < 0x8000000 || original_type_list_value - 0x84000 < (Function *)0x7c000) &&
+                                            ((original_type_list_value_ & 7) == 4 && *(int *)(original_type_list_value - 4) == *(int *)(unaff_s7_lo + 0x17))))) {
       new_type_obj->memusage_method = original_type_list_value;
     }
   } else {
@@ -1064,7 +1064,7 @@ u64 method_set(Type* type_, u32 method_id, u32 method) {
   if (*EnableMethodSet != 0 || (FastLink == false && MasterDebug != 0 && DiskBoot == 0)) {
     ulong sym = CONCAT44(unaff_s7_hi, unaff_s7_lo);
     for (; sym < (ulong)(long)LastSymbol; sym += 4) {
-      Type* sym_value = *(Type **)(sym + -1);
+      Type* sym_value = *(Type **)(sym - 1);
       if (((SymbolTable2 <= sym_value && sym_value < (Type *)0x8000000) || &sym_value[-0x289e].print_method < (Function **)0x7c000) && ((uint)sym_value & 7) == 4 &&
           sym_value[-1].memusage_method == *(Function **)(unaff_s7_lo + 0x17) &&
           (int)method_id < (int)(uint)sym_value->num_methods &&
@@ -1082,7 +1082,7 @@ u64 method_set(Type* type_, u32 method_id, u32 method) {
 
     sym = (ulong)(int)SymbolTable2;
     for (; sym < CONCAT44(unaff_s7_hi, unaff_s7_lo); sym += 4) {
-      Type* sym_value = *(Type **)(sym + -1);
+      Type* sym_value = *(Type **)(sym - 1);
       if (!((sym_value < SymbolTable2 || (Type *)0x7ffffff < sym_value) && (Function **)0x7bfff < &sym_value[-0x289e].print_method) && ((uint)sym_value & 7) == 4 &&
           sym_value[-1].memusage_method == *(Function **)(unaff_s7_lo + 0x17) &&
           (int)method_id < (int)(uint)sym_value->num_methods &&
@@ -1135,7 +1135,7 @@ u64 call_goal_function_arg2(Function* func, u64 a, u64 b) {
  * Call a global GOAL function by name.
  */
 u64 call_goal_function_by_name(const char* name) {
-  return call_goal_function(*(Function **)((int)intern_from_c(-1, 0, name) + -1));
+  return call_goal_function(*(Function **)((int)intern_from_c(-1, 0, name) - 1));
 }
 
 u64 print_object(u32 obj);
@@ -1233,7 +1233,7 @@ u64 print_pair(u32 obj) {
     cprintf("()");
   } else {
     undefined4 unaff_s7_hi;
-    if ((long)*(int *)(CollapseQuote + -1) == CONCAT44(unaff_s7_hi,unaff_s7_lo)
+    if ((long)*(int *)(CollapseQuote - 1) == CONCAT44(unaff_s7_hi,unaff_s7_lo)
         || ((obj_ & OFFSET_MASK) != 2)
         || *(int *)(obj - 2) != unaff_s7_lo + FIX_SYM_QUOTE
         || (*(uint *)(obj + 2) & 7) != 2
@@ -1859,26 +1859,26 @@ int InitHeapAndSymbol() {
 
   u32* ds_symbol = intern_from_c(-1, 0, "*debug-segment*");
   if (DebugSegment == 0) {
-    *(u8 **)((int)ds_symbol + -1) = s7 + 0x0;
+    *(u8 **)((int)ds_symbol - 1) = s7 + 0x0;
   } else {
-    *(u8 **)((int)ds_symbol + -1) = s7 + 0x4;
+    *(u8 **)((int)ds_symbol - 1) = s7 + 0x4;
   }
 
   u32* method_set_symbol = intern_from_c(-1, 0, "*enable-method-set*");
-  EnableMethodSet = (int *)((int)method_set_symbol + -1);
-  *(undefined4 *)((int)method_set_symbol + -1) = 0;
+  EnableMethodSet = (int *)((int)method_set_symbol - 1);
+  *(undefined4 *)((int)method_set_symbol - 1) = 0;
 
-  KernelDebug = (int)intern_from_c(-1, 0, "*kernel-debug*") + -1;
+  KernelDebug = (int)intern_from_c(-1, 0, "*kernel-debug*") - 1;
   *(undefined4 *)(KernelDebug) = 0;
 
-  *(undefined4 *)((int)intern_from_c(-1, 0, "*boot-video-mode*") + -1) = 1;
-  *(undefined4 *)((int)intern_from_c(-1, 0, "*video-mode*") + -1) = 1;
+  *(undefined4 *)((int)intern_from_c(-1, 0, "*boot-video-mode*") - 1) = 1;
+  *(undefined4 *)((int)intern_from_c(-1, 0, "*video-mode*") - 1) = 1;
 
   SqlResult = intern_from_c(-1, 0, "*sql-result*");
-  *(u8 **)((int)SqlResult + -1) = s7;
+  *(u8 **)((int)SqlResult - 1) = s7;
 
   CollapseQuote = intern_from_c(-1, 0, "*collapse-quote*");
-  *(u8 **)((int)CollapseQuote + -1) = s7 + 0x4;
+  *(u8 **)((int)CollapseQuote - 1) = s7 + 0x4;
 
   LevelTypeList = intern_from_c(-1, 0, "*level-type-list*");
 
@@ -1886,9 +1886,9 @@ int InitHeapAndSymbol() {
   load_and_link_dgo_from_c("kernel", &kglobalheapinfo,
                           LINK_FLAG_OUTPUT_LOAD | LINK_FLAG_EXECUTE | LINK_FLAG_PRINT_LOGIN,
                           0x400000, (bool)0); // TODO: false?
-  *EnableMethodSet = *EnableMethodSet + -1;
+  *EnableMethodSet = *EnableMethodSet - 1;
 
-  kernel_version = *(uint *)((int)intern_from_c(-1, 0, "*kernel-version*") + -1);
+  kernel_version = *(uint *)((int)intern_from_c(-1, 0, "*kernel-version*") - 1);
   if (kernel_version == 0 || ((kernel_version >> 0x13) != 0x16)) {
     MsgErr("\n");
     MsgErr("dkernel: compiled C kernel version is %d.%d but"

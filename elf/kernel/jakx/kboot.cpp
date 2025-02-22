@@ -110,7 +110,7 @@ void KernelDispatch(u32 dispatcher_func) {
     ProcessListenerMessage(new_message);
   }
 
-  int old_listener_function = *(int *)(ListenerFunction + -1);
+  int old_listener_function = *(int *)(ListenerFunction - 1);
 
   (*(code *)dispatcher_func)();
 
@@ -118,13 +118,13 @@ void KernelDispatch(u32 dispatcher_func) {
 
   undefined4 unaff_s7_lo;
   undefined4 unaff_s7_hi;
-  code* bonus_function = *(code **)(KernelFunction + -1);
+  code* bonus_function = *(code **)(KernelFunction - 1);
   if ((long)(int)bonus_function != CONCAT44(unaff_s7_hi,unaff_s7_lo)) {
-    *(undefined4 *)(KernelFunction + -1) = unaff_s7_lo;
+    *(undefined4 *)(KernelFunction - 1) = unaff_s7_lo;
     (*bonus_function)();
   }
 
-  if (MasterDebug != 0 && *(int *)(ListenerFunction + -1) != old_listener_function) {
+  if (MasterDebug != 0 && *(int *)(ListenerFunction - 1) != old_listener_function) {
     SendAck();
   }
 }
@@ -137,7 +137,7 @@ void KernelShutdown(u32 reason) {
 
 int KernelCheckAndDispatch() {
   while ((MasterExit == 0 && (POWERING_OFF_W == false))) {
-    KernelDispatch(*(u32 *)(kernel_dispatcher + -1));
+    KernelDispatch(*(u32 *)(kernel_dispatcher - 1));
   }
   if (POWERING_OFF_W != false) {
     KernelShutdown(3);

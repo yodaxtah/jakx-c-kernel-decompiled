@@ -61,7 +61,7 @@ void GoalProtoHandler(int event, int param, void* opt) {
   }
 
   if (pb->deci2count != 0) {
-    *(int *)(pb->deci2count + -1) = *(int *)(pb->deci2count + -1) + 1;
+    *(int *)(pb->deci2count - 1) = *(int *)(pb->deci2count - 1) + 1;
   }
 
   pb->most_recent_event = event;

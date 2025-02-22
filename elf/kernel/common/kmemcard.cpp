@@ -823,7 +823,7 @@ void FUN_00274280_mc(int param_1, long param_2) {
     iVar2 = 1;
     puVar1 = &DAT_00283740;
     do {
-      iVar2 = iVar2 + -1;
+      iVar2 = iVar2 - 1;
       FUN_00270f74_identical_to_previous(puVar1);
       puVar1 = puVar1 + 0x8c0;
     } while (iVar2 != -1);
@@ -861,7 +861,7 @@ int FUN_00273910_memory_card(void) {
   
   sema_id = DAT_002d3908_mc_sema_id;
   WaitSema(DAT_002d3908_mc_sema_id);
-  DAT_002d3d44 = DAT_002d3d44 + -1;
+  DAT_002d3d44 = DAT_002d3d44 - 1;
   if (DAT_002d3d44 < 0) {
     printf("MC: error; lock count underflow\n");
     DAT_002d3d44 = 0;

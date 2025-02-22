@@ -228,7 +228,7 @@ char* round(float x, s32* param1, char* start, char* sEnd, char padchar, s32 *pa
   if (4.00000000 < f) {
     while (true) {
       if (*sEnd == '.') {
-        sEnd = sEnd + -1;
+        sEnd = sEnd - 1;
       }
       cVar1 = *sEnd;
       *sEnd = cVar1 + 1;
@@ -238,11 +238,11 @@ char* round(float x, s32* param1, char* start, char* sEnd, char padchar, s32 *pa
       *sEnd = '0';
       if (sEnd == start)
         break;
-      sEnd = sEnd + -1;
+      sEnd = sEnd - 1;
     }
     if (param1 == (int*)0x0) {
       start[-1] = '1'; // Why is this not sEnd?
-      start = start + -1;
+      start = start - 1;
     } else {
       *start = '1'; // Why is this not sEnd?
       *param1 = *param1 + 1;
@@ -251,14 +251,14 @@ char* round(float x, s32* param1, char* start, char* sEnd, char padchar, s32 *pa
     if (*param4 == 0x2d) {
       while (true) {
         if (*sEnd == '.') {
-          sEnd = sEnd + -1;
+          sEnd = sEnd - 1;
         }
         if (*sEnd != '0')
           break;
         if (sEnd == start) {
           *param4 = 0;
         }
-        sEnd = sEnd + -1;
+        sEnd = sEnd - 1;
       }
     }
   }
@@ -353,7 +353,7 @@ LAB_002676d4:
         goto LAB_002676b0;
       }
       if ((local_58 & 1) != 0) {
-        start_ptr = round(x_00,(s32 *)0x0,start_ptr,count_chrp + -1,'\0',lead_char);
+        start_ptr = round(x_00,(s32 *)0x0,start_ptr,count_chrp - 1,'\0',lead_char);
       }
     }
     else {
@@ -477,7 +477,7 @@ char* kitoa(char* buffer, s64 value, u64 base, s32 length, char pad, u32 flag) {
     else if (length < count) {
       char c = (base == 16) ? 'f' : '1';
 
-      while (length < count && (buffer[count + -1] == c)) {
+      while (length < count && (buffer[count - 1] == c)) {
         count--;
       }
 
@@ -523,7 +523,7 @@ void kqtoa_G() {
   auVar1 = _pcpyud(in_a1_qw, in_zero_qw);
   auVar2 = _pcpyud(in_zero_qw, auVar2);
   s64 value = auVar2._0_8_;
-  kitoa(in_a0_lo, auVar1._0_8_, in_a2, in_a3_lo + -0x10, in_t0_lo, in_t1_lo);
+  kitoa(in_a0_lo, auVar1._0_8_, in_a2, in_a3_lo - 0x10, in_t0_lo, in_t1_lo);
   char* buffer = strend(in_a0_lo);
   kitoa(buffer, value, in_a2, 0x10, '0', 0);
 }
