@@ -808,19 +808,18 @@ void ultimate_memcpy_G(void* dst, void* src, uint32_t size) {
     }
   } else {
     code* sym_val = gfunc_774;
-    if ((((uint)dst & 0xf) != 0) ||
-        (((uint)src & 0xf) != 0) ||
-        (((ulong)(int)size & 0xf) != 0) ||
-        (ulong)(int)size < 0x1000) {
+    if ((((uint)dst & 0xf) == 0) && (((uint)src & 0xf) == 0) && (((ulong)(int)size & 0xf) == 0) && (ulong)(int)size > 0xfff) {
+      if (gfunc_774 == nullptr) {
+        int unaff_s7_lo;
+        sym_val = *(code **)(unaff_s7_lo + FIX_SYM_ULTIMATE_MEMCPY - 1);
+        if (sym_val == nullptr) {
+          memcpy(dst, src, (ulong)(int)size);
+          return;
+        }
+      }
+    } else {
       memcpy(dst, src, (ulong)(int)size);
       return;
-    } else {
-      int unaff_s7_lo;
-      sym_val = *(code **)(unaff_s7_lo + FIX_SYM_ULTIMATE_MEMCPY - 1);
-      if (gfunc_774 == nullptr && sym_val == nullptr) {
-        memcpy(dst, src, (ulong)(int)size);
-        return;
-      }
     }
     gfunc_774 = sym_val;
     (*gfunc_774)();
