@@ -76,7 +76,7 @@ s32 RpcCall(s32 rpcChannel,
     RpcCallEndFunctionArgs_W[rpcChannel].callback = callback;
     RpcCallEndFunctionArgs_W[rpcChannel].fourth = 0; // in_stack_00000008;
     RpcCallEndFunctionArgs_W[rpcChannel].third = 0; // in_stack_00000000;
-    return SifCallRpc(&cd_G_rpc[rpcChannel], fno, (int)async, sendBuff, sendSize, recvBuff, recvSize, RpcCallEndFunction_W, RpcCallEndFunctionArgs_W + rpcChannel);
+    return SifCallRpc(&cd_G_rpc[rpcChannel], fno, (int)async, sendBuff, sendSize, recvBuff, recvSize, RpcCallEndFunction_W, &RpcCallEndFunctionArgs_W[rpcChannel]);
   }
   return -1;
 }
@@ -166,8 +166,7 @@ s32 RpcBind(s32 channel, s32 id) {
       }
       sceKernelDelayThread_G(10000);
     }
-  }
-  else {
+  } else {
     MsgErr("dkernel: RpcBind() error; invalid port id %d\n", channel);
     return -1;
   }
@@ -186,20 +185,19 @@ s32 InitRPC() {
   if (RPC_Initialized_G) {
     MsgErr("dkernel: InitRPC() error; multiple initializations attempted");
     return -1;
-  }
-  else {
-    for (int i = 0; i < numberOfRpcChannels; ++i) {
+  } else {
+    for (int i = 0; i < numberOfRpcChannels; i++) {
       RpcCallEndFunctionArgs_W[i].fourth = 0;
       RpcCallEndFunctionArgs_W[i].sema_id = -1;
       RpcCallEndFunctionArgs_W[i].callback = nullptr;
       RpcCallEndFunctionArgs_W[i].third = 0;
     }
-    for (int i = 0; i < 6; ++i) { // FIXME: why is it 6 here? Why is RpcChannels_W of length 6 and RpcCallEndFunctionArgs_W of length 7?
+    for (int i = 0; i < 6; i++) { // FIXME: why is it 6 here? Why is RpcChannels_W of length 6 and RpcCallEndFunctionArgs_W of length 7?
       if (!RpcBind(RpcChannels_W[i].channel, RpcChannels_W[i].id)) {
         return -1;
       }
     }
-    for (int i = 0; i < numberOfRpcChannels; ++i) {
+    for (int i = 0; i < numberOfRpcChannels; i++) {
       memset(&someSema, 0, 0x18); // MACRO
       someSema.init_count = 1;
       someSema.max_count = 1;
