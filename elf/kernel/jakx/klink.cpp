@@ -807,17 +807,20 @@ void ultimate_memcpy_G(void* dst, void* src, uint32_t size) {
       *(undefined *)((int)dst + i) = *(undefined *)((int)src + i);
     }
   } else {
-    int unaff_s7_lo;
-    code *sym_val;
+    code* sym_val = gfunc_774;
     if ((((uint)dst & 0xf) != 0) ||
         (((uint)src & 0xf) != 0) ||
         (((ulong)(int)size & 0xf) != 0) ||
-        ((ulong)(int)size < 0x1000 ||
-        ((sym_val = gfunc_774, gfunc_774 == nullptr &&
-         (sym_val = *(code **)(unaff_s7_lo + FIX_SYM_ULTIMATE_MEMCPY - 1), *(code **)(unaff_s7_lo + FIX_SYM_ULTIMATE_MEMCPY - 1) == nullptr))
-        ))) {
+        (ulong)(int)size < 0x1000) {
       memcpy(dst, src, (ulong)(int)size);
       return;
+    } else {
+      int unaff_s7_lo;
+      sym_val = *(code **)(unaff_s7_lo + FIX_SYM_ULTIMATE_MEMCPY - 1);
+      if (gfunc_774 == nullptr && sym_val == nullptr) {
+        memcpy(dst, src, (ulong)(int)size);
+        return;
+      }
     }
     gfunc_774 = sym_val;
     (*gfunc_774)();
