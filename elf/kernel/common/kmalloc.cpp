@@ -84,7 +84,7 @@ kheapinfo* kheapstatus(kheapinfo* heap) {
     Msg(6, "\t %d bytes before stack\n", GLOBAL_HEAP_END);
   }
 
-  for (int i = 0; i < 2; i++) {
+  for (int i = 0; i < NUM_CATEGORIES; i++) {
     printf("   %d: %d %d\n", i, MemItemsCount[i], MemItemsSize[i]);
   }
 
