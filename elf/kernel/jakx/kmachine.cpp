@@ -162,9 +162,9 @@ void InitParms(int argc, const char** argv) {
       if (i + 1 < argc) { // FIXME
         i++;
         std::string artGroupName = argv[i];
-        Msg(6, "dkernel: art-group %s\n", artGroupName);
+        Msg(6, "dkernel: art-group %s\n", artGroupName.c_str());
         if (strlen(artGroupName) != 0) {
-          strcpy(DebugBootArtGroup, artGroupName);
+          strcpy(DebugBootArtGroup, artGroupName.c_str());
           strcpy(DebugBootMessage, "art-group");
         }
       }
