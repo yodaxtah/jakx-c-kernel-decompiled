@@ -125,7 +125,7 @@ void load_and_link_dgo_from_c(const char* name,
 
   u8* buffer2 = kmalloc(heap, bufferSize, 0x2040, "dgo-buffer-2");
   u8* buffer1 = kmalloc(heap, bufferSize, 0x2040, "dgo-buffer-2");
-  
+
   char fileName[16];
   kstrcpyup(fileName + 4, name); // TODO: This is different because the prefix is DGO_ maybe?
   if ((fileName + 12)[(int)strlen(fileName + 4)] != '.') { // FIXME: How does this match len(name) - 4?
