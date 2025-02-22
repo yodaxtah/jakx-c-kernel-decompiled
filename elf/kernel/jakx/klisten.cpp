@@ -47,13 +47,13 @@ void InitListener() {
   kernel_packages = intern_from_c(-1, 0, "*kernel-packages*");
   print_column = intern_from_c(-1, 0, "*print-column*");
   int unaff_s7_lo;
-  *(int *)((int)ListenerLinkBlock + -1) = unaff_s7_lo;
-  *(int *)((int)ListenerFunction + -1) = unaff_s7_lo;
-  *(int *)((int)KernelFunction + -1) = unaff_s7_lo;
+  *(int *)((int)ListenerLinkBlock - 1) = unaff_s7_lo;
+  *(int *)((int)ListenerFunction - 1) = unaff_s7_lo;
+  *(int *)((int)KernelFunction - 1) = unaff_s7_lo;
 
-  *(int *)((int)kernel_packages + -1) =
+  *(int *)((int)kernel_packages - 1) =
       new_pair(unaff_s7_lo + 0xa0, *(u32 *)(unaff_s7_lo + 0x6f),
-               (u32)make_string_from_c("kernel"), *(u32 *)((int)kernel_packages + -1));
+               (u32)make_string_from_c("kernel"), *(u32 *)((int)kernel_packages - 1));
   //  if (MasterDebug != 0) {
   //    SendFromBufferD(0, 0, &AckBufArea, 0);
   //  }
@@ -107,10 +107,10 @@ void ProcessListenerMessage(char* msg) {
     case 9: {
       u8* buffer = kmalloc(kdebugheap, MessCount, 0, "listener-link-buf");
       memcpy(buffer, msg, (size_t)MessCount);
-      *(u8 **)(ListenerLinkBlock + -1) = buffer + 4;
+      *(u8 **)(ListenerLinkBlock - 1) = buffer + 4;
 
       undefined in_t1_lo; // TODO: why would this be true? I expect this to be false...
-      *(uint8_t **)(ListenerFunction + -1) = link_and_exec(buffer, "*listener*", MessCount - *(int *)(buffer + 4), kdebugheap,
+      *(uint8_t **)(ListenerFunction - 1) = link_and_exec(buffer, "*listener*", MessCount - *(int *)(buffer + 4), kdebugheap,
                                                            0x10, (bool)in_t1_lo);
       return;
     } break;
@@ -130,19 +130,19 @@ int sql_query_sync(String* string_in) {
   else {
     int unaff_s7_lo;
     undefined4 unaff_s7_hi;
-    *(int *)(SqlResult + -1) = unaff_s7_lo;
+    *(int *)(SqlResult - 1) = unaff_s7_lo;
     output_sql_query(string_in + 1);
-    *(int *)(ListenerFunction + -1) = unaff_s7_lo;
+    *(int *)(ListenerFunction - 1) = unaff_s7_lo;
     ListenerStatus = 1;
     ClearPending();
     SendAck();
-    int listener = *(int *)(ListenerFunction + -1);
+    int listener = *(int *)(ListenerFunction - 1);
     kdebugheap->top -= 0x4000;
     if ((long)listener == CONCAT44(unaff_s7_hi,unaff_s7_lo)) {
-      while ((long)*(int *)(SqlResult + -1) == CONCAT44(unaff_s7_hi,unaff_s7_lo)) {
-        KernelDispatch(*(u32 *)(sync_dispatcher + -1));
+      while ((long)*(int *)(SqlResult - 1) == CONCAT44(unaff_s7_hi,unaff_s7_lo)) {
+        KernelDispatch(*(u32 *)(sync_dispatcher - 1));
         SendAck();
-        if ((long)*(int *)(SqlResult + -1) == CONCAT44(unaff_s7_hi,unaff_s7_lo)) {
+        if ((long)*(int *)(SqlResult - 1) == CONCAT44(unaff_s7_hi,unaff_s7_lo)) {
           int i = 0;
           do {
             i++;
@@ -151,7 +151,7 @@ int sql_query_sync(String* string_in) {
       }
     }
     kdebugheap->top += 0x4000;
-    return *(int *)(SqlResult + -1);
+    return *(int *)(SqlResult - 1);
   }
 }
 
