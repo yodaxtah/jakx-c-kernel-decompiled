@@ -729,6 +729,7 @@ void jak3_finish(link_control* this, bool jump_from_c_to_goal) {
   FastLink = false;
   m_heap->top = this->m_heap_top;
   DebugSegment = old_debug_segment;
+
   this->m_busy = 0;
   if (this->m_on_global_heap != false) {
     kmemclose();
