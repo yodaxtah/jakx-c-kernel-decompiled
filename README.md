@@ -134,6 +134,7 @@ Less important details to check:
 - [ ] Find the exact start of the array at 00283740 of 0x8c0 sized elements? Also see `sceMc2Init_G_Proxy` where `uVar6 * 0x230` as well as `uVar6 * 0x8c0` occur.
 - [ ] Find the exact start of the array over 00283864, 00283874 of 0x230 sized elements (see `mc_get_secrets_S`)
 - [ ] Find the exact start of the array over 00283860 of 0x230 sized elements (see `MC_shutdown_G`)
+- [ ] Find usage of `mc_slot_info` and `mc_file_info`
 - [ ] ... many more that I forgot to write down.
 
 ## Exporting C++
