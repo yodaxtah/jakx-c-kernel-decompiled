@@ -416,7 +416,7 @@ void ftoa(char* out_str, float x, s32 desired_len, char pad_char, s32 precision,
   char* out_ptr = out_str;
 
   if ((desired_len > 0) && (desired_len > real_count) && 0 < i) {
-    for (s32 i = 0; i < desired_len - real_count; i++) {
+    for (s32 i = 0; i < (desired_len - real_count); i++) {
       *out_ptr = pad_char;
       out_ptr++;
     }
