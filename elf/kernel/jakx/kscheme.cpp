@@ -1526,9 +1526,9 @@ int InitHeapAndSymbol() {
   u8* s7 = symbol_table + 0x8001;
   NumSymbols = 0;
   reset_output();
-  *(u8 **)(s7 + -0x8 - 1) = s7 + -6 - 1;
-  *(u8 **)(s7 + -0x4 - 1) = s7 + -6 - 1;
-  *(kheapinfo **)(symbol_table + 0xa0 - 1) = &kglobalheapinfo;
+  *(u8 **)(s7 + FIX_SYM_EMPTY_CAR - 1) = s7 + S7_OFF_FIX_SYM_EMPTY_PAIR;
+  *(u8 **)(s7 + FIX_SYM_EMPTY_CDR - 1) = s7 + S7_OFF_FIX_SYM_EMPTY_PAIR;
+  *(kheapinfo **)(symbol_table + FIX_SYM_GLOBAL_HEAP - 1) = &kglobalheapinfo;
 
   UnknownName = (undefined4)make_string_from_c("*unknown-symbol-name*");
   alloc_and_init_type((Type **)(s7 + FIX_SYM_TYPE_TYPE), 9, true);
@@ -1683,7 +1683,7 @@ int InitHeapAndSymbol() {
   Function* print_object_func = make_function_from_c(print_object, (bool)0x48);
   Function* inspect_object_func = make_function_from_c(inspect_object, (bool)0x48);
 
-  set_fixed_type(FIX_SYM_OBJECT_TYPE, "object", (u32 *)(s7 + 0x1c), 0x900000004, 
+  set_fixed_type(FIX_SYM_OBJECT_TYPE, "object", (u32 *)(s7 + FIX_SYM_OBJECT_TYPE), 0x900000004, 
                  (u32)print_object_func, (u32)inspect_object_func);
   Type* object_type = *(Type **)(s7 + FIX_SYM_OBJECT_TYPE - 1);
   object_type->new_method = *(Function **)(s7 + FIX_SYM_NOTHING_FUNC - 1);
@@ -1695,14 +1695,14 @@ int InitHeapAndSymbol() {
   set_fixed_type(FIX_SYM_STRUCTURE, "structure", (u32 *)(s7 + FIX_SYM_OBJECT_TYPE),
                  0x900000004, (u32)make_function_from_c(print_structure, (bool)0x60),
                  (u32)make_function_from_c(inspect_structure, (bool)0x60));
-  Type* structure_type = *(Type **)(s7 + 0x6b);
+  Type* structure_type = *(Type **)(s7 + FIX_SYM_STRUCTURE - 1);
   structure_type->new_method = make_function_from_c(new_structure, (bool)0x68);
   structure_type->delete_method = make_function_from_c(delete_structure, (bool)0x68);
 
-  set_fixed_type(FIX_SYM_BASIC, "basic", (u32 *)(s7 + 0x6c),
+  set_fixed_type(FIX_SYM_BASIC, "basic", (u32 *)(s7 + FIX_SYM_STRUCTURE),
                  0x900000004, (u32)make_function_from_c(print_basic, (bool)0x68),
                  (u32)make_function_from_c(inspect_basic, (bool)0x68));
-  Type* basic_type = *(Type **)(s7 + 0xb);
+  Type* basic_type = *(Type **)(s7 + FIX_SYM_BASIC - 1);
   basic_type->new_method = make_function_from_c(new_basic, (bool)FIX_SYM_NUMBER);
   basic_type->delete_method = *(Function **)(s7 + FIX_SYM_DELETE_BASIC - 1);
   basic_type->asize_of_method = *(Function **)(s7 + FIX_SYM_ASIZE_OF_BASIC_FUNC - 1);
