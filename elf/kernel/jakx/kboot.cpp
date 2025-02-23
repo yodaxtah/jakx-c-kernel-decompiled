@@ -131,12 +131,12 @@ void KernelDispatch(u32 dispatcher_func) {
 
 void KernelShutdown(u32 reason) {
   if (MasterExit < reason) {
-    MasterExit = reason;
+    MasterExit = (RuntimeExitStatus)reason;
   }
 }
 
 int KernelCheckAndDispatch() {
-  while ((MasterExit == 0 && (POWERING_OFF_W == false))) {
+  while ((MasterExit == RuntimeExitStatus::RUNNING && !POWERING_OFF_W)) {
     KernelDispatch(*(u32 *)(kernel_dispatcher - 1));
   }
   if (POWERING_OFF_W != false) {
