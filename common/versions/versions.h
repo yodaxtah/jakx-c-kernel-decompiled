@@ -48,7 +48,7 @@ constexpr u32 TX_PAGE_VERSION = 8;
 }  // namespace versions
 
 // GOAL kernel version (OpenGOAL changes this version from the game's version)
-constexpr int KERNEL_VERSION_MAJOR = 2;
+constexpr int KERNEL_VERSION_MAJOR = 0X16
 constexpr int KERNEL_VERSION_MINOR = 0;
 
 // OVERLORD version returned by an RPC
