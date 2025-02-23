@@ -308,22 +308,20 @@ s32 FileSave(char* name, u8* data, s32 size) {
     return -6;
   }
 
-  if (size != 0) {
-    int writeOffset = 0;
-    do {
-      int chunkSize = 0x1000000;
-      if (size < 0x1000000) {
-        chunkSize = size; // one or final write
-      }
-      int written = sceWrite(fd,(char *)(data + writeOffset), chunkSize);
-      writeOffset = writeOffset + written;
-      size = size - written;
-      if (written != chunkSize) {
-        MsgErr("dkernel: can't write full file: '%s'\n", name);
-        sceClose(fd);
-        return -6;
-      }
-    } while (size != 0);
+  int writeOffset = 0;
+  while (size != 0) {
+    int chunkSize = 0x1000000;
+    if (size < 0x1000000) {
+      chunkSize = size; // one or final write
+    }
+    int written = sceWrite(fd,(char *)(data + writeOffset), chunkSize);
+    writeOffset = writeOffset + written;
+    size = size - written;
+    if (written != chunkSize) {
+      MsgErr("dkernel: can't write full file: '%s'\n", name);
+      sceClose(fd);
+      return -6;
+    }
   }
 
   sceClose(fd);
