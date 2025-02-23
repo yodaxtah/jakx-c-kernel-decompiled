@@ -1349,14 +1349,14 @@ u64 asize_of_basic(u32 it) {
  */
 u64 copy_basic(u32 obj, u32 heap, u32 unused, u32 pp) {
   u64 heap_ = (u64)(int)heap;
-  u64 size = call_method_of_type(obj, *(Type **)(obj - 4), 5);
+  u64 size = call_method_of_type(obj, *(Type **)(obj - BASIC_OFFSET), GOAL_ASIZE_METHOD);
   u64 result;
 
   if ((heap_ & 1) != 0) {
-    result = alloc_heap_object(heap, *(u32 *)(obj - 4), (u32)size, pp);
-    memcpy((void *)result, (void *)obj, (u64)(int)((u32)size - 4));
+    result = alloc_heap_object(heap, *(u32 *)(obj - BASIC_OFFSET), (u32)size, pp);
+    memcpy((void *)result, (void *)obj, (u64)(int)((u32)size - BASIC_OFFSET));
   } else {
-    memcpy((void *)(heap - 4), (void *)(obj - 4), size);
+    memcpy((void *)(heap - BASIC_OFFSET), (void *)(obj - BASIC_OFFSET), size);
     result = heap_;
   }
   return result;
