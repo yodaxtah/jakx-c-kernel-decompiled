@@ -64,16 +64,16 @@ void fixed_sym_set(u32 offset, u32 value) {
 }
 }  // namespace
 
-u64 new_illegal(u32 allocation, u32 type) {
+u64 new_illegal(u32 allocation, Type* type) {
   int unaff_s7_lo;
   undefined4 unaff_s7_hi;
   
   MsgErr("dkernel: illegal attempt to call new method of static object type %s\n",
-         *(int *)((*(int *)type - unaff_s7_lo) + SymbolString) + 4);
+         *(int *)((int)type->symbol + (SymbolString - unaff_s7_lo)) + 4);
   return CONCAT44(unaff_s7_hi, unaff_s7_lo);
 }
 
-u64 alloc_from_heap(u32 heap_symbol, u32 type, s32 size, u32 pp) {
+u64 alloc_from_heap(u32 heap_symbol, Type* type, s32 size, u32 pp) {
   int unaff_s6_lo;
   int unaff_s7_lo;
   u64 heap_symbol_ = (u64)(int)heap_symbol_;
@@ -83,16 +83,16 @@ u64 alloc_from_heap(u32 heap_symbol, u32 type, s32 size, u32 pp) {
       heap_symbol_ == (long)(unaff_s7_lo + FIX_SYM_DEBUG) ||
       heap_symbol_ == (long)(unaff_s7_lo + FIX_SYM_LOADING_LEVEL) ||
       heap_symbol_ == (long)(unaff_s7_lo + FIX_SYM_PROCESS_LEVEL_HEAP)) {
-    if (type == 0) {
+    if (type == nullptr) {
       return (long)(int)kmalloc(heap_ptr, size, KMALLOC_MEMSET, "global-object");
     }
 
-    if (*(int *)type == 0) {
+    if (type->symbol == nullptr) {
       return (long)(int)kmalloc(heap_ptr, size, KMALLOC_MEMSET, "global-object");
     }
 
     char *gstr = (char *)(aligned_size + 4);
-    gstr_len = *(int *)((*(int *)type - unaff_s7_lo) + SymbolString);
+    gstr_len = *(int *)((int)type->symbol + (SymbolString - unaff_s7_lo));
     if (gstr_len == 0) {
       return (long)(int)kmalloc(heap_ptr, size, KMALLOC_MEMSET, "global-object");
     }
