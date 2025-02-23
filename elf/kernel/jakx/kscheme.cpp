@@ -1754,9 +1754,9 @@ int InitHeapAndSymbol() {
   set_fixed_type(FIX_SYM_PAIR_TYPE, "pair", (u32 *)(s7 + FIX_SYM_OBJECT_TYPE),
                  0x900000008, (u32)make_function_from_c(print_pair, (bool)0xd0),
                  (u32)make_function_from_c(inspect_pair, (bool)0xd0));
-  (*(Type **)(s7 + 0x6f))->new_method =
+  (*(Type **)(s7 + FIX_SYM_PAIR_TYPE - 1))->new_method =
       make_function_from_c(new_pair, (bool)0xd8);
-  (*(Type **)(s7 + 0x6f))->delete_method =
+  (*(Type **)(s7 + FIX_SYM_PAIR_TYPE - 1))->delete_method =
       make_function_from_c(delete_pair, (bool)0xd8);
 
   set_fixed_type(FIX_SYM_PROCESS_TREE, "process-tree", (u32 *)(s7 + FIX_SYM_BASIC),
