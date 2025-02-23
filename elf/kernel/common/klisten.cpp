@@ -24,24 +24,24 @@ void klisten_init_globals() {
  */
 void ClearPending() {
   if (MasterDebug == 0) { // TODO: why is ListenerStatus gone?
-    if (PrintPending != nullptr) {
-      size_t size = strlen(PrintBufArea + 0x18); // SIZEOF
+    if (PrintPending.offset != 0) {
+      size_t size = strlen(PrintBufArea.cast<char>().c() + 0x18); // SIZEOF
       if ((long)size > 0) {
-        printf("%s", PrintBufArea + 0x18); // SIZEOF
+        printf("%s", PrintBufArea.cast<char>().c() + 0x18); // SIZEOF
       }
       clear_print();
     }
   } else {
     if (ListenerStatus != 0) {
-      if (OutputPending != 0) { // TODO: why is the loop gone here?
-        char* msg = (char *)(OutputBufArea + 0x18); // SIZEOF
+      if (OutputPending.offset != 0) { // TODO: why is the loop gone here?
+        char* msg = OutputBufArea.cast<char>().c() + 0x18; // SIZEOF
         size_t size = strlen(msg);
         SendFromBuffer(msg, (s32)size);
         clear_output();
       }
 
-      if (PrintPending != nullptr) {
-        char* msg = PrintBufArea + 0x18; // SIZEOF
+      if (PrintPending.offset != 0) {
+        char* msg = PrintBufArea.cast<char>().c() + 0x18; // SIZEOF
         size_t size = strlen(msg);
         while (size > 0) {
           size_t send_size = size;
@@ -69,7 +69,7 @@ void ClearPending() {
 void SendAck() {
   if (MasterDebug != 0) {
     SendFromBufferD(0, protoBlock.msg_id,
-                    &AckBufArea,
+                    AckBufArea,
                     0);
   }
 }

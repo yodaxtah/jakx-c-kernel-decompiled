@@ -69,11 +69,11 @@ void init_output() {
     PrintBufArea = kmalloc(kdebugheap, DEBUG_PRINT_BUFFER_SIZE, KMALLOC_MEMSET | KMALLOC_ALIGN_256,
                            "print-buf");
   } else {
-    MessBufArea = nullptr;
-    OutputBufArea = nullptr;
+    MessBufArea = Ptr<u8>(0);
+    OutputBufArea = Ptr<u8>(0);
 
     PrintBufArea =
-        kmalloc(kglobalheapinfo, PRINT_BUFFER_SIZE, KMALLOC_MEMSET | KMALLOC_ALIGN_256, "print-buf");
+        kmalloc(kglobalheap, PRINT_BUFFER_SIZE, KMALLOC_MEMSET | KMALLOC_ALIGN_256, "print-buf");
   }
 }
 
@@ -82,8 +82,8 @@ void init_output() {
  */
 void clear_output() {
   if (MasterDebug != 0) {
-    strcpy((char *)(OutputBufArea + 0x18), ""); // SIZEOF
-    OutputPending = 0;
+    strcpy((char*)Ptr<u8>(OutputBufArea + 0x18).c(), ""); // SIZEOF, TODO: .cast<char>?
+    OutputPending = Ptr<u8>(0);
   }
 }
 
@@ -91,8 +91,8 @@ void clear_output() {
  * Clear all data in the print buffer
  */
 void clear_print() {
-  PrintBufArea[0x18] = 0; // SIZEOF
-  PrintPending = nullptr;
+  *Ptr<u8>(PrintBufArea + 0x18) = 0; // SIZEOF
+  PrintPending = Ptr<u8>(0);
 }
 
 /*!
@@ -102,7 +102,7 @@ void clear_print() {
 void reset_output() {
   if (MasterDebug != 0) {
     undefined *unaff_s7_lo;
-    sprintf((char *)(OutputBufArea + 0x18), "reset #x%x\n", // SIZEOF
+    sprintf(OutputBufArea.cast<char>() + 0x18, "reset #x%x\n", // SIZEOF
             unaff_s7_lo);
 
     OutputPending = OutputBufArea + 0x18; // SIZEOF
@@ -115,7 +115,7 @@ void reset_output() {
  */
 void output_unload(const char* name) {
   if (MasterDebug != 0) {
-    sprintf(strend((char *)(OutputBufArea + 0x18)), // SIZEOF
+    sprintf(strend((char *)(OutputBufArea.cast<char>().c() + 0x18)), // SIZEOF
             "unload \"%s\"\n", name);
     OutputPending = OutputBufArea + 0x18; // SIZEOF
   }
@@ -124,13 +124,13 @@ void output_unload(const char* name) {
 /*!
  * Buffer message to compiler indicating some object file has been loaded.
  */
-void output_segment_load(const char* name, u8* link_block, u32 flags) {
+void output_segment_load(const char* name, Ptr<u8> link_block, u32 flags) {
   if (MasterDebug != 0) {
-    char* buffer = strend((char *)(OutputBufArea + 0x18)); // SIZEOF
+    char* buffer = strend(OutputBufArea.cast<char>().c() + 0x18); // SIZEOF
     char true_str[] = "t";
     char false_str[] = "nil";
     char* flag_str = ((flags & LINK_FLAG_OUTPUT_TRUE) != 0) ? true_str : false_str;
-    ObjectFileHeader* lbp = (ObjectFileHeader*)link_block;
+    ObjectFileHeader* lbp = link_block.cast<ObjectFileHeader>();
     sprintf(buffer, "load \"%s\" %s #x%x #x%x #x%x\n", name, flag_str,
             lbp->code_infos[0].offset + 4, lbp->code_infos[1].offset + 4, lbp->code_infos[2].offset + 4);
     // TODO: Why +4? The struct SegmentInfo might itself be nested at 0x4 in another one:
@@ -148,11 +148,11 @@ void output_segment_load(const char* name, u8* link_block, u32 flags) {
 void cprintf(const char* format, ...) {
   va_list args;
   va_start(args, format);
-  char* str = PrintPending;
-  if (PrintPending == nullptr)
-    str = PrintBufArea + 0x18; // SIZEOF
-  PrintPending = strend(str);
-  vsprintf(PrintPending, format, args);
+  char* str = PrintPending.cast<char>().c();
+  if (PrintPending.offset == 0)
+    str = PrintBufArea.cast<char>().c() + 0x18; // SIZEOF
+  PrintPending = make_ptr(strend(str));
+  vsprintf((char*)PrintPending.c(), format, args); // NOTE: .cast<char>().c() ?
 
   va_end(args);
 }

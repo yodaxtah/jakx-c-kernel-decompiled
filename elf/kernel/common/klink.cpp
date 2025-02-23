@@ -223,9 +223,9 @@ void link_control::jak1_jak2_begin(Ptr<uint8_t> object_file,
   }
 }
 
-u8* c_symlink2(u8* objData, u8* linkObj, u8* relocTable) {
-  u8* relocPtr = relocTable;
-  u8* objPtr = objData;
+Ptr<u8> c_symlink2(Ptr<u8> objData, Ptr<u8> linkObj, Ptr<u8> relocTable) {
+  u8* relocPtr = relocTable.c();
+  Ptr<u8> objPtr = objData;
 
   do {
     u8 table_value = *relocPtr;
@@ -247,13 +247,13 @@ u8* c_symlink2(u8* objData, u8* linkObj, u8* relocTable) {
 
     relocPtr = next_reloc;
     objPtr = (u8 *)((int)objPtr + (result & 0xfffffffc));
-    u32 objValue = *(u8 **)objPtr;
+    u32 objValue = *(objPtr.cast<u8*>());
     if (objValue == 0xffffffff) {
-      *(u8 **)objPtr = linkObj;
+      *(objPtr.cast<u8*>()) = linkObj.offset;
     } else {
-      *(u8 **)objPtr = (u8 *)((uint)objValue & 0xffff0000 | (int)(objValue + (int)linkObj) - unaff_s7_lo & 0xffffU);
+      *(objPtr.cast<u8*>()) = (u8 *)((uint)objValue & 0xffff0000 | (int)(objValue + (int)linkObj) - unaff_s7_lo & 0xffffU);
     }
   } while (*relocPtr != 0);
 
-  return relocPtr + 1;
+  return make_ptr(relocPtr + 1);
 }

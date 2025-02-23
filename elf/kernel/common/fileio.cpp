@@ -258,12 +258,12 @@ s32 FileLength(char* filename) {
  * @return pointer to file data
  * DONE, EXACT
  */
-u8* FileLoad(char* name, kheapinfo* heap, u8* memory, u32 malloc_flags, s32* size_out) {
+Ptr<u8> FileLoad(char* name, Ptr<kheapinfo> heap, Ptr<u8> memory, u32 malloc_flags, s32* size_out) {
   s32 fd = sceOpen(name, SCE_RDONLY);
   if (fd < 0) {
     MsgErr("dkernel: file read !open \'%s\' (%d)\n", name, fd);
     sceClose(fd);
-    return (u8*)(-5);
+    return Ptr<u8>(-5);
   }
 
   // determine size
@@ -272,15 +272,15 @@ u8* FileLoad(char* name, kheapinfo* heap, u8* memory, u32 malloc_flags, s32* siz
   sceLseek(fd, initial_pos, SCE_SEEK_SET);
 
   if (size > 0) {
-    if (memory == 0) {
+    if (memory.offset == 0) {
       memory = kmalloc(heap, size + 0x40, malloc_flags, name);
     }
-    if (memory == 0) {
+    if (memory.offset == 0) {
       MsgErr("dkernel: mem full for file read: '%s' (%d bytes)\n", name, size);
-      return (u8*)(-3);
+      return Ptr<u8>(-3);
     }
 
-    s32 read_amount = sceRead(fd, memory, size);
+    s32 read_amount = sceRead(fd, memory.c(), size);
     if (read_amount == size) {
       sceClose(fd);
       if (size_out)
@@ -289,7 +289,7 @@ u8* FileLoad(char* name, kheapinfo* heap, u8* memory, u32 malloc_flags, s32* siz
     } else {
       MsgErr("dkernel: can't read full file (%d of %d): '%s'\n", read_amount, size, name);
       sceClose(fd);
-      return (u8*)(-5);
+      return Ptr<u8>(-5);
     }
   } else {
     return Ptr<u8>(0);

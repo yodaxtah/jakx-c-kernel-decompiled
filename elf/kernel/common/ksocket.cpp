@@ -70,18 +70,18 @@ void InitCheckListener() {}
  * Updates MessCount to be equal to the size of the new message
  * DONE, EXACT
  */
-char* WaitForMessageAndAck() {
+Ptr<char> WaitForMessageAndAck() {
   if (MasterDebug == 0) {
     MessCount = -1;
   } else {
-    MessCount = ReceiveToBuffer((char*)(MessBufArea + 0x18)); // SIZEOF
+    MessCount = ReceiveToBuffer((char*)(MessBufArea.c() + 0x18)); // SIZEOF
   }
 
   if (MessCount < 0) {
-    return nullptr;
+    return Ptr<char>(0);
   }
 
-  return MessBufArea + 0x18; // SIZEOF
+  return MessBufArea.cast<char>() + 0x18; // SIZEOF
 }
 
 /*!

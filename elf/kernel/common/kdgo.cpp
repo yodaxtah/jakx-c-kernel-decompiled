@@ -246,20 +246,20 @@ void LoadDGOTest() {
 
   bool lastShowStall = setStallMsg_G(false);
 
-  BeginLoadingDGO("TEST.DGO", (u8 *)0x4800000, (u8 *)0x4c00000, (u8 *)0x4000000);
+  BeginLoadingDGO("TEST.DGO", Ptr<u8>(0x4800000), Ptr<u8>(0x4c00000), Ptr<u8>(0x4000000));
   while (true) {
-    u8* dest_buffer;
+    Ptr<u8> dest_buffer(0);
     do {
       dest_buffer = GetNextDGO(&lastObject);
-    } while (dest_buffer == nullptr);
+    } while (dest_buffer.offset == 0);
 
-    Msg(6, "Loaded %s at %8.8X length %d\n", dest_buffer + 1, dest_buffer,
-        *dest_buffer);
+    Msg(6, "Loaded %s at %8.8X length %d\n", (dest_buffer + 4).cast<char>().c(), dest_buffer.offset,
+        *(dest_buffer.cast<u32>()));
     if (lastObject != 0) {
       break;
     }
 
-    ContinueLoadingDGO((u8 *)0x4800000);
+    ContinueLoadingDGO(Ptr<u8>(0x4800000));
   }
 
   setStallMsg_G(lastShowStall);

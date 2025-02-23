@@ -33,7 +33,7 @@ void kdgo_init_globals() {
  * DONE,
  * MODIFIED : Added print statement to indicate when DGO load starts.
  */
-void BeginLoadingDGO(const char* name, u8* buffer1, u8* buffer2, u8* currentHeap) {
+void BeginLoadingDGO(const char* name, Ptr<u8> buffer1, Ptr<u8> buffer2, Ptr<u8> currentHeap) {
   uint msgID = sMsgNum;
   RPC_Dgo_Cmd* mess = sMsg + sMsgNum;
   sMsgNum = sMsgNum ^ 1;
@@ -41,10 +41,10 @@ void BeginLoadingDGO(const char* name, u8* buffer1, u8* buffer2, u8* currentHeap
 
   sMsg[msgID].status = DGO_RPC_RESULT_INIT;
 
-  sMsg[msgID].buffer1 = (uint32_t)buffer1;
-  sMsg[msgID].buffer2 = (uint32_t)buffer2;
+  sMsg[msgID].buffer1 = (uint32_t)buffer1.offset;
+  sMsg[msgID].buffer2 = (uint32_t)buffer2.offset;
 
-  sMsg[msgID].buffer_heap_top = (uint32_t)currentHeap;
+  sMsg[msgID].buffer_heap_top = (uint32_t)currentHeap.offset;
 
   sMsg[msgID].cgo_id = cgo_id;
   cgo_id++;
@@ -62,13 +62,13 @@ void BeginLoadingDGO(const char* name, u8* buffer1, u8* buffer2, u8* currentHeap
  * DONE,
  * MODIFIED : added exception if the sLastMessage isn't set (game just returns null as buffer)
  */
-u8* GetNextDGO(u32* lastObjectFlag) {
+Ptr<u8> GetNextDGO(u32* lastObjectFlag) {
   *lastObjectFlag = 1;
   RpcSync(DGO_RPC_CHANNEL_PLUS_1);
-  u8* buffer = nullptr;
+  Ptr<u8> buffer(0);
   if (sLastMsg != nullptr) {
-    if (sLastMsg->status == DGO_RPC_RESULT_MORE || sLastMsg->status == DGO_RPC_RESULT_DONE) {
-      buffer =
+    if ((sLastMsg->status == DGO_RPC_RESULT_MORE) || (sLastMsg->status == DGO_RPC_RESULT_DONE)) {
+      buffer.offset =
           (u8 *)sLastMsg->buffer1;
     }
 
@@ -90,14 +90,14 @@ u8* GetNextDGO(u32* lastObjectFlag) {
  *
  * Unlike jak 1, we update buffer1 and buffer2 here for borrow heap loads.
  */
-void ContinueLoadingDGO(u8 b1, u8* b2, u8* heapPtr) {
+void ContinueLoadingDGO(Ptr<u8> b1, Ptr<u8> b2, Ptr<u8> heapPtr) {
   u32 msgID = sMsgNum;
   RPC_Dgo_Cmd* sendBuff = sMsg + sMsgNum;
   sMsgNum = sMsgNum ^ 1;
   sMsg[msgID].status = DGO_RPC_RESULT_INIT;
-  sMsg[msgID].buffer1 = (int)(char)b1;
-  sMsg[msgID].buffer2 = (uint32_t)b2;
-  sendBuff->buffer_heap_top = (uint32_t)heapPtr;
+  sMsg[msgID].buffer1 = b1.offset;
+  sMsg[msgID].buffer2 = b2.offset;
+  sendBuff->buffer_heap_top = heapPtr.offset;
   RpcCallNoCallback(DGO_RPC_CHANNEL_PLUS_1, DGO_RPC_LOAD_NEXT_FNO, true, sendBuff, 0x40, // SIZEOF
           sendBuff, 0x40); // SIZEOF
   sLastMsg = sendBuff;
@@ -107,8 +107,8 @@ void ContinueLoadingDGO(u8 b1, u8* b2, u8* heapPtr) {
  * This does not use the mutli-threaded linker and will block until the entire file is done.
  */
 void load_and_link_dgo(u64 name_gstr, u64 heap_info, u64 flag, u64 buffer_size) {
-  const char* name = (const char*)((int)name_gstr + 4);
-  kheapinfo* heap = (kheapinfo*)heap_info;
+  const char* name = Ptr<char>((int)name_gstr + 4).c();
+  Ptr<kheapinfo> heap = Ptr<kheapinfo>(heap_info);
   load_and_link_dgo_from_c(name, heap, (u32)flag, (s32)buffer_size, false);
 }
 
@@ -117,7 +117,7 @@ void load_and_link_dgo(u64 name_gstr, u64 heap_info, u64 flag, u64 buffer_size) 
  * This does not use the mutli-threaded linker and will block until the entire file is done.e
  */
 void load_and_link_dgo_from_c(const char* name,
-                              kheapinfo* heap,
+                              Ptr<kheapinfo> heap,
                               u32 linkFlag,
                               s32 bufferSize,
                               bool jump_from_c_to_goal) {
@@ -138,12 +138,12 @@ void load_and_link_dgo_from_c(const char* name,
   if (!POWERING_OFF_W) {
     BeginLoadingDGO(
       acStack_b0, buffer1, buffer2,
-      (u8*)((uint)(heap->current + 0x3f) & 0xffffffc0));
+      Ptr<u8>((uint)(heap->current + 0x3f).offset & 0xffffffc0));
 
     u32 lastObjectLoaded = 0;
     while (lastObjectLoaded == 0 && !POWERING_OFF_W) { // TBD
-      int32_t* dgoObj = (int32_t *)GetNextDGO(&lastObjectLoaded);
-      if (dgoObj == nullptr) {
+      Ptr<u8> dgoObj = GetNextDGO(&lastObjectLoaded);
+      if (dgoObj.offset == 0) {
         continue;
       }
 
@@ -153,11 +153,11 @@ void load_and_link_dgo_from_c(const char* name,
 
       FUN_0027cc90_patch(dgoObj, bufferSize);
 
-      uint8_t* obj = (uint8_t*)(dgoObj + 0x10);
-      u32 objSize = *dgoObj;
+      Ptr<u8> obj = dgoObj + 0x40;
+      u32 objSize = *(dgoObj.cast<u32>());
 
       char objName[64];
-      strcpy(objName, (char *)(dgoObj + 1));
+      strcpy(objName, (dgoObj + 4).cast<char>().c());
       ;
       {
         undefined in_t1_lo;
@@ -168,7 +168,7 @@ void load_and_link_dgo_from_c(const char* name,
         break;
       }
       if (POWERING_OFF_W == false) {
-        ContinueLoadingDGO((u8)buffer1, buffer2, (u8 *)((uint)(heap->current + 0x3f) & 0xffffffc0));
+        ContinueLoadingDGO((u8)buffer1, buffer2, Ptr<u8>((uint)(heap->current + 0x3f) & 0xffffffc0));
       }
     }
   }

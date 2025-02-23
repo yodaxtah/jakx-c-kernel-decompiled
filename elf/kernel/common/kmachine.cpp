@@ -122,7 +122,7 @@ void CacheFlush(void* mem, int size) {
  * Prints an error if it fails to open.
  */
 u64 CPadOpen(u64 cpad_info, s32 pad_number) {
-  CPadInfo* pad = (CPadInfo*)cpad_info;
+  CPadInfo* pad = Ptr<CPadInfo>(cpad_info).c();
   if (cpad_info == 0) {
     MsgErr("dkernel: error; NULL pad info\n");
     cpad_info = 0;
@@ -242,7 +242,7 @@ u64 CPadGetData(u64 cpad_info) {
 // should make sure this works the same way in jak 2
 void InstallHandler(u32 handler_idx, u32 handler_func) {
   DisableIntc(handler_idx);
-  AddIntcHandler(handler_idx,(void *)handler_func,0);
+  AddIntcHandler(handler_idx, (void*)handler_func, 0);
   EnableIntc(handler_idx);
 }
 
@@ -255,7 +255,7 @@ void InstallDebugHandler() {
  * Get length of a file.
  */
 s32 klength(u64 fs) {
-  FileStream* file_stream = (FileStream*)fs;
+  FileStream* file_stream = Ptr<FileStream>(fs).c();
   if (((*(byte *)&file_stream->flags ^ 1) & 1) != 0) {
     int end_seek = sceLseek(file_stream->file, 0, SCE_SEEK_END);
     int reset_seek = sceLseek(file_stream->file, 0, SCE_SEEK_SET);
@@ -273,7 +273,7 @@ s32 klength(u64 fs) {
  */
 s32 kseek(u64 fs, s32 offset, s32 where) {
   s32 result = -1;
-  FileStream* file_stream = (FileStream*)fs;
+  FileStream* file_stream = Ptr<FileStream>(fs).c();
   if (((*(byte *)&file_stream->flags ^ 1) & 1) != 0) {
     result = sceLseek(file_stream->file, offset, where);
     if (result < 0) {
@@ -288,9 +288,9 @@ s32 kseek(u64 fs, s32 offset, s32 where) {
  */
 s32 kread(u64 fs, u64 buffer, s32 size) {
   s32 result = -1;
-  FileStream* file_stream = (FileStream*)fs;
+  FileStream* file_stream = Ptr<FileStream>(fs).c();
   if (((*(byte *)&file_stream->flags ^ 1) & 1) != 0) {
-    result = sceRead(file_stream->file, (void *)buffer, size)
+    result = sceRead(file_stream->file, Ptr<u8>(buffer).c(), size);
     if (result < 0) {
       file_stream->flags |= 1;
     }
@@ -303,9 +303,9 @@ s32 kread(u64 fs, u64 buffer, s32 size) {
  */
 s32 kwrite(u64 fs, u64 buffer, s32 size) {
   s32 result = -1;
-  FileStream* file_stream = (FileStream*)fs;
+  FileStream* file_stream = Ptr<FileStream>(fs).c();
   if (((*(byte *)&file_stream->flags ^ 1) & 1) != 0) {
-    result = sceWrite(file_stream->file, (const void *)buffer, size);
+    result = sceWrite(file_stream->file, Ptr<u8>(buffer).c(), size);
     if (result < 0) {
       file_stream->flags |= 1;
     }
@@ -317,7 +317,7 @@ s32 kwrite(u64 fs, u64 buffer, s32 size) {
  * Close a file stream.
  */
 u64 kclose(u64 fs) {
-  FileStream* file_stream = (FileStream*)fs;
+  FileStream* file_stream = Ptr<FileStream>(fs).c();
   if (((*(byte *)&file_stream->flags ^ 1) & 1) != 0) {
     sceClose(file_stream->file);
     file_stream->file = -1;

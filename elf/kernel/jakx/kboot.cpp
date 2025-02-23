@@ -105,8 +105,8 @@ s32 goal_main(int argc, const char** argv) {
 }
 
 void KernelDispatch(u32 dispatcher_func) {
-  char* new_message = WaitForMessageAndAck();
-  if (new_message != nullptr) {
+  Ptr<char> new_message = WaitForMessageAndAck();
+  if (new_message.offset != 0) {
     ProcessListenerMessage(new_message);
   }
 
@@ -119,7 +119,7 @@ void KernelDispatch(u32 dispatcher_func) {
   undefined4 unaff_s7_lo;
   undefined4 unaff_s7_hi;
   code* bonus_function = *(code **)(KernelFunction - 1);
-  if ((long)(int)bonus_function != CONCAT44(unaff_s7_hi,unaff_s7_lo)) {
+  if ((long)(int)bonus_function != CONCAT44(unaff_s7_hi, unaff_s7_lo)) {
     *(undefined4 *)(KernelFunction - 1) = unaff_s7_lo;
     (*bonus_function)();
   }

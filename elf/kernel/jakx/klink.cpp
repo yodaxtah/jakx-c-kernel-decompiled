@@ -23,10 +23,10 @@ bool is_opengoal_object(void* data) {
 constexpr bool link_debug_printfs = false;
 }  // namespace
 
-void jak3_begin(link_control* this, uint8_t* object_file,
+void jak3_begin(link_control* this, Ptr<uint8_t> object_file,
                 const char* name,
                 int32_t size,
-                kheapinfo* heap,
+                Ptr<kheapinfo> heap,
                 uint32_t flags) {
   if (false /*is_opengoal_object()*/) {
     // this if clause/statement is not present in the code
@@ -40,7 +40,7 @@ void jak3_begin(link_control* this, uint8_t* object_file,
     this->m_object_data = object_file;
     strcpy(this->m_object_name, name);
     this->m_object_size = size;
-    LinkHeaderV5* l_hdr = (LinkHeaderV5*)this->m_object_data;
+    LinkHeaderV5* l_hdr = (LinkHeaderV5*)this->m_object_data.c();
     this->m_flags = flags;
     u16 version = l_hdr->core.version;
 
@@ -739,12 +739,12 @@ void jak3_finish(link_control* this, bool jump_from_c_to_goal) {
 
 namespace jak3 {
 
-uint8_t* link_and_exec(uint8_t* data,
-                        const char* name,
-                        int32_t size,
-                        kheapinfo* heap,
-                        uint32_t flags,
-                        bool jump_from_c_to_goal) {
+Ptr<uint8_t> link_and_exec(Ptr<uint8_t> data,
+                           const char* name,
+                           int32_t size,
+                           Ptr<kheapinfo> heap,
+                           uint32_t flags,
+                           bool jump_from_c_to_goal) {
   if (link_busy() != 0) {
     printf("-------------> saved link is busy\n");
   }

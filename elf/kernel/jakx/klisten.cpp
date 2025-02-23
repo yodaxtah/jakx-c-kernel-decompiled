@@ -62,18 +62,18 @@ void InitListener() {
 /*!
  * Handle an incoming listener message
  */
-void ProcessListenerMessage(char* msg) {
+void ProcessListenerMessage(Ptr<char> msg) {
   ListenerStatus = 1;
   switch (protoBlock.msg_kind) {
     case LTT_MSG_POKE:
       ClearPending();
       break;
     case LTT_MSG_INSPECT:
-      inspect_object(atoi(msg));
+      inspect_object(atoi(msg.c()));
       ClearPending();
       break;
     case LTT_MSG_PRINT:
-      print_object(atoi(msg));
+      print_object(atoi(msg.c()));
       ClearPending();
       break;
     case LTT_MSG_PRINT_SYMBOLS:
@@ -105,8 +105,8 @@ void ProcessListenerMessage(char* msg) {
     case LTT_MSG_RESET:
       KernelShutdown(1);
     case LTT_MSG_CODE: {
-      u8* buffer = kmalloc(kdebugheap, MessCount, 0, "listener-link-buf");
-      memcpy(buffer, msg, (size_t)MessCount);
+      Ptr<u8> buffer = kmalloc(kdebugheap, MessCount, 0, "listener-link-buf");
+      memcpy(buffer.c(), msg.c(), (size_t)MessCount);
       *(u8 **)(ListenerLinkBlock - 1) = buffer + 4;
 
       undefined in_t1_lo; // TODO: why would this be true? I expect this to be false...
@@ -122,8 +122,7 @@ void ProcessListenerMessage(char* msg) {
   SendAck();
 }
 
-int sql_query_sync(String* string_in) {
-  
+int sql_query_sync(Ptr<String> string_in) {
   if (MasterDebug == 0) {
     int unaff_s7_lo;
     return unaff_s7_lo - 7;

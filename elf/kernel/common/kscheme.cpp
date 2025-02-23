@@ -153,8 +153,8 @@ u64 call_goal_on_stack(Ptr<Function> f, u64 rsp, u64 st, void* offset) {
 /*!
  * Call a GOAL function with no arguments.
  */
-u64 call_goal_function(Function* func) {
-  return (long)(*(code *)func)();
+u64 call_goal_function(Ptr<Function> func) {
+  return (long)(*(code *)func.c())();
 }
 
 /*!
@@ -170,13 +170,13 @@ u64 print_structure(u32 s) {
  * Print an integer. Works correctly for 64-bit integers.
  */
 u64 print_integer(u64 obj) {
-  char* str = PrintPending;
+  char* str = PrintPending.cast<char>().c();
   if (str == nullptr) {
-    str = PrintBufArea + 0x18;
+    str = (PrintBufArea + 0x18).cast<char>().c();
   }
 
-  PrintPending = strend(str);
-  kitoa(PrintPending, obj, 10, -1, '0', 0);
+  PrintPending = make_ptr(strend(str)).cast<u8>();
+  kitoa((char*)PrintPending.c(), obj, 10, -1, '0', 0);
   return obj;
 }
 
@@ -184,13 +184,13 @@ u64 print_integer(u64 obj) {
  * Print a boxed integer. Works correctly for 64-bit integers. Assumes signed.
  */
 u64 print_binteger(u64 obj) {
-  char* str = PrintPending;
-  if (PrintPending == nullptr) {
-    str = PrintBufArea + 0x18;
+  char* str = PrintPending.cast<char>().c();
+  if (PrintPending.offset == 0) {
+    str = (PrintBufArea + 0x18).cast<char>().c();
   }
 
-  PrintPending = strend(str);
-  kitoa(PrintPending, (s64)obj >> 3, 10, -1, '0', 0);
+  PrintPending = make_ptr(strend(str)).cast<u8>();
+  kitoa((char*)PrintPending.c(), ((s64)obj) >> 3, 10, -1, '0', 0);
   return obj;
 }
 
@@ -199,14 +199,14 @@ u64 print_binteger(u64 obj) {
  */
 u64 print_float(u32 f) {
   float ff = (float)f;
-  char* str = PrintPending;
-  if (PrintPending == nullptr) {
-    str = PrintBufArea + 0x18;
+  char* str = PrintPending.cast<char>().c();
+  if (PrintPending.offset == 0) {
+    str = (PrintBufArea + 0x18).cast<char>().c();
   }
 
-  PrintPending = strend(str);
+  PrintPending = make_ptr(strend(str)).cast<u8>();
 
-  ftoa(PrintPending, ff, -1, ' ', 4, 0);
+  ftoa((char*)PrintPending.c(), ff, -1, ' ', 4, 0);
   return (u64)f;
 }
 
@@ -256,14 +256,14 @@ u64 inspect_float(u32 f) {
   float ff = (float)f;
   cprintf("[%8x] float ", (long)(int)f);
 
-  char* str = PrintPending;
-  if (PrintPending == nullptr) {
-    str = PrintBufArea + 0x18;
+  char* str = PrintPending.cast<char>().c();
+  if (PrintPending.offset == 0) {
+    str = (PrintBufArea + 0x18).cast<char>().c();
   }
 
-  PrintPending = strend(str);
+  PrintPending = make_ptr(strend(str)).cast<u8>();
 
-  ftoa(PrintPending, ff, -1, ' ', 4, 0);
+  ftoa(PrintPending.cast<char>().c(), ff, -1, ' ', 4, 0);
   cprintf("\n");
   return (u64)f;
 }
@@ -288,7 +288,7 @@ u64 inspect_vu_function(u32 obj) {
     u32 qlength;
   };
 
-  VuFunction* vf = (VuFunction*)obj;
+  Ptr<VuFunction> vf = Ptr<VuFunction>(obj);
   cprintf("[%8x] vu-function\n\tlength: %d\n\torigin: #x%x\n\tqlength: %d\n", (long)(int)obj, vf->length,
           vf->origin, vf->qlength);
   return (u64)obj;

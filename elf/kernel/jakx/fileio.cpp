@@ -215,8 +215,8 @@ char* MakeFileName(int type, const char* name, int new_string) {
   if (new_string == 0) {
     result = buffer_633;
   } else {
-    int l = strlen(buffer_633);
-    result = (char*)kmalloc(&kglobalheapinfo, (int)l + 1, 0, "filename");
+    int l = (int)strlen(buffer_633);
+    result = kmalloc(kglobalheap, (int)l + 1, 0, "filename");
     kstrcpy(result, buffer_633);
   }
 

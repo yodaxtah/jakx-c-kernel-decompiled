@@ -397,7 +397,7 @@ int InitMachine() {
   int global_heap_end_W = FUN_00268b40();
 
   s32 global_heap_size = global_heap_end_W - 0x4000;
-  u8* heap_start = (u8 *)malloc((long)global_heap_size);
+  u8* heap_start = malloc((long)global_heap_size);
   if (heap_start == nullptr) {
     MsgErr("dkernel: out of memory, cannot allocate global heap; exiting\n");
     return -1;
@@ -415,7 +415,7 @@ int InitMachine() {
     if ((MasterDebug != 0 || DebugSegment != 0) && (0x4ffffff < (ulong)(long)global_heap_size)) {
       kinitheap(kdebugheap, heap_start + 0x5000000, global_heap_end_W - 0x5004000);
     } else {
-      kdebugheap = 0;
+      kdebugheap.offset = 0;
     }
     init_output();
     s32 initIopResult = InitIOP();
@@ -582,8 +582,8 @@ u32 MouseGetData(u32 mouse) {
  * and anything else for write only.
  * DONE
  */
-u64 kopen(u64 fs, u64 name, u64 mode) {  
-  FileStream* file_stream = (FileStream *)fs;
+u64 kopen(u64 fs, u64 name, u64 mode) {
+  Ptr<FileStream> file_stream = Ptr<FileStream>(fs).c();
   file_stream->mode = (u32)mode;
   file_stream->name = (u32)name;
   file_stream->flags = 0;

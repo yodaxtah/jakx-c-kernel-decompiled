@@ -40,17 +40,17 @@ s32 format_impl_jak3(uint64_t* args) {
 
   ulong original_dest = (ulong)(int)args;
 
-  char* print_temp = PrintPending;
-  if (PrintPending == nullptr) {
-    print_temp = PrintBufArea + 0x18; // SIZEOF
+  char* print_temp = PrintPending.cast<char>().c();
+  if (PrintPending.offset == 0) {
+    print_temp = PrintBufArea.cast<char>().c() + 0x18; // SIZEOF
   }
-  PrintPending = (char *)strend(print_temp);
+  PrintPending = make_ptr(strend(print_temp)).cast<u8>();
 
-  char* output_ptr = PrintPending;
+  char* output_ptr = PrintPending.cast<char>().c();
 
   char* format_cstring = format_gstring + 4;
 
-  char* PrintPendingLocal__ = PrintPending;
+  char* PrintPendingLocal__ = PrintPending.cast<char>().c();
   u32 indentation = 0;
 
   indentation = (*(u32 *)(print_column - 1)) >> 3;
@@ -247,7 +247,7 @@ s32 format_impl_jak3(uint64_t* args) {
         case 'g': {
           *output_ptr = 0;
           u32 in = (u32)arg_regs[arg_reg_idx++];
-          strcat(output_ptr, in);
+          strcat(output_ptr, Ptr<char>(in).c());
           output_ptr = strend(output_ptr);
         } break;
 
@@ -292,7 +292,7 @@ s32 format_impl_jak3(uint64_t* args) {
           } else {
             u32* sym = find_symbol_from_c(-1, (const_char *)&argument_data);
             if (sym != nullptr) {
-              Type* type = *(Type **)((int)sym - 1);
+              Ptr<Type> type = *(Type **)((int)sym - 1);
               if (type != nullptr) {
                 call_method_of_type(in, type, GOAL_INSPECT_METHOD);
               }
@@ -337,7 +337,7 @@ s32 format_impl_jak3(uint64_t* args) {
           } else {
             u32* sym = find_symbol_from_c(-1, (const_char *)&argument_data);
             if (sym != nullptr) {
-              Type* type = *(Type **)((int)sym - 1);
+              Ptr<Type> type = *(Type **)((int)sym - 1);
               if (type != nullptr) {
                 call_method_of_type(in, type, GOAL_PRINT_METHOD);
               }
@@ -375,8 +375,8 @@ s32 format_impl_jak3(uint64_t* args) {
           *output_ptr = 0;
           u32 in = (u32)arg_regs[arg_reg_idx++];
 
-          if ((((uint)in & 0x7) == 0x4) && (*(int *)(in - 4) == *(int *)(unaff_s7_lo + FIX_SYM_STRING_TYPE - 1))) {
-            cprintf("%s", in + 4);
+          if ((((uint)in & 0x7) == 0x4) && *Ptr<int>(in - 4) == *(int *)(unaff_s7_lo + FIX_SYM_STRING_TYPE - 1)) {
+            cprintf("%s", Ptr<char>(in).c() + 4);
           } else {
             print_object(in);
           }
@@ -493,36 +493,37 @@ s32 format_impl_jak3(uint64_t* args) {
         printf("%s", PrintPendingLocal__);
         fflush(*(FILE **)(_impure_ptr + 8));
       }
-      PrintPending = PrintPendingLocal__;
+      PrintPending = make_ptr(PrintPendingLocal__).cast<u8>();
       *PrintPendingLocal__ = 0;
     }
 
     return 0;
   } else if (original_dest == CONCAT44(unaff_s7_hi, unaff_s7_lo)) {
     u32 string = (u32)make_string_from_c(PrintPendingLocal__);
-    PrintPending = PrintPendingLocal__;
+    PrintPending = make_ptr(PrintPendingLocal__).cast<u8>();
     *PrintPendingLocal__ = 0;
     return (s32)string;
   } else if (original_dest == 0) {
     printf("%s", PrintPendingLocal__);
     fflush(*(FILE **)(_impure_ptr + 8));
-    PrintPending = PrintPendingLocal__;
+    PrintPending = make_ptr(PrintPendingLocal__).cast<u8>();
     *PrintPendingLocal__ = 0;
     return 0;
   } else {
     if ((original_dest & OFFSET_MASK) == BASIC_OFFSET) {
-      if (*(int *)((int)args - 4) == *(int *)(unaff_s7_lo + FIX_SYM_STRING_TYPE - 1)) {
-        u32 len = (long)*(int *)args;
-        char* str = (char *)((int)args + 4);
+      Ptr<Type> type = *Ptr<Ptr<int>>((int)args - 4);
+      if (type == *Ptr<Ptr<Type>>(unaff_s7_lo + FIX_SYM_STRING_TYPE - 1)) {
+        u32 len = (long)*Ptr<s32>(args);
+        char* str = Ptr<char>((int)args + 4).c();
         strncat(str, PrintPendingLocal__, len);
-        PrintPending = PrintPendingLocal__;
+        PrintPending = make_ptr(PrintPendingLocal__).cast<u8>();
         *PrintPendingLocal__ = 0;
         return 0;
-      } else if (*(int *)((int)args - 4) == *(int *)(unaff_s7_lo + FIX_SYM_FILE_STREAM - 1)) {
+      } else if (type == *Ptr<Ptr<Type>>(unaff_s7_lo + FIX_SYM_FILE_STREAM - 1)) {
         size_t len = strlen(PrintPendingLocal__);
-        sceWrite((long)*(int *)((int)args + 12), PrintPendingLocal__, (int)len);
+        sceWrite((long)*Ptr<s32>((int)args + 12), PrintPendingLocal__, (int)len);
 
-        PrintPending = PrintPendingLocal__;
+        PrintPending = make_ptr(PrintPendingLocal__).cast<u8>();
         *PrintPendingLocal__ = 0;
         return 0;
       }

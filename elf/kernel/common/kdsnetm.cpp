@@ -29,11 +29,11 @@ void InitGoalProto() {
     MsgErr("gproto: open proto error\n");
   } else {
     protoBlock.send_buffer = nullptr;
-    protoBlock.receive_buffer = MessBufArea;
+    protoBlock.receive_buffer = MessBufArea.c();
     protoBlock.send_status = -1;
     protoBlock.last_receive_size = -1;
     protoBlock.receive_progress = 0;
-    protoBlock.deci2count = 0;
+    protoBlock.deci2count.offset = 0;
     Msg(6, "gproto: proto open at socket %d\n", protoBlock.socket);
   }
 }
@@ -60,7 +60,7 @@ void GoalProtoHandler(int event, int param, void* opt) {
     pb = &protoBlock;
   }
 
-  if (pb->deci2count != 0) {
+  if (pb->deci2count.offset != 0) {
     *(int *)(pb->deci2count - 1) = *(int *)(pb->deci2count - 1) + 1;
   }
 
@@ -146,7 +146,7 @@ s32 SendFromBufferD(s32 msg_kind, u64 msg_id, char* data, s32 size) {
     header->deci2_header.src = 'E';
     header->deci2_header.dst = 'H';
 
-    header->msg_kind = (short)msg_kind;
+    header->msg_kind = (ListenerMessageKind)msg_kind;
     header->u6 = 0;
     header->msg_size = size;
     header->msg_id = msg_id;
