@@ -185,8 +185,8 @@ void delete_basic(u32 s) {
 /*!
  * Allocate a new pair and set its car and cdr.
  */
-u64 new_pair(u32 heap, u32 type, u32 car, u32 cdr) {
-  u64 mem = alloc_from_heap(heap, type, (uint)*(ushort *)(type + 8), cdr);
+u64 new_pair(u32 heap, Type* type, u32 car, u32 cdr) {
+  u64 mem = alloc_from_heap(heap, type, type->allocated_size, cdr);
   if (mem == 0) {
     return 0;
   }
