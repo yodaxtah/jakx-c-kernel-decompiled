@@ -744,13 +744,13 @@ void InitMachineScheme() {
     ;
 
     *(int *)(kernel_packages - 1) =
-        (int)new_pair(unaff_s7_lo + 0xa0,*(u32 *)(unaff_s7_lo + FIX_SYM_PAIR_TYPE - 1),
+        (int)new_pair(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP, *(u32 *)(unaff_s7_lo + FIX_SYM_PAIR_TYPE - 1),
                  (u32)make_string_from_c("engine"), *(u32 *)(kernel_packages - 1));
     *(int *)(kernel_packages - 1) =
-        (int)new_pair(unaff_s7_lo + 0xa0,*(u32 *)(unaff_s7_lo + FIX_SYM_PAIR_TYPE - 1),
+        (int)new_pair(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP, *(u32 *)(unaff_s7_lo + FIX_SYM_PAIR_TYPE - 1),
                  (u32)make_string_from_c("game"), *(u32 *)(kernel_packages - 1));
     *(int *)(kernel_packages - 1) =
-        (int)new_pair(unaff_s7_lo + 0xa0,*(u32 *)(unaff_s7_lo + FIX_SYM_PAIR_TYPE - 1),
+        (int)new_pair(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP, *(u32 *)(unaff_s7_lo + FIX_SYM_PAIR_TYPE - 1),
                  (u32)make_string_from_c("common"), *(u32 *)(kernel_packages - 1));
     call_goal_function_by_name("play-boot");
   }
