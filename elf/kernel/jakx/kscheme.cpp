@@ -1526,9 +1526,9 @@ int InitHeapAndSymbol() {
   u8* s7 = symbol_table + 0x8001;
   NumSymbols = 0;
   reset_output();
-  *(u8 **)(symbol_table + 0x7ff8) = symbol_table + 0x7ffa;
-  *(kheapinfo **)(symbol_table + 0x80a0) = &kglobalheapinfo;
-  *(u8 **)(symbol_table + 0x7ffc) = symbol_table + 0x7ffa;
+  *(u8 **)(s7 + -0x8 - 1) = s7 + -6 - 1;
+  *(u8 **)(s7 + -0x4 - 1) = s7 + -6 - 1;
+  *(kheapinfo **)(symbol_table + 0xa0 - 1) = &kglobalheapinfo;
 
   UnknownName = (undefined4)make_string_from_c("*unknown-symbol-name*");
   alloc_and_init_type((Type **)(s7 + FIX_SYM_TYPE_TYPE), 9, true);
