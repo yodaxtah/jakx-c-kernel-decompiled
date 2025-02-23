@@ -55,7 +55,7 @@ void InitListener() {
       new_pair(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP, *(u32 *)(unaff_s7_lo + FIX_SYM_PAIR_TYPE - 1),
                (u32)make_string_from_c("kernel"), *(u32 *)((int)kernel_packages - 1));
   //  if (MasterDebug != 0) {
-  //    SendFromBufferD(0, 0, &AckBufArea, 0);
+  //    SendFromBufferD(MSG_ACK, 0, AckBufArea, 0); // NOTE: No + sizeof
   //  }
 }
 
