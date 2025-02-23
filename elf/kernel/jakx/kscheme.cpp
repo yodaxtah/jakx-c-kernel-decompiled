@@ -1003,7 +1003,7 @@ Type* new_type(u32 symbol, Type* parent, u64 flags) {
     }
   }
 
-  if (*(int *)(unaff_s7_lo + 0xa7) == *(int *)(unaff_s7_lo + 0x9f)) {
+  if (*(int *)(unaff_s7_lo + FIX_SYM_LOADING_LEVEL - 1) == *(int *)(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP - 1)) {
 
     undefined4 unaff_s7_hi;
     if (original_type_list_value_ != 0 && (original_type_list_value_ == CONCAT44(unaff_s7_hi,unaff_s7_lo) ||
@@ -1030,16 +1030,16 @@ Type* new_type(u32 symbol, Type* parent, u64 flags) {
 u64 type_typep(Type* t1, Type* t2) {
   int unaff_s7_lo;
   if (t1 == t2) {
-    return (long)(unaff_s7_lo + 4);
+    return (long)(unaff_s7_lo + FIX_SYM_TRUE);
   }
 
   Type *t1_ = t1;
   do {
     t1_ = t1_->parent;
     if (t1 == t2) {
-      return (long)(unaff_s7_lo + 4);
+      return (long)(unaff_s7_lo + FIX_SYM_TRUE);
     }
-  } while (t1_ != nullptr && t1_ != *(Type **)(unaff_s7_lo + 0x1b));
+  } while (t1_ != nullptr && t1_ != *(Type **)(unaff_s7_lo + FIX_SYM_OBJECT_TYPE - 1));
   undefined4 unaff_s7_hi;
   return CONCAT44(unaff_s7_hi, unaff_s7_lo);
 }
@@ -1180,7 +1180,7 @@ u64 call_method_of_type_arg2(u32 arg, Type* type, u32 method_id, u32 a1, u32 a2)
  */
 u64 print_object(u32 obj) {
   u64 obj_ = (u64)(int)obj;
-  if ((obj_ & OFFSET_MASK) == 0) {
+  if ((obj_ & OFFSET_MASK) == BINTEGER_OFFSET) {
     return (u64)(int)print_binteger((ulong)obj);
   } else {
     if ((obj_ < (ulong)(long)SymbolTable2 || 0x7ffffff < obj_) &&
@@ -1310,7 +1310,7 @@ u64 print_string(u32 obj) {
   undefined4 unaff_s7_hi;
   ulong obj_ = (ulong)(int)obj;
   if ((((obj_ < (ulong)(long)SymbolTable2) || (0x7ffffff < obj_)) && (0x7bfff < obj - 0x84000)) ||
-     (((obj_ & OFFSET_MASK) != BASIC_OFFSET || (*(int *)(obj - 4) != *(int *)(unaff_s7_lo + 0xf))))) {
+     (((obj_ & OFFSET_MASK) != BASIC_OFFSET || (*(int *)(obj - 4) != *(int *)(unaff_s7_lo + FIX_SYM_STRING_TYPE - 1)))) {
     if (obj_ == CONCAT44(unaff_s7_hi,unaff_s7_lo)) {
       cprintf("#f");
 
