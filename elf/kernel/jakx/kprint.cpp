@@ -294,7 +294,7 @@ s32 format_impl_jak3(uint64_t* args) {
             if (sym != nullptr) {
               Type* type = *(Type **)((int)sym - 1);
               if (type != nullptr) {
-                call_method_of_type(in, type, 3);
+                call_method_of_type(in, type, GOAL_INSPECT_METHOD);
               }
             } else {
               ;
@@ -339,7 +339,7 @@ s32 format_impl_jak3(uint64_t* args) {
             if (sym != nullptr) {
               Type* type = *(Type **)((int)sym - 1);
               if (type != nullptr) {
-                call_method_of_type(in, type, 2);
+                call_method_of_type(in, type, GOAL_PRINT_METHOD);
               }
             } else {
               ;
@@ -487,7 +487,7 @@ s32 format_impl_jak3(uint64_t* args) {
 
   *output_ptr = 0;
 
-  if (original_dest == (long)(unaff_s7_lo + 4)) {
+  if (original_dest == (long)(unaff_s7_lo + FIX_SYM_TRUE)) {
     if (DiskBoot != 0) {
       if (true) {
         printf("%s", PrintPendingLocal__);
