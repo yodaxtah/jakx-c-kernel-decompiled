@@ -83,18 +83,18 @@ u64 alloc_from_heap(u32 heap_symbol, u32 type, s32 size, u32 pp) {
       heap_symbol_ == (long)(unaff_s7_lo + FIX_SYM_DEBUG) ||
       heap_symbol_ == (long)(unaff_s7_lo + FIX_SYM_LOADING_LEVEL) ||
       heap_symbol_ == (long)(unaff_s7_lo + FIX_SYM_PROCESS_LEVEL_HEAP)) {
-    if (type == 0) {
+    if (!type) {
       return (long)(int)kmalloc(heap_ptr, size, KMALLOC_MEMSET, "global-object");
     }
 
     Ptr<Type> typ(type);
-    if (typ->symbol.offset == 0) {
+    if (!typ->symbol.offset) {
       return (long)(int)kmalloc(heap_ptr, size, KMALLOC_MEMSET, "global-object");
     }
 
     char *gstr = (char *)(aligned_size + 4);
     gstr_len = *(int *)((int)typ->symbol + (SymbolString - unaff_s7_lo));
-    if (gstr_len == 0) {
+    if (!gstr_len) {
       return (long)(int)kmalloc(heap_ptr, size, KMALLOC_MEMSET, "global-object");
     }
 
@@ -138,7 +138,7 @@ u64 alloc_heap_memory(u32 heap, u32 size) {
  */
 u64 alloc_heap_object(u32 heap, u32 type, u32 size, u32 pp) {
   u64 mem = alloc_from_heap(heap, type, size, pp);
-  if (mem == 0) {
+  if (!mem) {
     return 0;
   }
 
@@ -188,7 +188,7 @@ void delete_basic(u32 s) {
  */
 u64 new_pair(u32 heap, u32 type, u32 car, u32 cdr) {
   u64 mem = alloc_from_heap(heap, type, Ptr<Type>(type)->allocated_size, cdr);
-  if (mem == 0) {
+  if (!mem) {
     return 0;
   }
 
@@ -217,7 +217,7 @@ u64 make_string(u32 size) {
       alloc_heap_object(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP, *(u32 *)(unaff_s7_lo + FIX_SYM_STRING_TYPE - 1),
                         mem_size + BASIC_OFFSET + 4, in_a3_lo);
 
-  if (mem != 0) {
+  if (mem) {
     *Ptr<u32>(mem) = size;
   }
   return mem;
@@ -626,7 +626,7 @@ Ptr<u32> find_symbol_in_area(const char* name, u32 start, u32 end) {
   for (u32 i = start; i < end; i += 4) {
     int unaff_s7_lo;
     int str = *(int *)(i + (SymbolString - unaff_s7_lo));
-    if ((str != 0) && !strcmp((char *)(str + 4), name)) {
+    if ((str) && !strcmp((char *)(str + 4), name)) {
       return (u32*)i;
     }
   }
@@ -685,7 +685,7 @@ Ptr<u32> find_symbol_from_c(uint16_t sym_id, const char* name) {
   undefined4 unaff_s7_hi;
   int extended_sym_id = (int)(short)sym_id;
   if (sym_id == 0xffff) {
-    if (name == nullptr) {
+    if (!name) {
       MsgErr("dkernel: attempted to find symbol with NULL name and id #x%x\n", extended_sym_id);
       return Ptr<u32>(0);
     } else {
@@ -694,8 +694,8 @@ Ptr<u32> find_symbol_from_c(uint16_t sym_id, const char* name) {
         lookup_result = find_symbol_in_area(name, SymbolTable2, unaff_s7_lo - 0x10);
       }
 
-      if ((DebugSegment == 0) || ((long)*(int *)(unaff_s7_lo + FIX_SYM_KERNEL_SYMBOL_WARNINGS - 1) != CONCAT44(unaff_s7_hi, unaff_s7_lo))) {
-        if (lookup_result == nullptr) {
+      if (!DebugSegment || ((long)*(int *)(unaff_s7_lo + FIX_SYM_KERNEL_SYMBOL_WARNINGS - 1) != CONCAT44(unaff_s7_hi, unaff_s7_lo))) {
+        if (lookup_result.offset == 0) {
           MsgWarn("dkernel: doing a string->symbol on %s, but could not find the name\n", name);
         } else {
           int sym_string = *(int *)((int)lookup_result + (SymbolString - unaff_s7_lo));
@@ -714,7 +714,7 @@ Ptr<u32> find_symbol_from_c(uint16_t sym_id, const char* name) {
     Ptr<u32> sym(unaff_s7_lo + extended_sym_id - 1);
     if (sym.offset != (u32 *)(unaff_s7_lo - 7)) {
       int existing_name = *(int *)((int)sym + (SymbolString - unaff_s7_lo));
-      if (existing_name != 0 && existing_name != UnknownName && strcmp((char *)(existing_name + 4), name)) { // TODO: Why not !strcmp in Jak X like Jak 3?
+      if (existing_name && existing_name != UnknownName && strcmp((char *)(existing_name + 4), name)) { // TODO: Why not !strcmp in Jak X like Jak 3?
         MsgWarn(
             "dkernel: WARNING: attempting to find symbol %s at id #x%x but symbol %s was "
             "already there.\n",
@@ -756,7 +756,7 @@ Ptr<u32> intern_from_c(int sym_id, int flags, const char* name) {
 
   int* sptr = (int*)((int)symbol + (SymbolString - unaff_s7_lo));
   int current_string = *sptr;
-  if (current_string.offset != 0) {
+  if (current_string.offset) {
     if ((flags & 0x40U) == 0) {
       kheaplogging = false;
       return symbol;
@@ -860,7 +860,7 @@ Ptr<Type> alloc_and_init_type(Ptr<Ptr<Type>> sym,
   if (!force_global_type &&
       *(int *)(unaff_s7_lo + FIX_SYM_LOADING_LEVEL - 1) != *(int *)(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP - 1)) {
     Type** type_list_ptr = *(Type ***)(LevelTypeList - 1);
-    if (type_list_ptr == nullptr) {
+    if (type_list_ptr == 0) {
       MsgErr("dkernel: trying to init loading level type \'%s\' while type-list is undefined\n",
              *(int *)(sym + (SymbolString - unaff_s7_lo)) + 4);
       type_mem = alloc_heap_object(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP, u32_in_fixed_sym_FIX_SYM_TYPE_TYPE_,
@@ -893,7 +893,7 @@ Type* intern_type_from_c(int a, int b, const char* name, u64 methods) {
   Type** symbol = (Type **)intern_from_c((int)(short)a, b, name);
   Type* sym_value = *(Type **)((int)symbol - 1);
 
-  if (sym_value == nullptr) {
+  if (!sym_value) {
     u64 n_methods = methods;
 
     if (methods == 0) {
@@ -938,14 +938,14 @@ Ptr<Type> set_fixed_type(u32 offset,
   int unaff_s7_lo;
   kheaplogging = true;
   Type** type_symbol = (Type **)(unaff_s7_lo + offset);
-  Type* symbol_value = *(Type **)((int)type_symbol - 1);
+  Ptr<Type> symbol_value = *(Type **)((int)type_symbol - 1);
 
   kheaplogging = false;
   *(String **)((int)type_symbol + (SymbolString - unaff_s7_lo)) = make_string_from_c(name);
   ;
   NumSymbols++;
 
-  if (symbol_value == nullptr) {
+  if (symbol_value.offset == 0) {
     symbol_value = alloc_and_init_type(type_symbol, (uint)(flags >> 0x20) & 0xffff, true);
   }
 
@@ -958,13 +958,13 @@ Ptr<Type> set_fixed_type(u32 offset,
   symbol_value->new_method = parent_type->new_method;
   symbol_value->delete_method = parent_type->delete_method;
 
-  if (print == 0) {
+  if (!print) {
     symbol_value->print_method = (u32)parent_type->print_method;
   } else {
     symbol_value->print_method.offset = (Function*)print;
   }
 
-  if (inspect == 0) {
+  if (!inspect) {
     symbol_value->inpsect_method = (u32)parent_type->inpsect_method;
   } else {
     symbol_value->inpsect_method.offset = (Function*)inspect;
@@ -1007,7 +1007,7 @@ u64 new_type(u32 symbol, u32 parent, u64 flags) {
   if (*(int *)(unaff_s7_lo + FIX_SYM_LOADING_LEVEL - 1) == *(int *)(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP - 1)) {
 
     undefined4 unaff_s7_hi;
-    if (original_type_list_value_ != 0 && (original_type_list_value_ == CONCAT44(unaff_s7_hi,unaff_s7_lo) ||
+    if (original_type_list_value_ && (original_type_list_value_ == CONCAT44(unaff_s7_hi,unaff_s7_lo) ||
                                            (((ulong)(long)SymbolTable2 <= original_type_list_value_ && original_type_list_value_ < 0x8000000 || original_type_list_value - 0x84000 < (Function *)0x7c000) &&
                                             ((original_type_list_value_ & 7) == 4 && *(int *)(original_type_list_value - 4) == *(int *)(unaff_s7_lo + FIX_SYM_TYPE_TYPE - 1))))) {
       new_type_obj->memusage_method = original_type_list_value;
@@ -1063,7 +1063,7 @@ u64 method_set(u32 type_, u32 method_id, u32 method) {
 
   (&type->new_method)[method_id] = (Function *)method_;
 
-  if (*EnableMethodSet != 0 || (FastLink == false && MasterDebug != 0 && DiskBoot == 0)) {
+  if (*EnableMethodSet || (!FastLink && MasterDebug && !DiskBoot)) {
     ulong sym = CONCAT44(unaff_s7_hi, unaff_s7_lo);
     for (; sym < (ulong)(long)LastSymbol; sym += 4) {
       Type* sym_value = *(Type **)(sym - 1);
@@ -1072,7 +1072,7 @@ u64 method_set(u32 type_, u32 method_id, u32 method) {
           (int)method_id < (int)(uint)sym_value->num_methods &&
           (&sym_value->new_method)[method_id] == existing_method &&
           type_typep(sym_value, type) != CONCAT44(unaff_s7_hi, unaff_s7_lo)) {
-        if (FastLink != false) {
+        if (FastLink != 0) {
           printf("************ WARNING **************\n");
           printf("method %d of %s redefined - you must define class heirarchies in order now\n",
                  method_id, *(int *)((sym - unaff_s7_lo) + SymbolString) + 4);
@@ -1090,7 +1090,7 @@ u64 method_set(u32 type_, u32 method_id, u32 method) {
           (int)method_id < (int)(uint)sym_value->num_methods &&
           (&sym_value->new_method)[method_id] == existing_method &&
           type_typep(sym_value, type) != CONCAT44(unaff_s7_hi, unaff_s7_lo)) {
-        if (FastLink != false) {
+        if (FastLink != 0) {
           printf("************ WARNING **************\n");
           printf("method %d of %s redefined - you must define class heirarchies in order now\n",
                  method_id, *(int *)((sym - unaff_s7_lo) + SymbolString) + 4);
@@ -1190,7 +1190,7 @@ u64 print_object(u32 obj) {
       cprintf("#<invalid object #x%x>", obj_);
     } else if ((obj_ & OFFSET_MASK) == PAIR_OFFSET) {
       return print_pair(obj);
-    } else if ((obj_ & 1 != 0) && obj_ >= (ulong)(long)SymbolTable2 &&
+    } else if ((obj_ & 1) && obj_ >= (ulong)(long)SymbolTable2 &&
                obj_ < (ulong)(long)LastSymbol) {
       return print_symbol(obj);
     } else if ((obj_ & OFFSET_MASK) == BASIC_OFFSET) {
@@ -1862,10 +1862,10 @@ int InitHeapAndSymbol() {
   make_function_symbol_from_c("network-bootstrap", network_bootstrapProxy);
 
   u32* ds_symbol = intern_from_c(-1, 0, "*debug-segment*");
-  if (DebugSegment == 0) {
-    *(u8 **)((int)ds_symbol - 1) = s7 + FIX_SYM_FALSE;
-  } else {
+  if (DebugSegment) {
     *(u8 **)((int)ds_symbol - 1) = s7 + FIX_SYM_TRUE;
+  } else {
+    *(u8 **)((int)ds_symbol - 1) = s7 + FIX_SYM_FALSE;
   }
 
   u32* method_set_symbol = intern_from_c(-1, 0, "*enable-method-set*");
@@ -1893,7 +1893,7 @@ int InitHeapAndSymbol() {
   *EnableMethodSet = *EnableMethodSet - 1;
 
   kernel_version = *(uint *)((int)intern_from_c(-1, 0, "*kernel-version*") - 1);
-  if (kernel_version == 0 || ((kernel_version >> 0x13) != KERNEL_VERSION_MAJOR)) {
+  if (!kernel_version || ((kernel_version >> 0x13) != KERNEL_VERSION_MAJOR)) {
     MsgErr("\n");
     MsgErr(
           "dkernel: compiled C kernel version is %d.%d but"

@@ -171,7 +171,7 @@ u64 print_structure(u32 s) {
  */
 u64 print_integer(u64 obj) {
   char* str = PrintPending.cast<char>().c();
-  if (str == nullptr) {
+  if (!str) {
     str = (PrintBufArea + 0x18).cast<char>().c();
   }
 
@@ -185,7 +185,7 @@ u64 print_integer(u64 obj) {
  */
 u64 print_binteger(u64 obj) {
   char* str = PrintPending.cast<char>().c();
-  if (PrintPending.offset == 0) {
+  if (!PrintPending.offset) {
     str = (PrintBufArea + 0x18).cast<char>().c();
   }
 
@@ -200,7 +200,7 @@ u64 print_binteger(u64 obj) {
 u64 print_float(u32 f) {
   float ff = (float)f;
   char* str = PrintPending.cast<char>().c();
-  if (PrintPending.offset == 0) {
+  if (!PrintPending.offset) {
     str = (PrintBufArea + 0x18).cast<char>().c();
   }
 
@@ -257,7 +257,7 @@ u64 inspect_float(u32 f) {
   cprintf("[%8x] float ", (long)(int)f);
 
   char* str = PrintPending.cast<char>().c();
-  if (PrintPending.offset == 0) {
+  if (!str) {
     str = (PrintBufArea + 0x18).cast<char>().c();
   }
 

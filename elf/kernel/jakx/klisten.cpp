@@ -54,7 +54,7 @@ void InitListener() {
   *(int *)((int)kernel_packages - 1) =
       new_pair(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP, *(u32 *)(unaff_s7_lo + FIX_SYM_PAIR_TYPE - 1),
                (u32)make_string_from_c("kernel"), *(u32 *)((int)kernel_packages - 1));
-  //  if (MasterDebug != 0) {
+  //  if (MasterDebug) {
   //    SendFromBufferD(MSG_ACK, 0, AckBufArea, 0); // NOTE: No + sizeof
   //  }
 }
@@ -123,7 +123,7 @@ void ProcessListenerMessage(Ptr<char> msg) {
 }
 
 int sql_query_sync(Ptr<String> string_in) {
-  if (MasterDebug == 0) {
+  if (!MasterDebug) {
     int unaff_s7_lo;
     return unaff_s7_lo - 7;
   }

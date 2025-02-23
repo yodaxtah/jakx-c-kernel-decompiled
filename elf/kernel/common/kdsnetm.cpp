@@ -60,7 +60,7 @@ void GoalProtoHandler(int event, int param, void* opt) {
     pb = &protoBlock;
   }
 
-  if (pb->deci2count.offset != 0) {
+  if (pb->deci2count.offset) {
     *(int *)(pb->deci2count - 1) = *(int *)(pb->deci2count - 1) + 1;
   }
 

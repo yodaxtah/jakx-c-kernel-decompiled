@@ -51,7 +51,7 @@ s32 SendFromBuffer(char* buff, s32 size) {
  * DONE, EXACT
  */
 void InitListenerConnect() {
-  if (MasterDebug != 0) {
+  if (MasterDebug) {
     return strcpy(&AckBufArea, "ack\n");
   }
 }
@@ -71,7 +71,7 @@ void InitCheckListener() {}
  * DONE, EXACT
  */
 Ptr<char> WaitForMessageAndAck() {
-  if (MasterDebug == 0) {
+  if (!MasterDebug) {
     MessCount = -1;
   } else {
     MessCount = ReceiveToBuffer((char*)(MessBufArea.c() + 0x18)); // SIZEOF

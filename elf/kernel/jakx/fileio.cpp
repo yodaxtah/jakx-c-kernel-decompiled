@@ -21,28 +21,28 @@ char* DecodeFileName(const char* name) {
   char* result;
 
   if (name[0] == '$') {
-    if (strncmp(name, "$TEXTURE/", 9) == 0) {
+    if (!strncmp(name, "$TEXTURE/", 9)) {
       result = MakeFileName(TX_PAGE_FILE_TYPE, name + 9, 0);
-    } else if (strncmp(name, "$ART_GROUP/", 0xb) == 0) {
+    } else if (!strncmp(name, "$ART_GROUP/", 0xb)) {
       result = MakeFileName(ART_GROUP_FILE_TYPE, name + 0xb, 0);
-    } else if (strncmp(name, "$LEVEL/", 7) == 0) {
-      size_t len = strlen(name);
-      if (name[(int)len - 4] == '.') {
+    } else if (!strncmp(name, "$LEVEL/", 7)) {
+      int len = (int)strlen(name);
+      if (name[len - 4] == '.') {
         result = MakeFileName(LEVEL_WITH_EXTENSION_FILE_TYPE, name + 7, 0);
       } else {
         result = MakeFileName(LEVEL_FILE_TYPE, name + 7, 0);
       }
-    } else if (strncmp(name, "$FINAL/", 6) == 0) {
+    } else if (!strncmp(name, "$FINAL/", 6)) {
       result = MakeFileName(DATA_FILE_TYPE, name + 6, 0);
-    } else if (strncmp(name, "$CODE/", 6) == 0) {
+    } else if (!strncmp(name, "$CODE/", 6)) {
       result = MakeFileName(CODE_FILE_TYPE, name + 6, 0);
-    } else if (strncmp(name, "$RES/", 5) == 0) {
+    } else if (!strncmp(name, "$RES/", 5)) {
       result = MakeFileName(RES_FILE_TYPE, name + 5, 0);
-    } else if (strncmp(name, "$MISC/", 6) == 0) {
+    } else if (!strncmp(name, "$MISC/", 6)) {
       result = MakeFileName(MISC_FILE_TYPE, name + 6, 0);
-    } else if (strncmp(name, "$MAP/", 5) == 0) {
+    } else if (!strncmp(name, "$MAP/", 5)) {
       result = MakeFileName(MAP_FILE_TYPE, name + 5, 0);
-    } else if (strncmp(name, "$FLASH/", 7) == 0) {
+    } else if (!strncmp(name, "$FLASH/", 7)) {
       result = MakeFileName(FLASH_FILE_TYPE, name + 7, 0);
     } else {
       result = nullptr;
@@ -132,7 +132,7 @@ char* MakeFileName(int type, const char* name, int new_string) {
       break;
 
     case ART_GROUP_FILE_TYPE:  // 0x30
-      // sprintf(buf, "%sfinal/art-group%d/%s-ag.go", prefix, ART_FILE_VERSION, name);
+      sprintf(buf, "%sfinal/art-group%d/%s-ag.go", prefix, ART_FILE_VERSION, name);
       break;
 
     case VS_FILE_TYPE:  // 0x31
@@ -212,7 +212,7 @@ char* MakeFileName(int type, const char* name, int new_string) {
   }
 
   char* result;
-  if (new_string == 0) {
+  if (!new_string) {
     result = buffer_633;
   } else {
     int l = (int)strlen(buffer_633);

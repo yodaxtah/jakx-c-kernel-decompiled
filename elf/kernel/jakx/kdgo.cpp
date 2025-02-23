@@ -141,13 +141,13 @@ void load_and_link_dgo_from_c(const char* name,
       Ptr<u8>((uint)(heap->current + 0x3f).offset & 0xffffffc0));
 
     u32 lastObjectLoaded = 0;
-    while (lastObjectLoaded == 0 && !POWERING_OFF_W) { // TBD
+    while (!lastObjectLoaded && !POWERING_OFF_W) { // TBD
       Ptr<u8> dgoObj = GetNextDGO(&lastObjectLoaded);
-      if (dgoObj.offset == 0) {
+      if (!dgoObj.offset) {
         continue;
       }
 
-      if (lastObjectLoaded != 0) {
+      if (lastObjectLoaded) {
         heap->top = oldHeapTop;
       }
 
@@ -164,7 +164,7 @@ void load_and_link_dgo_from_c(const char* name,
         link_and_exec(obj, objName, objSize, heap, linkFlag, (bool)in_t1_lo);
       }
 
-      if (lastObjectLoaded != 0) {
+      if (lastObjectLoaded) {
         break;
       }
       if (POWERING_OFF_W == false) {

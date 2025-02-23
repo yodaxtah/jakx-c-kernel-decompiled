@@ -404,7 +404,7 @@ int InitMachine() {
   }
   else {
     s32 global_heap_size__ = 0x5000000;
-    if (!((MasterDebug != 0 || DebugSegment != 0) && (0x4ffffff < (ulong)(long)global_heap_size))) {
+    if (!((MasterDebug || DebugSegment) && (0x4ffffff < (ulong)(long)global_heap_size))) {
       global_heap_size__ = global_heap_size;
     }
     kinitheap(kglobalheap, heap_start, global_heap_size__);
@@ -412,14 +412,14 @@ int InitMachine() {
     kmemopen_from_c(kglobalheap, "global");
     kmemopen_from_c(kglobalheap, "scheme-globals");
 
-    if ((MasterDebug != 0 || DebugSegment != 0) && (0x4ffffff < (ulong)(long)global_heap_size)) {
+    if ((MasterDebug || DebugSegment) && (0x4ffffff < (ulong)(long)global_heap_size)) {
       kinitheap(kdebugheap, heap_start + 0x5000000, global_heap_end_W - 0x5004000);
     } else {
       kdebugheap.offset = 0;
     }
     init_output();
     s32 initIopResult = InitIOP();
-    if (initIopResult != 0) {
+    if (initIopResult) {
       return initIopResult;
     }
     // sceGsResetPath();
@@ -723,7 +723,7 @@ void InitMachineScheme() {
   *(undefined4 *)((int)intern_from_c(-1, 0, "*stack-size*") - 1) = 0x4000;
   *(u32 **)((int)intern_from_c(-1, 0, "*kernel-boot-message*") - 1) = intern_from_c(-1, 0, DebugBootMessage);
   *(String **)((int)intern_from_c(-1, 0, "*user*") - 1) = make_string_from_c(DebugBootUser);
-  if (DiskBoot != 0) {
+  if (DiskBoot) {
     *(u32 **)((int)intern_from_c(-1, 0, "*kernel-boot-mode*") - 1) = intern_from_c(-1, 0, "boot");
   }
   int unaff_s7_lo;
@@ -734,7 +734,7 @@ void InitMachineScheme() {
   }
   *(String **)((int)intern_from_c(-1, 0, "*kernel-boot-art-group*") - 1) = make_string_from_c(DebugBootArtGroup);
 
-  if (DiskBoot != 0) {
+  if (DiskBoot) {
     *EnableMethodSet = *EnableMethodSet + 1;
     undefined in_t0_lo;
     load_and_link_dgo_from_c("game", kglobalheap,

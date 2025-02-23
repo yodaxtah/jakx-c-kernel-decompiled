@@ -18,7 +18,7 @@ namespace {
 bool is_opengoal_object(void* data) {
   u32 first_word;
   memcpy(&first_word, data, 4);
-  return first_word != 0 && first_word != UINT32_MAX;
+  return first_word && first_word != UINT32_MAX;
 }
 constexpr bool link_debug_printfs = false;
 }  // namespace
@@ -108,15 +108,15 @@ void jak3_begin(link_control* this, Ptr<uint8_t> object_file,
         }
       }
     }
-    if ((this->m_flags & LINK_FLAG_FORCE_DEBUG) != 0 && MasterDebug != 0 && DiskBoot == 0) {
-      this->m_keep_debug = (int)true;
+    if ((this->m_flags & LINK_FLAG_FORCE_DEBUG) && MasterDebug && !DiskBoot) {
+      this->m_keep_debug = true;
     }
   }
 }
 
 uint32_t jak3_work(link_control* this) {
   int old_debug_segment = DebugSegment;
-  if (this->m_keep_debug != 0) {
+  if (this->m_keep_debug) {
     DebugSegment = unaff_s7_lo + 4;
   }
 
@@ -457,7 +457,7 @@ uint32_t jakx_work_v5(link_control* this) {
       (&ofh->code_infos[seg_id - 1].unknown_0xc)[1] += this->m_object_data;
 
       if (seg_id == 1) {
-        if (DebugSegment == 0) {
+        if (!DebugSegment) {
           ofh->code_infos[seg_id].offset = 0;
           ofh->code_infos[seg_id].size = 0;
         } else {
@@ -687,10 +687,10 @@ void jak3_finish(link_control* this, bool jump_from_c_to_goal) {
   // FlushCache(0);
   // FlushCache(2);
   int old_debug_segment = DebugSegment;
-  if (this->m_keep_debug != 0) {
+  if (this->m_keep_debug) {
     DebugSegment = unaff_s7_lo + 4;
   }
-  if ((this->m_flags & LINK_FLAG_FORCE_FAST_LINK) != 0) {
+  if ((this->m_flags & LINK_FLAG_FORCE_FAST_LINK)) {
     FastLink = true;
   }
 
@@ -702,7 +702,7 @@ void jak3_finish(link_control* this, bool jump_from_c_to_goal) {
     code* m_entry = (code *)this->m_entry;
     if (this->m_entry != (code *)0x0) {
 
-      if (*(int *)(this->m_entry - 4) == *(int *)(unaff_s7_lo + 7) && (this->m_flags & 5) != 0) {
+      if (*(int *)(this->m_entry - 4) == *(int *)(unaff_s7_lo + 7) && (this->m_flags & 5)) {
         if ((this->m_flags & 4) == 0) {
           (**(code **)(unaff_s7_lo + FIX_SYM_NOTHING_FUNC - 1))();
         } else {
@@ -710,10 +710,10 @@ void jak3_finish(link_control* this, bool jump_from_c_to_goal) {
           (**(code **)(unaff_s7_lo + FIX_SYM_NOTHING_FUNC - 1))();
         }
 
-        if ((this->m_flags & LINK_FLAG_OUTPUT_LOAD) != 0) {
+        if ((this->m_flags & LINK_FLAG_OUTPUT_LOAD)) {
           output_segment_load(m_link_hdr->name, (ObjectFileHeader *)m_link_hdr->length_to_get_to_link, this->m_flags);
         }
-      } else if ((this->m_flags & LINK_FLAG_EXECUTE) != 0) {
+      } else if ((this->m_flags & LINK_FLAG_EXECUTE)) {
         char* name = basename(this->m_object_name);
         call_method_of_type_arg2((u32)this->m_entry, *(Type **)(this->m_entry - 4), 7, (u32)this->m_heap,
                                  (u32)name);
@@ -745,14 +745,14 @@ Ptr<uint8_t> link_and_exec(Ptr<uint8_t> data,
                            Ptr<kheapinfo> heap,
                            uint32_t flags,
                            bool jump_from_c_to_goal) {
-  if (link_busy() != 0) {
+  if (link_busy()) {
     printf("-------------> saved link is busy\n");
   }
   jak3_begin((link_control *)&stack0xffffff30, data, name, size, heap, flags);
   uint32_t done;
   do {
     done = jak3_work((link_control *)&stack0xffffff30);
-  } while (done == 0);
+  } while (!done);
   jak3_finish((link_control *)&stack0xffffff30, SUB81((long)(int)data, 0));
   uint8_t *lc.m_entry;
   return lc.m_entry;
@@ -778,14 +778,14 @@ uint64_t link_begin(u64* args) {
   jak3_begin(&saved_link_control_WG, (uint8_t *)args, in_a1_lo, in_a2_lo,
              in_a3_lo, in_t0_lo);
   uint32_t work_result = jak3_work(&saved_link_control_WG);
-  if (work_result != 0) {
+  if (work_result) {
     jak3_finish(&saved_link_control_WG, (bool)SUB41(args, 0));
   }
   return (ulong)(work_result != 0);
 }
 uint64_t link_resume() {
   uint32_t work_result = jak3_work(&saved_link_control_WG);
-  if (work_result != 0) {
+  if (work_result) {
     jak3_finish(&saved_link_control_WG, false);
   }
   return (ulong)(work_result != 0);
@@ -806,7 +806,7 @@ void ultimate_memcpy_G(void* dst, void* src, uint32_t size) {
     for (int i = size - 1; i != -1; i--) {
       *(undefined *)((int)dst + i) = *(undefined *)((int)src + i);
     }
-  } else if ((((uint)dst & 0xf) == 0) && (((uint)src & 0xf) == 0) && (((ulong)(int)size & 0xf) == 0) && (ulong)(int)size > 0xfff) {
+  } else if (!((uint)dst & 0xf) && !((uint)src & 0xf) && !((ulong)(int)size & 0xf) && (ulong)(int)size > 0xfff) {
     if (gfunc_774 == nullptr) {
       int unaff_s7_lo;
       code* sym_val = *(code **)(unaff_s7_lo + FIX_SYM_ULTIMATE_MEMCPY - 1);

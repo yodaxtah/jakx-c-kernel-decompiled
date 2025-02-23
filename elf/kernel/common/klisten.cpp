@@ -23,7 +23,7 @@ void klisten_init_globals() {
  * Changed slightly, it will also print to stdout if there's no compiler connected.
  */
 void ClearPending() {
-  if (MasterDebug == 0) { // TODO: why is ListenerStatus gone?
+  if (!MasterDebug) { // TODO: why is ListenerStatus gone?
     if (PrintPending.offset != 0) {
       size_t size = strlen(PrintBufArea.cast<char>().c() + 0x18); // SIZEOF
       if ((long)size > 0) {
@@ -32,7 +32,7 @@ void ClearPending() {
       clear_print();
     }
   } else {
-    if (ListenerStatus != 0) {
+    if (ListenerStatus) {
       if (OutputPending.offset != 0) { // TODO: why is the loop gone here?
         char* msg = OutputBufArea.cast<char>().c() + 0x18; // SIZEOF
         size_t size = strlen(msg);
@@ -67,7 +67,7 @@ void ClearPending() {
  * Note: jak2 sent 0 length acks.
  */
 void SendAck() {
-  if (MasterDebug != 0) {
+  if (MasterDebug) {
     SendFromBufferD(0, protoBlock.msg_id,
                     AckBufArea,
                     0);

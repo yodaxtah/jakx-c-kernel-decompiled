@@ -256,7 +256,7 @@ void InstallDebugHandler() {
  */
 s32 klength(u64 fs) {
   FileStream* file_stream = Ptr<FileStream>(fs).c();
-  if (((*(byte *)&file_stream->flags ^ 1) & 1) != 0) {
+  if ((*(byte *)&file_stream->flags ^ 1) & 1) {
     int end_seek = sceLseek(file_stream->file, 0, SCE_SEEK_END);
     int reset_seek = sceLseek(file_stream->file, 0, SCE_SEEK_SET);
     if (reset_seek < 0 || end_seek < 0) {
@@ -274,7 +274,7 @@ s32 klength(u64 fs) {
 s32 kseek(u64 fs, s32 offset, s32 where) {
   s32 result = -1;
   FileStream* file_stream = Ptr<FileStream>(fs).c();
-  if (((*(byte *)&file_stream->flags ^ 1) & 1) != 0) {
+  if ((*(byte *)&file_stream->flags ^ 1) & 1) {
     result = sceLseek(file_stream->file, offset, where);
     if (result < 0) {
       file_stream->flags |= 1;
@@ -289,7 +289,7 @@ s32 kseek(u64 fs, s32 offset, s32 where) {
 s32 kread(u64 fs, u64 buffer, s32 size) {
   s32 result = -1;
   FileStream* file_stream = Ptr<FileStream>(fs).c();
-  if (((*(byte *)&file_stream->flags ^ 1) & 1) != 0) {
+  if ((*(byte *)&file_stream->flags ^ 1) & 1) {
     result = sceRead(file_stream->file, Ptr<u8>(buffer).c(), size);
     if (result < 0) {
       file_stream->flags |= 1;
@@ -304,7 +304,7 @@ s32 kread(u64 fs, u64 buffer, s32 size) {
 s32 kwrite(u64 fs, u64 buffer, s32 size) {
   s32 result = -1;
   FileStream* file_stream = Ptr<FileStream>(fs).c();
-  if (((*(byte *)&file_stream->flags ^ 1) & 1) != 0) {
+  if ((*(byte *)&file_stream->flags ^ 1) & 1) {
     result = sceWrite(file_stream->file, Ptr<u8>(buffer).c(), size);
     if (result < 0) {
       file_stream->flags |= 1;
@@ -318,7 +318,7 @@ s32 kwrite(u64 fs, u64 buffer, s32 size) {
  */
 u64 kclose(u64 fs) {
   FileStream* file_stream = Ptr<FileStream>(fs).c();
-  if (((*(byte *)&file_stream->flags ^ 1) & 1) != 0) {
+  if ((*(byte *)&file_stream->flags ^ 1) & 1) {
     sceClose(file_stream->file);
     file_stream->file = -1;
   }

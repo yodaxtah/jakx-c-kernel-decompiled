@@ -106,7 +106,7 @@ s32 goal_main(int argc, const char** argv) {
 
 void KernelDispatch(u32 dispatcher_func) {
   Ptr<char> new_message = WaitForMessageAndAck();
-  if (new_message.offset != 0) {
+  if (new_message.offset) {
     ProcessListenerMessage(new_message);
   }
 
@@ -124,7 +124,7 @@ void KernelDispatch(u32 dispatcher_func) {
     (*bonus_function)();
   }
 
-  if (MasterDebug != 0 && *(int *)(ListenerFunction - 1) != old_listener_function) {
+  if (MasterDebug && *(int *)(ListenerFunction - 1) != old_listener_function) {
     SendAck();
   }
 }

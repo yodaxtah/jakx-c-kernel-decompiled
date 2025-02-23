@@ -41,7 +41,7 @@ s32 format_impl_jak3(uint64_t* args) {
   ulong original_dest = (ulong)(int)args;
 
   char* print_temp = PrintPending.cast<char>().c();
-  if (PrintPending.offset == 0) {
+  if (!PrintPending.offset) {
     print_temp = PrintBufArea.cast<char>().c() + 0x18; // SIZEOF
   }
   PrintPending = make_ptr(strend(print_temp)).cast<u8>();
@@ -57,7 +57,7 @@ s32 format_impl_jak3(uint64_t* args) {
 
   u32 arg_idx = 0;
 
-  if (indentation != 0 && output_ptr[-1] == '\n') {
+  if (indentation && output_ptr[-1] == '\n') {
     for (u32 i = 0; i < indentation; i++) {
       *output_ptr = ' ';
       output_ptr++;
@@ -66,7 +66,7 @@ s32 format_impl_jak3(uint64_t* args) {
 
   char* format_ptr = format_cstring;
 
-  while (*format_ptr != 0) {
+  while (*format_ptr) {
     if (*format_ptr == '~') {
       char* arg_start = format_ptr;
       arg_idx = 0;
@@ -132,7 +132,7 @@ s32 format_impl_jak3(uint64_t* args) {
         case '%':
           *output_ptr = '\n';
           output_ptr++;
-          if (indentation != 0 && format_ptr[2] != 0) {
+          if (indentation && format_ptr[2]) {
             for (u32 i = 0; i < indentation; i++) {
               *output_ptr = ' ';
               output_ptr++;
@@ -476,7 +476,7 @@ s32 format_impl_jak3(uint64_t* args) {
         continue;
       }
       format_ptr += 2;
-      if (format_ptr[0] != 0) {
+      if (format_ptr[0]) {
         *output_ptr = *format_ptr;
         output_ptr++;
         format_ptr++;
@@ -488,7 +488,7 @@ s32 format_impl_jak3(uint64_t* args) {
   *output_ptr = 0;
 
   if (original_dest == (long)(unaff_s7_lo + FIX_SYM_TRUE)) {
-    if (DiskBoot != 0) {
+    if (DiskBoot) {
       if (true) {
         printf("%s", PrintPendingLocal__);
         fflush(*(FILE **)(_impure_ptr + 8));

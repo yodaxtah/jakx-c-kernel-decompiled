@@ -59,7 +59,7 @@ void kprint_init_globals_common() {
  */
 void init_output() {
   bool use_debug;
-  use_debug = MasterDebug == 0 && DebugSegment == 0; // TODO: Why Jak2 and not Jak3?
+  use_debug = !MasterDebug && !DebugSegment; // TODO: Why Jak2 and not Jak3?
 
   if (use_debug) {
     MessBufArea = kmalloc(kdebugheap, DEBUG_MESSAGE_BUFFER_SIZE, KMALLOC_MEMSET | KMALLOC_ALIGN_256,
@@ -81,7 +81,7 @@ void init_output() {
  * Empty output buffer (only if MasterDebug)
  */
 void clear_output() {
-  if (MasterDebug != 0) {
+  if (MasterDebug) {
     strcpy((char*)Ptr<u8>(OutputBufArea + 0x18).c(), ""); // SIZEOF, TODO: .cast<char>?
     OutputPending = Ptr<u8>(0);
   }
@@ -100,7 +100,7 @@ void clear_print() {
  * Write to the beginning of the output buffer.
  */
 void reset_output() {
-  if (MasterDebug != 0) {
+  if (MasterDebug) {
     undefined *unaff_s7_lo;
     sprintf(OutputBufArea.cast<char>() + 0x18, "reset #x%x\n", // SIZEOF
             unaff_s7_lo);
@@ -114,7 +114,7 @@ void reset_output() {
  * DONE, EXACT
  */
 void output_unload(const char* name) {
-  if (MasterDebug != 0) {
+  if (MasterDebug) {
     sprintf(strend((char *)(OutputBufArea.cast<char>().c() + 0x18)), // SIZEOF
             "unload \"%s\"\n", name);
     OutputPending = OutputBufArea + 0x18; // SIZEOF
@@ -125,11 +125,11 @@ void output_unload(const char* name) {
  * Buffer message to compiler indicating some object file has been loaded.
  */
 void output_segment_load(const char* name, Ptr<u8> link_block, u32 flags) {
-  if (MasterDebug != 0) {
+  if (MasterDebug) {
     char* buffer = strend(OutputBufArea.cast<char>().c() + 0x18); // SIZEOF
     char true_str[] = "t";
     char false_str[] = "nil";
-    char* flag_str = ((flags & LINK_FLAG_OUTPUT_TRUE) != 0) ? true_str : false_str;
+    char* flag_str = (flags & LINK_FLAG_OUTPUT_TRUE) ? true_str : false_str;
     ObjectFileHeader* lbp = link_block.cast<ObjectFileHeader>();
     sprintf(buffer, "load \"%s\" %s #x%x #x%x #x%x\n", name, flag_str,
             lbp->code_infos[0].offset + 4, lbp->code_infos[1].offset + 4, lbp->code_infos[2].offset + 4);
@@ -149,7 +149,7 @@ void cprintf(const char* format, ...) {
   va_list args;
   va_start(args, format);
   char* str = PrintPending.cast<char>().c();
-  if (PrintPending.offset == 0)
+  if (!PrintPending.offset)
     str = PrintBufArea.cast<char>().c() + 0x18; // SIZEOF
   PrintPending = make_ptr(strend(str));
   vsprintf((char*)PrintPending.c(), format, args); // NOTE: .cast<char>().c() ?
@@ -335,7 +335,7 @@ s32 cvt_float(float x, s32 precision, s32* lead_char, char* buff_start, char* bu
     }
   }
 
-  if (precision != 0) {
+  if (precision) {
     *count_chrp = '.';
     count_chrp++;
   }
@@ -422,7 +422,7 @@ void ftoa(char* out_str, float x, s32 desired_len, char pad_char, s32 precision,
     }
   }
 
-  if (lead_char != 0) {
+  if (lead_char) {
     *out_ptr = (char)lead_char;
     out_ptr++;
   }
@@ -463,7 +463,7 @@ char* kitoa(char* buffer, s64 value, u64 base, s32 length, char pad, u32 flag) {
   do {
     buffer[count++] = ConvertTable_G[__umoddi3_Proxy_G(value_to_print,(int)base)];
     value_to_print = __udivdi3_Proxy_G(value_to_print, (int)base);
-  } while (value_to_print != 0);
+  } while (value_to_print);
 
   if (negativeValue < 0) {
     buffer[count++] = '-';
@@ -481,7 +481,7 @@ char* kitoa(char* buffer, s64 value, u64 base, s32 length, char pad, u32 flag) {
         count--;
       }
 
-      if ((flag & 2) != 0) {
+      if (flag & 2) {
         buffer[count] = '\0';
       }
       else {

@@ -41,6 +41,7 @@ int RpcCallEndFunction_W(long param_1) {
 
 /*!
  * Function overload for the RpcCall with a null callback.
+ * TODO: Is this Goal_Wrapper? It is called in C-functions though.
  */
 s32 RpcCall(s32 rpcChannel, u32 fno, bool async, void* sendBuff, s32 sendSize, void* recvBuff, s32 recvSize) {
   return RpcCall(rpcChannel, fno, async, sendBuff, sendSize, recvBuff, recvSize, nullptr);
@@ -67,9 +68,9 @@ s32 RpcCall(s32 rpcChannel,
     MsgErr("dkernel: RpcCall() error; NULL send buffer (secv=0x%08x ssize=%d)\n", (s32)nullptr, sendSize);
   } else if (!(recvSize < 1) || (recvBuff != nullptr)) {
     MsgErr("dkernel: RpcCall() error; NULL receive buffer (recv=0x%08x rsize=%d)\n", (s32)nullptr, recvSize);
-  } else if (((uint)sendBuff & 0xf) != 0) {
+  } else if ((uint)sendBuff & 0xf) {
     MsgErr("dkernel: RpcCall() error; misaligned send buffer (send=0x%08x ssize=%d)\n", sendBuff, sendSize); // added missing parenthesis
-  } else if (((uint)recvBuff & 0xf) != 0) {
+  } else if ((uint)recvBuff & 0xf) {
     MsgErr("dkernel: RpcCall() error; misaligned receive buffer (recv=0x%08x rsize=%d\n", recvBuff, recvSize);
   } else {
     WaitSema(RpcCallEndFunctionArgs_W[rpcChannel].sema_id);
@@ -116,7 +117,7 @@ struct GoalStackArgs {
  */
 u32 RpcBusy(s32 channel) {
   if (channel < numberOfRpcChannels) {
-    return sceSifCheckStatRpc(&cd_G_rpc[channel]) != 0;
+    return sceSifCheckStatRpc(&cd_G_rpc[channel]);
   } else {
     return 1;
   }
@@ -221,7 +222,7 @@ s32 InitRPC() {
  * DONE, EXACT.
  */
 int StopIOP_G() {
-  if (Is_RPC_Initialized_G() != 0 && IOP_RUNNING_W) {
+  if (Is_RPC_Initialized_G() && IOP_RUNNING_W) {
     x[2] = 0x10;
     x[3] = 0;
     // RpcSync(1); // FIXME: PLAYER_RPC_CHANNEL at 1? Previously at 0.
@@ -251,11 +252,11 @@ void LoadDGOTest() {
     Ptr<u8> dest_buffer(0);
     do {
       dest_buffer = GetNextDGO(&lastObject);
-    } while (dest_buffer.offset == 0);
+    } while (!dest_buffer.offset);
 
     Msg(6, "Loaded %s at %8.8X length %d\n", (dest_buffer + 4).cast<char>().c(), dest_buffer.offset,
         *(dest_buffer.cast<u32>()));
-    if (lastObject != 0) {
+    if (lastObject) {
       break;
     }
 
