@@ -456,7 +456,7 @@ uint32_t jakx_work_v5(link_control* this) {
       (&ofh->code_infos[seg_id - 1].unknown_0xc)[0] += ((int)ofh->code_infos - 4);
       (&ofh->code_infos[seg_id - 1].unknown_0xc)[1] += this->m_object_data;
 
-      if (seg_id == 1) {
+      if (seg_id == DEBUG_SEGMENT) {
         if (!DebugSegment) {
           ofh->code_infos[seg_id].offset = 0;
           ofh->code_infos[seg_id].size = 0;
@@ -476,7 +476,7 @@ uint32_t jakx_work_v5(link_control* this) {
                               ofh->code_infos[seg_id].size);
           }
         }
-      } else if (seg_id == 0) {
+      } else if (seg_id == MAIN_SEGMENT) {
         if (ofh->code_infos[seg_id].size == 0) {
           ofh->code_infos[seg_id].offset = 0;
         } else if (this->m_moved_link_block == false) {
@@ -503,7 +503,7 @@ uint32_t jakx_work_v5(link_control* this) {
             break;
           }
         }
-      } else if (seg_id == 2) {
+      } else if (seg_id == TOP_LEVEL_SEGMENT) {
         if (ofh->code_infos[seg_id].size == 0) {
           (&code_infos->unknown_0xc)[1] = 0;
         } else {
