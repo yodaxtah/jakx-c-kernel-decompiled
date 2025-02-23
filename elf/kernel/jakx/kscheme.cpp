@@ -171,8 +171,8 @@ void delete_structure(u32 s) {
 /*!
  * Allocate a basic of fixed size.
  */
-u64 new_basic(u32 heap, u32 type, u32 size, u32 pp) {
-  return alloc_heap_object(heap, type, (uint)*(ushort *)(type + 8), pp);
+u64 new_basic(u32 heap, Type* type, u32 size, u32 pp) {
+  return alloc_heap_object(heap, type, type->allocated_size, pp);
 }
 
 /*!
