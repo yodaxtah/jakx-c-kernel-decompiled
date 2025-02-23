@@ -1531,13 +1531,13 @@ int InitHeapAndSymbol() {
   *(u8 **)(symbol_table + 0x7ffc) = symbol_table + 0x7ffa;
 
   UnknownName = (undefined4)make_string_from_c("*unknown-symbol-name*");
-  alloc_and_init_type((Type **)(s7 + 0x18), 9, true);
-  alloc_and_init_type((Type **)(s7 + 0x14), 9, true);
-  alloc_and_init_type((Type **)(s7 + 0x10), 9, true);
-  alloc_and_init_type((Type **)(s7 + 0x8), 9, true);
+  alloc_and_init_type((Type **)(s7 + FIX_SYM_TYPE_TYPE), 9, true);
+  alloc_and_init_type((Type **)(s7 + FIX_SYM_SYMBOL_TYPE), 9, true);
+  alloc_and_init_type((Type **)(s7 + FIX_SYM_STRING_TYPE), 9, true);
+  alloc_and_init_type((Type **)(s7 + FIX_SYM_FUNCTION_TYPE), 9, true);
 
-  set_fixed_symbol(FIX_SYM_FALSE, "#f", (u32)(s7 + 0x0));
-  set_fixed_symbol(FIX_SYM_TRUE, "#t", (u32)(s7 + 0x4));
+  set_fixed_symbol(FIX_SYM_FALSE, "#f", (u32)(s7 + FIX_SYM_FALSE));
+  set_fixed_symbol(FIX_SYM_TRUE, "#t", (u32)(s7 + FIX_SYM_TRUE));
   set_fixed_symbol(FIX_SYM_NOTHING_FUNC, "nothing", make_nothing_func());
   set_fixed_symbol(FIX_SYM_ZERO_FUNC, "zero-func", make_zero_func());
   set_fixed_symbol(FIX_SYM_ASIZE_OF_BASIC_FUNC, "asize-of-basic-func",
@@ -1548,12 +1548,12 @@ int InitHeapAndSymbol() {
                    (u32)make_function_from_c(delete_basic, (bool)0x20));
   set_fixed_symbol(FIX_SYM_GLOBAL_HEAP, "global", (u32)&kglobalheapinfo);
   set_fixed_symbol(FIX_SYM_DEBUG, "debug", (u32)kdebugheap);
-  set_fixed_symbol(FIX_SYM_STATIC, "static", (u32)(s7 + 0x9c));
+  set_fixed_symbol(FIX_SYM_STATIC, "static", (u32)(s7 + FIX_SYM_STATIC));
   set_fixed_symbol(FIX_SYM_LOADING_LEVEL, "loading-level", (u32)&kglobalheapinfo);
   set_fixed_symbol(FIX_SYM_LOADING_PACKAGE, "loading-package", (u32)&kglobalheapinfo);
   set_fixed_symbol(FIX_SYM_PROCESS_LEVEL_HEAP, "process-level-heap", (u32)&kglobalheapinfo);
-  set_fixed_symbol(FIX_SYM_STACK, "stack", (u32)(s7 + 0xb4));
-  set_fixed_symbol(FIX_SYM_SCRATCH, "scratch", (u32)(s7 + 0xb8));
+  set_fixed_symbol(FIX_SYM_STACK, "stack", (u32)(s7 + FIX_SYM_STACK));
+  set_fixed_symbol(FIX_SYM_SCRATCH, "scratch", (u32)(s7 + FIX_SYM_SCRATCH));
   set_fixed_symbol(FIX_SYM_SCRATCH_TOP, "*scratch-top*", 0x70000000);
   set_fixed_symbol(FIX_SYM_LEVEL, "level", 0);
   set_fixed_symbol(FIX_SYM_ART_GROUP, "art-group", 0);
@@ -1563,7 +1563,7 @@ int InitHeapAndSymbol() {
   set_fixed_symbol(FIX_SYM_SOUND, "sound", 0);
   set_fixed_symbol(FIX_SYM_DGO, "dgo", 0);
   set_fixed_symbol(FIX_SYM_TOP_LEVEL, "top-level", *(u32 *)(s7 + 0x93));
-  set_fixed_symbol(FIX_SYM_QUOTE, "quote", (u32)(s7 + 0xe8));
+  set_fixed_symbol(FIX_SYM_QUOTE, "quote", (u32)(s7 + FIX_SYM_QUOTE));
   set_fixed_symbol(FIX_SYM_LISTENER_LINK_BLOCK, "*listener-link-block*", 0);
   set_fixed_symbol(FIX_SYM_LISTENER_FUNCTION, "*listener-function*", 0x0);
   set_fixed_symbol(FIX_SYM_STACK_TOP, "*stack-top*", 0x0);
@@ -1675,7 +1675,7 @@ int InitHeapAndSymbol() {
 
   set_fixed_symbol(FIX_SYM_SYMBOL_STRING, "*symbol-string*", (u32)SymbolString);
   set_fixed_symbol(FIX_SYM_KERNEL_SYMBOL_WARNINGS, "*kernel-symbol-warnings*",
-                   (u32)(s7 + 0x4));
+                   (u32)(s7 + FIX_SYM_TRUE));
   set_fixed_symbol(FIX_SYM_NETWORK_BOOTSTRAP, "network-bootstrap", 0);
 
   Function* new_illegal_func = make_function_from_c(new_illegal, (bool)0x48);
@@ -1685,14 +1685,14 @@ int InitHeapAndSymbol() {
 
   set_fixed_type(FIX_SYM_OBJECT_TYPE, "object", (u32 *)(s7 + 0x1c), 0x900000004, 
                  (u32)print_object_func, (u32)inspect_object_func);
-  Type* object_type = *(Type **)(s7 + 0x1b);
-  object_type->new_method = *(Function **)(s7 + 0x93);
+  Type* object_type = *(Type **)(s7 + FIX_SYM_OBJECT_TYPE - 1);
+  object_type->new_method = *(Function **)(s7 + FIX_SYM_NOTHING_FUNC - 1);
   object_type->delete_method = delete_illegal_func;
   object_type->asize_of_method =
-      *(Function **)(s7 + 0xbf);
+      *(Function **)(s7 + FIX_SYM_ZERO_FUNC - 1);
   object_type->copy_method = print_object_func = make_function_from_c(copy_fixed, (bool)0x60);
 
-  set_fixed_type(FIX_SYM_STRUCTURE, "structure", (u32 *)(s7 + 0x1c),
+  set_fixed_type(FIX_SYM_STRUCTURE, "structure", (u32 *)(s7 + FIX_SYM_OBJECT_TYPE),
                  0x900000004, (u32)make_function_from_c(print_structure, (bool)0x60),
                  (u32)make_function_from_c(inspect_structure, (bool)0x60));
   Type* structure_type = *(Type **)(s7 + 0x6b);
@@ -1703,55 +1703,55 @@ int InitHeapAndSymbol() {
                  0x900000004, (u32)make_function_from_c(print_basic, (bool)0x68),
                  (u32)make_function_from_c(inspect_basic, (bool)0x68));
   Type* basic_type = *(Type **)(s7 + 0xb);
-  basic_type->new_method = make_function_from_c(new_basic, (bool)0x78);
-  basic_type->delete_method = *(Function **)(s7 + 0x97);
-  basic_type->asize_of_method = *(Function **)(s7 + 0xc3);
-  basic_type->copy_method = *(Function **)(s7 + 0xc7);
+  basic_type->new_method = make_function_from_c(new_basic, (bool)FIX_SYM_NUMBER);
+  basic_type->delete_method = *(Function **)(s7 + FIX_SYM_DELETE_BASIC - 1);
+  basic_type->asize_of_method = *(Function **)(s7 + FIX_SYM_ASIZE_OF_BASIC_FUNC - 1);
+  basic_type->copy_method = *(Function **)(s7 + FIX_SYM_COPY_BASIC_FUNC - 1);
 
-  set_fixed_type(FIX_SYM_SYMBOL_TYPE, "symbol", (u32 *)(s7 + 0x1c),
-                 0x900000004, (u32)make_function_from_c(print_symbol, (bool)0x78),
-                 (u32)make_function_from_c(inspect_symbol, (bool)0x78));
-  Type* sym_type = *(Type **)(s7 + 0x13);
+  set_fixed_type(FIX_SYM_SYMBOL_TYPE, "symbol", (u32 *)(s7 + FIX_SYM_OBJECT_TYPE),
+                 0x900000004, (u32)make_function_from_c(print_symbol, (bool)FIX_SYM_NUMBER),
+                 (u32)make_function_from_c(inspect_symbol, (bool)FIX_SYM_NUMBER));
+  Type* sym_type = *(Type **)(s7 + FIX_SYM_SYMBOL_TYPE - 1);
   *(Function **)(*(int *)(s7 + 0x13) + 0x10) = new_illegal_func;
   sym_type->delete_method = delete_illegal_func;
 
-  set_fixed_type(FIX_SYM_TYPE_TYPE, "type", (u32 *)(s7 + 0xc),
+  set_fixed_type(FIX_SYM_TYPE_TYPE, "type", (u32 *)(s7 + FIX_SYM_BASIC),
                  0x900000038, (u32)make_function_from_c(print_type, (bool)0x80),
                  (u32)make_function_from_c(inspect_type, (bool)0x80));
-  Type* type_type = *(Type **)(s7 + 0x17);
+  Type* type_type = *(Type **)(s7 + FIX_SYM_TYPE_TYPE - 1);
   type_type->new_method = make_function_from_c(new_type, (bool)0x88);
   type_type->delete_method = delete_illegal_func;
 
-  set_fixed_type(FIX_SYM_STRING_TYPE, "string", (u32 *)(s7 + 0xc),
+  set_fixed_type(FIX_SYM_STRING_TYPE, "string", (u32 *)(s7 + FIX_SYM_BASIC),
                  0x900000008, (u32)make_function_from_c(print_string, (bool)0x88),
                  (u32)make_function_from_c(inspect_string, (bool)0x88));
   print_object_func = make_function_from_c(print_function, (bool)0x90);
 
-  set_fixed_type(FIX_SYM_FUNCTION_TYPE, "function", (u32 *)(s7 + 0xc), 0x900000004, 
+  set_fixed_type(FIX_SYM_FUNCTION_TYPE, "function", (u32 *)(s7 + FIX_SYM_BASIC), 0x900000004, 
                  (u32)print_object_func, 0);
-  Type* function_type = *(Type **)(s7 + 0x7);
+  Type* function_type = *(Type **)(s7 + FIX_SYM_FUNCTION_TYPE - 1);
   *(Function **)(*(int *)(s7 + 0x7) + 0x10) = new_illegal_func;
   function_type->delete_method = delete_illegal_func;
 
-  set_fixed_type(FIX_SYM_VU_FUNCTION, "vu-function", (u32 *)(s7 + 0x6c),
+  set_fixed_type(FIX_SYM_VU_FUNCTION, "vu-function", (u32 *)(s7 + FIX_SYM_STRUCTURE),
                  0x900000010, (u32)make_function_from_c(print_vu_function, (bool)0x98),
                  (u32)make_function_from_c(inspect_vu_function, (bool)0x98));
   *(Function **)(*(int *)(s7 + 0x7f) + 0x14) = delete_illegal_func;
 
-  set_fixed_type(FIX_SYM_LINK_BLOCK, "link-block", (u32 *)(s7 + 0xc),
+  set_fixed_type(FIX_SYM_LINK_BLOCK, "link-block", (u32 *)(s7 + FIX_SYM_BASIC),
                  0x90000000c, 0, 
                  (u32)make_function_from_c(inspect_link_block, (bool)0xa8));
-  Type* link_block_type = *(Type **)(s7 + 0x1f);
+  Type* link_block_type = *(Type **)(s7 + FIX_SYM_LINK_BLOCK - 1);
   *(Function **)(*(int *)(s7 + 0x1f) + 0x10) = new_illegal_func;
   link_block_type->delete_method = delete_illegal_func;
 
-  set_fixed_type(FIX_SYM_HEAP, "kheap", (u32 *)(s7 + 0x6c),
+  set_fixed_type(FIX_SYM_HEAP, "kheap", (u32 *)(s7 + FIX_SYM_STRUCTURE),
                  0x900000010, 0, (u32)make_function_from_c(kheapstatus, (bool)0xb8));
 
-  set_fixed_type(FIX_SYM_ARRAY, "array", (u32 *)(s7 + 0xc),
+  set_fixed_type(FIX_SYM_ARRAY, "array", (u32 *)(s7 + FIX_SYM_BASIC),
                  0x900000010, 0, 0);
 
-  set_fixed_type(FIX_SYM_PAIR_TYPE, "pair", (u32 *)(s7 + 0x1c),
+  set_fixed_type(FIX_SYM_PAIR_TYPE, "pair", (u32 *)(s7 + FIX_SYM_OBJECT_TYPE),
                  0x900000008, (u32)make_function_from_c(print_pair, (bool)0xd0),
                  (u32)make_function_from_c(inspect_pair, (bool)0xd0));
   (*(Type **)(s7 + 0x6f))->new_method =
@@ -1759,65 +1759,65 @@ int InitHeapAndSymbol() {
   (*(Type **)(s7 + 0x6f))->delete_method =
       make_function_from_c(delete_pair, (bool)0xd8);
 
-  set_fixed_type(FIX_SYM_PROCESS_TREE, "process-tree", (u32 *)(s7 + 0xc),
+  set_fixed_type(FIX_SYM_PROCESS_TREE, "process-tree", (u32 *)(s7 + FIX_SYM_BASIC),
                  0xf0000002c, 0, 0);
-  set_fixed_type(FIX_SYM_PROCESS_TYPE, "process", (u32 *)(s7 + 0x60),
+  set_fixed_type(FIX_SYM_PROCESS_TYPE, "process", (u32 *)(s7 + FIX_SYM_PROCESS_TREE),
                  0xf00000090, 0, 0);
-  set_fixed_type(FIX_SYM_THREAD, "thread", (u32 *)(s7 + 0xc),
+  set_fixed_type(FIX_SYM_THREAD, "thread", (u32 *)(s7 + FIX_SYM_BASIC),
                  0xc00000028, 0, 0);
-  set_fixed_type(FIX_SYM_CONNECTABLE, "connectable", (u32 *)(s7 + 0x6c),
+  set_fixed_type(FIX_SYM_CONNECTABLE, "connectable", (u32 *)(s7 + FIX_SYM_STRUCTURE),
                  0x900000010, 0, 0);
-  set_fixed_type(FIX_SYM_STACK_FRAME, "stack-frame", (u32 *)(s7 + 0xc),
+  set_fixed_type(FIX_SYM_STACK_FRAME, "stack-frame", (u32 *)(s7 + FIX_SYM_BASIC),
                  0x90000000c, 0, 0);
-  set_fixed_type(FIX_SYM_FILE_STREAM, "file-stream", (u32 *)(s7 + 0xc),
+  set_fixed_type(FIX_SYM_FILE_STREAM, "file-stream", (u32 *)(s7 + FIX_SYM_BASIC),
                  0x900000014, 0, 0);
-  set_fixed_type(FIX_SYM_POINTER, "pointer", (u32 *)(s7 + 0x1c),
+  set_fixed_type(FIX_SYM_POINTER, "pointer", (u32 *)(s7 + FIX_SYM_OBJECT_TYPE),
                  0x900000004, 0, 0);
-  *(Function **)(*(int *)(s7 + 0x73) + 0x10) = new_illegal_func;
+  *(Function **)(*(int *)(s7 + FIX_SYM_POINTER - 1) + 0x10) = new_illegal_func;
 
-  set_fixed_type(FIX_SYM_NUMBER, "number", (u32 *)(s7 + 0x1c),
+  set_fixed_type(FIX_SYM_NUMBER, "number", (u32 *)(s7 + FIX_SYM_OBJECT_TYPE),
                  0x900000008, make_function_from_c(print_integer, (bool)0x30),
                  make_function_from_c(inspect_integer, (bool)0x30));
-  *(Function **)(*(int *)(s7 + 0x77) + 0x10) = new_illegal_func;
+  *(Function **)(*(int *)(s7 + FIX_SYM_NUMBER - 1) + 0x10) = new_illegal_func;
 
-  set_fixed_type(FIX_SYM_FLOAT, "float", (u32 *)(s7 + 0x78),
+  set_fixed_type(FIX_SYM_FLOAT, "float", (u32 *)(s7 + FIX_SYM_NUMBER),
                  0x900000004, (u32)make_function_from_c(print_float, (bool)0x38),
                  (u32)make_function_from_c(inspect_float, (bool)0x38));
 
-  set_fixed_type(FIX_SYM_INTEGER, "integer", (u32 *)(s7 + 0x78),
+  set_fixed_type(FIX_SYM_INTEGER, "integer", (u32 *)(s7 + FIX_SYM_NUMBER),
                  0x900000008, 0, 0); // NOTE: swapped with binteger
 
-  set_fixed_type(FIX_SYM_BINTEGER, "binteger", (u32 *)(s7 + 0x24),
+  set_fixed_type(FIX_SYM_BINTEGER, "binteger", (u32 *)(s7 + FIX_SYM_INTEGER),
                  0x900000008, make_function_from_c(print_binteger, (bool)0x48),
                  make_function_from_c(inspect_binteger, (bool)0x48));
 
-  set_fixed_type(FIX_SYM_SINTEGER, "sinteger", (u32 *)(s7 + 0x24),
+  set_fixed_type(FIX_SYM_SINTEGER, "sinteger", (u32 *)(s7 + FIX_SYM_INTEGER),
                  0x900000008, 0, 0);
-  set_fixed_type(FIX_SYM_INT8, "int8", (u32 *)(s7 + 0x28),
+  set_fixed_type(FIX_SYM_INT8, "int8", (u32 *)(s7 + FIX_SYM_SINTEGER),
                  0x900000001, 0, 0);
-  set_fixed_type(FIX_SYM_INT16, "int16", (u32 *)(s7 + 0x28),
+  set_fixed_type(FIX_SYM_INT16, "int16", (u32 *)(s7 + FIX_SYM_SINTEGER),
                  0x900000002, 0, 0);
-  set_fixed_type(FIX_SYM_INT32, "int32", (u32 *)(s7 + 0x28),
+  set_fixed_type(FIX_SYM_INT32, "int32", (u32 *)(s7 + FIX_SYM_SINTEGER),
                  0x900000004, 0, 0);
-  set_fixed_type(FIX_SYM_INT64, "int64", (u32 *)(s7 + 0x28),
+  set_fixed_type(FIX_SYM_INT64, "int64", (u32 *)(s7 + FIX_SYM_SINTEGER),
                  0x900000008, 0, 0);
-  set_fixed_type(FIX_SYM_INT128, "int128", (u32 *)(s7 + 0x28),
+  set_fixed_type(FIX_SYM_INT128, "int128", (u32 *)(s7 + FIX_SYM_SINTEGER),
                  0x900000010, 0, 0);
 
-  set_fixed_type(FIX_SYM_UINTEGER, "uinteger", (u32 *)(s7 + 0x24),
+  set_fixed_type(FIX_SYM_UINTEGER, "uinteger", (u32 *)(s7 + FIX_SYM_INTEGER),
                  0x900000008, 0, 0);
-  set_fixed_type(FIX_SYM_UINT8, "uint8", (u32 *)(s7 + 0x2c),
+  set_fixed_type(FIX_SYM_UINT8, "uint8", (u32 *)(s7 + FIX_SYM_UINTEGER),
                  0x900000001, 0, 0);
-  set_fixed_type(FIX_SYM_UINT16, "uint16", (u32 *)(s7 + 0x2c),
+  set_fixed_type(FIX_SYM_UINT16, "uint16", (u32 *)(s7 + FIX_SYM_UINTEGER),
                  0x900000002, 0, 0);
-  set_fixed_type(FIX_SYM_UINT32, "uint32", (u32 *)(s7 + 0x2c),
+  set_fixed_type(FIX_SYM_UINT32, "uint32", (u32 *)(s7 + FIX_SYM_UINTEGER),
                  0x900000004, 0, 0);
-  set_fixed_type(FIX_SYM_UINT64, "uint64", (u32 *)(s7 + 0x2c),
+  set_fixed_type(FIX_SYM_UINT64, "uint64", (u32 *)(s7 + FIX_SYM_UINTEGER),
                  0x900000008, 0, 0);
-  set_fixed_type(FIX_SYM_UINT128, "uint128", (u32 *)(s7 + 0x2c),
+  set_fixed_type(FIX_SYM_UINT128, "uint128", (u32 *)(s7 + FIX_SYM_UINTEGER),
                  0x900000010, 0, 0);
 
-  (*(Type **)(symbol_table + 0x801c))->new_method =
+  (*(Type **)(s7 + FIX_SYM_OBJECT_TYPE - 1))->new_method =
       make_function_from_c(alloc_heap_object, (bool)200);
 
   make_function_symbol_from_c("string->symbol", intern);
@@ -1859,9 +1859,9 @@ int InitHeapAndSymbol() {
 
   u32* ds_symbol = intern_from_c(-1, 0, "*debug-segment*");
   if (DebugSegment == 0) {
-    *(u8 **)((int)ds_symbol - 1) = s7 + 0x0;
+    *(u8 **)((int)ds_symbol - 1) = s7 + FIX_SYM_FALSE;
   } else {
-    *(u8 **)((int)ds_symbol - 1) = s7 + 0x4;
+    *(u8 **)((int)ds_symbol - 1) = s7 + FIX_SYM_TRUE;
   }
 
   u32* method_set_symbol = intern_from_c(-1, 0, "*enable-method-set*");
@@ -1878,7 +1878,7 @@ int InitHeapAndSymbol() {
   *(u8 **)((int)SqlResult - 1) = s7;
 
   CollapseQuote = intern_from_c(-1, 0, "*collapse-quote*");
-  *(u8 **)((int)CollapseQuote - 1) = s7 + 0x4;
+  *(u8 **)((int)CollapseQuote - 1) = s7 + FIX_SYM_TRUE;
 
   LevelTypeList = intern_from_c(-1, 0, "*level-type-list*");
 
