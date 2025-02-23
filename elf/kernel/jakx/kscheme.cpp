@@ -113,7 +113,7 @@ u64 alloc_from_heap(u32 heap_symbol, Type* type, s32 size, u32 pp) {
     }
   } else if (heap_symbol_ == (long)(unaff_s7_lo + FIX_SYM_SCRATCH)) {
     heap_symbol_ = (u64)(int)*(void **)(unaff_s7_lo + FIX_SYM_SCRATCH - 4);
-    *(int *)(unaff_s7_lo + 0xbb) += aligned_size;
+    *(int *)(unaff_s7_lo + FIX_SYM_SCRATCH_TOP - 1) += aligned_size;
     memset((void *)heap_symbol_, 0, (long)aligned_size);
     return heap_symbol_;
   } else {
@@ -213,7 +213,7 @@ u64 make_string(u32 size) {
   u32 in_a3_lo;
   int unaff_s7_lo;
   u64 mem =
-      alloc_heap_object(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP, *(u32 *)(unaff_s7_lo + 0xf),
+      alloc_heap_object(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP, *(u32 *)(unaff_s7_lo + FIX_SYM_STRING_TYPE - 1),
                         mem_size + BASIC_OFFSET + 4, in_a3_lo);
 
   if (mem != 0) {
@@ -236,7 +236,7 @@ u64 make_string_from_c(const char* c_str) {
   u32 in_a3_lo;
   int unaff_s7_lo;
   u64 mem =
-      alloc_heap_object(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP, *(u32 *)(unaff_s7_lo + 0xf),
+      alloc_heap_object(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP, *(u32 *)(unaff_s7_lo + FIX_SYM_STRING_TYPE - 1),
                         mem_size + BASIC_OFFSET + 4, in_a3_lo);
 
   *(int *)mem = (int)str_size;
@@ -254,7 +254,7 @@ u64 make_debug_string_from_c(const char* c_str) {
 
   u32 in_a3_lo;
   int unaff_s7_lo;
-  u64 mem = alloc_heap_object(unaff_s7_lo + FIX_SYM_DEBUG, *(u32 *)(unaff_s7_lo + 0xf),
+  u64 mem = alloc_heap_object(unaff_s7_lo + FIX_SYM_DEBUG, *(u32 *)(unaff_s7_lo + FIX_SYM_STRING_TYPE - 1),
                               mem_size + BASIC_OFFSET + 4, in_a3_lo);
   
   *(int *)mem = (int)str_size;
@@ -569,7 +569,7 @@ u64 symbol_to_string_from_c(u32 sym) {
   int name = *(int *)((sym - unaff_s7_lo) + SymbolString);
   if ((u64)name == (long)UnknownName ||
       (0 < (long)(u64)name &&
-       (DebugSegment == 0 || (long)*(int *)(unaff_s7_lo + 0x28f) != CONCAT44(unaff_s7_hi, unaff_s7_lo)))) {
+       (DebugSegment == 0 || (long)*(int *)(unaff_s7_lo + FIX_SYM_KERNEL_SYMBOL_WARNINGS - 1) != CONCAT44(unaff_s7_hi, unaff_s7_lo)))) {
     MsgWarn(
         "dkernel: doing a symbol->string on %s (addr #x%x), but the symbol has not been marked as "
         "symbol-export-string\n",
@@ -693,7 +693,7 @@ u32* find_symbol_from_c(uint16_t sym_id, const char* name) {
         lookup_result = find_symbol_in_area(name, SymbolTable2, unaff_s7_lo - 0x10);
       }
 
-      if ((DebugSegment == 0) || ((long)*(int *)(unaff_s7_lo + 0x28f) != CONCAT44(unaff_s7_hi, unaff_s7_lo))) {
+      if ((DebugSegment == 0) || ((long)*(int *)(unaff_s7_lo + FIX_SYM_KERNEL_SYMBOL_WARNINGS - 1) != CONCAT44(unaff_s7_hi, unaff_s7_lo))) {
         if (lookup_result == nullptr) {
           MsgWarn("dkernel: doing a string->symbol on %s, but could not find the name\n", name);
         } else {
@@ -851,13 +851,13 @@ Type* alloc_and_init_type(Type** sym,
   u32 in_a3_lo;
   int unaff_s7_lo;
   kheaplogging = true;
-  u32 u32_in_fixed_sym_FIX_SYM_TYPE_TYPE_ = *(u32 *)(unaff_s7_lo + 0x17);
+  u32 u32_in_fixed_sym_FIX_SYM_TYPE_TYPE_ = *(u32 *)(unaff_s7_lo + FIX_SYM_TYPE_TYPE - 1);
   uint type_size = method_count * 4 + 0x23 & 0xfffffff0;
   u32 type_mem = 0;
   ;
 
   if (!force_global_type &&
-      *(int *)(unaff_s7_lo + 0xa7) != *(int *)(unaff_s7_lo + 0x9f)) {
+      *(int *)(unaff_s7_lo + FIX_SYM_LOADING_LEVEL - 1) != *(int *)(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP - 1)) {
     Type** type_list_ptr = *(Type ***)(LevelTypeList - 1);
     if (type_list_ptr == nullptr) {
       MsgErr("dkernel: trying to init loading level type \'%s\' while type-list is undefined\n",
@@ -949,7 +949,7 @@ Type* set_fixed_type(FixedSymbolTypeOffset offset,
   }
 
   symbol_value->symbol = type_symbol;
-  symbol_value[-1].memusage_method = *(Function **)(unaff_s7_lo + 0x17);
+  symbol_value[-1].memusage_method = *(Function **)(unaff_s7_lo + FIX_SYM_TYPE_TYPE - 1);
 
   Type* parent_type = *(Type **)((int)parent_symbol - 1);
   set_type_values(symbol_value, parent_type, flags);
@@ -969,7 +969,7 @@ Type* set_fixed_type(FixedSymbolTypeOffset offset,
     symbol_value->inpsect_method = (Function*)inspect;
   }
 
-  symbol_value->length_method = *(Function**)(unaff_s7_lo + 0xbf);
+  symbol_value->length_method = *(Function**)(unaff_s7_lo + FIX_SYM_ZERO_FUNC - 1);
   symbol_value->asize_of_method = parent_type->asize_of_method;
   symbol_value->copy_method = parent_type->copy_method;
   return symbol_value;
@@ -1008,7 +1008,7 @@ Type* new_type(u32 symbol, Type* parent, u64 flags) {
     undefined4 unaff_s7_hi;
     if (original_type_list_value_ != 0 && (original_type_list_value_ == CONCAT44(unaff_s7_hi,unaff_s7_lo) ||
                                            (((ulong)(long)SymbolTable2 <= original_type_list_value_ && original_type_list_value_ < 0x8000000 || original_type_list_value - 0x84000 < (Function *)0x7c000) &&
-                                            ((original_type_list_value_ & 7) == 4 && *(int *)(original_type_list_value - 4) == *(int *)(unaff_s7_lo + 0x17))))) {
+                                            ((original_type_list_value_ & 7) == 4 && *(int *)(original_type_list_value - 4) == *(int *)(unaff_s7_lo + FIX_SYM_TYPE_TYPE - 1))))) {
       new_type_obj->memusage_method = original_type_list_value;
     }
   } else {
@@ -1066,7 +1066,7 @@ u64 method_set(Type* type_, u32 method_id, u32 method) {
     for (; sym < (ulong)(long)LastSymbol; sym += 4) {
       Type* sym_value = *(Type **)(sym - 1);
       if (((SymbolTable2 <= sym_value && sym_value < (Type *)0x8000000) || &sym_value[-0x289e].print_method < (Function **)0x7c000) && ((uint)sym_value & 7) == 4 &&
-          sym_value[-1].memusage_method == *(Function **)(unaff_s7_lo + 0x17) &&
+          sym_value[-1].memusage_method == *(Function **)(unaff_s7_lo + FIX_SYM_TYPE_TYPE - 1) &&
           (int)method_id < (int)(uint)sym_value->num_methods &&
           (&sym_value->new_method)[method_id] == existing_method &&
           type_typep(sym_value, type_) != CONCAT44(unaff_s7_hi, unaff_s7_lo)) {
@@ -1084,7 +1084,7 @@ u64 method_set(Type* type_, u32 method_id, u32 method) {
     for (; sym < CONCAT44(unaff_s7_hi, unaff_s7_lo); sym += 4) {
       Type* sym_value = *(Type **)(sym - 1);
       if (!((sym_value < SymbolTable2 || (Type *)0x7ffffff < sym_value) && (Function **)0x7bfff < &sym_value[-0x289e].print_method) && ((uint)sym_value & 7) == 4 &&
-          sym_value[-1].memusage_method == *(Function **)(unaff_s7_lo + 0x17) &&
+          sym_value[-1].memusage_method == *(Function **)(unaff_s7_lo + FIX_SYM_TYPE_TYPE - 1) &&
           (int)method_id < (int)(uint)sym_value->num_methods &&
           (&sym_value->new_method)[method_id] == existing_method &&
           type_typep(sym_value, type_) != CONCAT44(unaff_s7_hi, unaff_s7_lo)) {
@@ -1114,7 +1114,7 @@ u64 call_method_of_type(u32 arg, Type* type, u32 method_id) {
   } else {
     int unaff_s7_lo;
     Type* type_tag = (Type *)type[-1].memusage_method;
-    if (type_tag == *(Type **)(unaff_s7_lo + 0x17)) {
+    if (type_tag == *(Type **)(unaff_s7_lo + FIX_SYM_TYPE_TYPE - 1)) {
       return (*(code *)(&type->new_method)[method_id])(arg_, arg_, type_tag);
     } else {
       cprintf("#<#x%x has invalid type ptr #x%x, bad type #x%x>\n", arg_, // TODO: why is type not in this list?
@@ -1163,7 +1163,7 @@ u64 call_method_of_type_arg2(u32 arg, Type* type, u32 method_id, u32 a1, u32 a2)
   } else {
     int unaff_s7_lo;
     Type* type_tag = (Type *)type[-1].memusage_method;
-    if (type_tag == *(Type **)(unaff_s7_lo + 0x17)) {
+    if (type_tag == *(Type **)(unaff_s7_lo + FIX_SYM_TYPE_TYPE - 1)) {
       return (*(code *)(&type->new_method)[method_id])(arg_, a1, a2);
     } else {
       cprintf("#<#x%x has invalid type ptr #x%x, bad type #x%x>\n", arg_,
@@ -1294,7 +1294,7 @@ u64 print_type(u32 obj) {
   ulong obj_ = (ulong)(int)obj;
   if (((obj_ < (ulong)(long)SymbolTable2 || 0x7ffffff < obj_) &&
        (0x7bfff < obj - 0x84000))
-      || ((obj_ & OFFSET_MASK) != BASIC_OFFSET || (*(int *)(obj - 4) != *(int *)(unaff_s7_lo + 0x17)))) {
+      || ((obj_ & OFFSET_MASK) != BASIC_OFFSET || (*(int *)(obj - 4) != *(int *)(unaff_s7_lo + FIX_SYM_TYPE_TYPE - 1)))) {
     cprintf("#<invalid type #x%x>", obj_);
   } else {
     cprintf("%s", (long)(*(int *)((*(int *)obj - unaff_s7_lo) + SymbolString) + 4));
@@ -1410,7 +1410,7 @@ u64 inspect_string(u32 obj) {
   if (((obj_ < (ulong)(long)SymbolTable2 || 0x7ffffff < obj_) &&
       (0x7bfff < obj - 0x84000))
       || ((obj_ & OFFSET_MASK) != BASIC_OFFSET ||
-      *(int *)(obj - 4) != *(int *)(unaff_s7_lo + 0xf))) {
+      *(int *)(obj - 4) != *(int *)(unaff_s7_lo + FIX_SYM_STRING_TYPE - 1))) {
     cprintf("#<invalid string #x%x>\n", obj_);
   } else {
     const char* str = (const char*)obj;
@@ -1446,7 +1446,7 @@ u64 inspect_type(u32 obj) {
   if (((obj_ < (ulong)(long)SymbolTable2 || 0x7ffffff < obj_) &&
        (0x7bfff < obj - 0x84000))
       || ((obj_ & OFFSET_MASK) != BASIC_OFFSET ||
-      *(int *)(obj - 4) != *(int *)(unaff_s7_lo + 0x17))) {
+      *(int *)(obj - 4) != *(int *)(unaff_s7_lo + FIX_SYM_TYPE_TYPE - 1))) {
     cprintf("#<invalid type #x%x>\n", obj_);
   } else {
     Type* typ = (Type*)obj;
@@ -1562,7 +1562,7 @@ int InitHeapAndSymbol() {
 
   set_fixed_symbol(FIX_SYM_SOUND, "sound", 0);
   set_fixed_symbol(FIX_SYM_DGO, "dgo", 0);
-  set_fixed_symbol(FIX_SYM_TOP_LEVEL, "top-level", *(u32 *)(s7 + 0x93));
+  set_fixed_symbol(FIX_SYM_TOP_LEVEL, "top-level", *(u32 *)(s7 + FIX_SYM_NOTHING_FUNC - 1)); // TODO: Why -1 here? Why not s7 + FIX_SYM_TOP_LEVEL? Also, why u32* and not u32?
   set_fixed_symbol(FIX_SYM_QUOTE, "quote", (u32)(s7 + FIX_SYM_QUOTE));
   set_fixed_symbol(FIX_SYM_LISTENER_LINK_BLOCK, "*listener-link-block*", 0);
   set_fixed_symbol(FIX_SYM_LISTENER_FUNCTION, "*listener-function*", 0x0);
@@ -1912,11 +1912,11 @@ u64 load(u32 file_name_in, u32 heap_in) {
   undefined4 unaff_s7_hi;
   char loadName [256];
   
-  undefined4 temp = *(undefined4 *)(unaff_s7_lo + 0xab);
-  *(u32 *)(unaff_s7_lo + 0xab) = heap_in;
+  undefined4 temp = *(undefined4 *)(unaff_s7_lo + FIX_SYM_LOADING_PACKAGE - 1);
+  *(u32 *)(unaff_s7_lo + FIX_SYM_LOADING_PACKAGE - 1) = heap_in;
   strcpy(loadName, DecodeFileName((const char* )(file_name_in + 4)));
   u64 returnValue = load_and_link((const char* )(file_name_in + 4), loadName, (kheapinfo *)heap_in, 0xf);
-  *(undefined4 *)(unaff_s7_lo + 0xab) = temp;
+  *(undefined4 *)(unaff_s7_lo + FIX_SYM_LOADING_PACKAGE - 1) = temp;
   if ((returnValue & 0xfffffffffff00000) == 0xfffffffffff00000) {
     returnValue = CONCAT44(unaff_s7_hi, unaff_s7_lo);
   }
@@ -1943,12 +1943,12 @@ u64 loadc(const char* file_name, kheapinfo *heap, u32 flags) {
   undefined4 unaff_s7_hi;
   char loadName [256];
   
-  undefined4 temp = *(undefined4 *)(unaff_s7_lo + 0xab);
-  *(kheapinfo **)(unaff_s7_lo + 0xab) = heap;
+  undefined4 temp = *(undefined4 *)(unaff_s7_lo + FIX_SYM_LOADING_PACKAGE - 1);
+  *(kheapinfo **)(unaff_s7_lo + FIX_SYM_LOADING_PACKAGE - 1) = heap;
   printf("****** CALL TO loadc() ******\n");
   strcpy(loadName, MakeFileName(CODE_FILE_TYPE, file_name, 0));
   u64 returnValue = load_and_link(file_name, loadName, heap, flags);
-  *(undefined4 *)(unaff_s7_lo + 0xab) = temp;
+  *(undefined4 *)(unaff_s7_lo + FIX_SYM_LOADING_PACKAGE - 1) = temp;
   if ((returnValue & 0xfffffffffff00000) == 0xfffffffffff00000) {
     returnValue = CONCAT44(unaff_s7_hi, unaff_s7_lo);
   }

@@ -124,7 +124,7 @@ uint32_t jak3_work(link_control* this) {
 
   int unaff_s7_lo;
   uint16_t m_version = this->m_link_hdr->version;
-  *(undefined4 *)(this->m_link_hdr[-1].name + 0x37) = *(undefined4 *)(unaff_s7_lo + 0x1f);
+  *(undefined4 *)(this->m_link_hdr[-1].name + 0x37) = *(undefined4 *)(unaff_s7_lo + FIX_SYM_LINK_BLOCK - 1);
   if (m_version == 5) {
     rv = jakx_work_v5(this);
   } else {
@@ -704,10 +704,10 @@ void jak3_finish(link_control* this, bool jump_from_c_to_goal) {
 
       if (*(int *)(this->m_entry - 4) == *(int *)(unaff_s7_lo + 7) && (this->m_flags & 5) != 0) {
         if ((this->m_flags & 4) == 0) {
-          (**(code **)(unaff_s7_lo + 0x93))();
+          (**(code **)(unaff_s7_lo + FIX_SYM_NOTHING_FUNC - 1))();
         } else {
           (*this->m_entry)();
-          (**(code **)(unaff_s7_lo + 0x93))();
+          (**(code **)(unaff_s7_lo + FIX_SYM_NOTHING_FUNC - 1))();
         }
 
         if ((this->m_flags & LINK_FLAG_OUTPUT_LOAD) != 0) {
