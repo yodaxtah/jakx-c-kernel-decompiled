@@ -52,30 +52,30 @@ s32 goal_main(int argc, const char** argv) {
   masterConfig.volume = 100;
   masterConfig.timeout = 0;
   switch (sony_language) {
-    case 0:
-      masterConfig.language = 6;
+    case SCE_JAPANESE_LANGUAGE:
+      masterConfig.language = 6;  // NOTE: Why UK_English and not Japanese?
       break;
-    case 2:
-      masterConfig.language = 1;
+    case SCE_FRENCH_LANGUAGE:  // 2 -> 1
+      masterConfig.language = (u16)Language::French;
       break;
-    case 3:
-      masterConfig.language = 3;
+    case SCE_SPANISH_LANGUAGE:  // 3 -> 3
+      masterConfig.language = (u16)Language::Spanish;
       break;
-    case 4:
-      masterConfig.language = 2;
+    case SCE_GERMAN_LANGUAGE:  // 4 -> 2
+      masterConfig.language = (u16)Language::German;
       break;
-    case 5:
-      masterConfig.language = 4;
+    case SCE_ITALIAN_LANGUAGE:  // 5 -> 4
+      masterConfig.language = (u16)Language::Italian;
       break;
-    case 7:
-      masterConfig.language = 9;
+    case SCE_PORTUGUESE_LANGUAGE:
+      masterConfig.language = (u16)Language::Portuguese;
       break;
     default:
-      masterConfig.language = 0;
+      masterConfig.language = (u16)Language::English;
       break;
   }
   if (!strcmp(DebugBootMessage, "demo") || !strcmp(DebugBootMessage, "demo-shared")) {
-    masterConfig.aspect = 1;
+    masterConfig.aspect = SCE_ASPECT_FULL;
   }
   DiskBoot = 1;
   MasterDebug = 0;
