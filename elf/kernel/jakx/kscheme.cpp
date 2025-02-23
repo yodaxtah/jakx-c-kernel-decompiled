@@ -1158,7 +1158,7 @@ u64 call_method_of_type_arg2(u32 arg, Type* type, u32 method_id, u32 a1, u32 a2)
   u64 arg_ = (u64)(int)arg;
   if ((((type < SymbolTable2) || ((Type *)0x7ffffff < type)) &&
        ((Function **)0x7bfff < &type[-0x289e].print_method))
-      || (((uint)type & 7) != 4)) {
+      || (((uint)type & OFFSET_MASK) != BASIC_OFFSET)) {
     cprintf("#<#x%x has invalid type ptr #x%x>\n", arg_, type);
   } else {
     int unaff_s7_lo;
@@ -1186,15 +1186,15 @@ u64 print_object(u32 obj) {
     if ((obj_ < (ulong)(long)SymbolTable2 || 0x7ffffff < obj_) &&
         (0x7bfff < obj - 0x84000)) { // TODO: why should this match: obj < 0x84000 || 0x100000 <= obj?
     cprintf("#<invalid object #x%x>", obj_);
-    } else if ((obj_ & OFFSET_MASK) == 2) {
+    } else if ((obj_ & OFFSET_MASK) == PAIR_OFFSET) {
       return print_pair(obj);
     } else if ((obj_ & 1 != 0) && obj_ >= (ulong)(long)SymbolTable2 &&
                obj_ < (ulong)(long)LastSymbol) {
       return print_symbol(obj);
-    } else if ((obj_ & OFFSET_MASK) == 4) {
+    } else if ((obj_ & OFFSET_MASK) == BASIC_OFFSET) {
       return call_method_of_type(obj,*(Type **)(obj - 4),2);
     } else {
-      cprintf("#<unknown type %d @ #x%x>", obj_ & 7, obj_);
+      cprintf("#<unknown type %d @ #x%x>", obj_ & OFFSET_MASK, obj_);
     }
   }
   return obj_;
