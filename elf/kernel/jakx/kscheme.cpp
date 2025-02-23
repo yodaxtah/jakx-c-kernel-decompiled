@@ -148,9 +148,9 @@ u64 alloc_heap_object(u32 heap, u32 type, u32 size, u32 pp) {
 /*!
  * Allocate a structure and get the structure size from the type.
  */
-u64 new_structure(u32 heap, u32 type) {
+u64 new_structure(u32 heap, Type* type) {
   u32 in_a3_lo;
-  return alloc_from_heap(heap, type, (uint)*(ushort *)(type + 8), in_a3_lo);
+  return alloc_from_heap(heap, type, (uint)type->allocated_size, in_a3_lo);
 }
 
 /*!
