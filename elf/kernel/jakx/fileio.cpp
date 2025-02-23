@@ -61,7 +61,6 @@ char* DecodeFileName(const char* name) {
 char* MakeFileName(int type, const char* name, int new_string) {
   char *prefix;
   char *buffer_633;
-  auto DGO_FILE_VERSION_ = &DAT_00000001;
   kstrcpy(buffer_633, "host:");
   char* buf = strend(buffer_633);
 
@@ -91,89 +90,89 @@ char* MakeFileName(int type, const char* name, int new_string) {
       kstrcpy(buf, "kernel/KERNELTOLISTENER_LOCK");
       break;
 
-    case IOP_MODULE_FILE_TYPE:
+    case IOP_MODULE_FILE_TYPE:  // 8
       sprintf(buffer_633, "host0:/usr/local/sce/iop/modules/%s.irx", name);
       break;
 
-    case DATA_FILE_TYPE:
+    case DATA_FILE_TYPE:  // 0x20
       sprintf(buf, "%sfinal/%s.go", prefix, name);
       break;
 
-    case TX_PAGE_FILE_TYPE:
-      sprintf(buf, "%sfinal/texture-page%d/%s.go", prefix, 0x8, name);
+    case TX_PAGE_FILE_TYPE:  // 0x21
+      sprintf(buf, "%sfinal/texture-page%d/%s.go", prefix, TX_PAGE_VERSION, name);
       break;
 
-    case JA_FILE_TYPE:
-      sprintf(buf, "%sdb/artdata%d/%s-ja.go", prefix, 0x8, name);
+    case JA_FILE_TYPE:  // 0x22
+      sprintf(buf, "%sdb/artdata%d/%s-ja.go", prefix, ART_FILE_VERSION, name);
       break;
 
-    case JG_FILE_TYPE:
-      sprintf(buf, "%sdb/artdata%d/%s-jg.go", prefix, 0x8, name);
+    case JG_FILE_TYPE:  // 0x23
+      sprintf(buf, "%sdb/artdata%d/%s-jg.go", prefix, ART_FILE_VERSION, name);
       break;
 
-    case MA_FILE_TYPE:
-      sprintf(buf, "%sdb/artdata%d/%s-ma.go", prefix, 0x8, name);
+    case MA_FILE_TYPE:  // 0x24
+      sprintf(buf, "%sdb/artdata%d/%s-ma.go", prefix, ART_FILE_VERSION, name);
       break;
 
-    case MG_FILE_TYPE:
-      sprintf(buf, "%sdb/artdata%d/%s-mg.go", prefix, 0x8, name);
+    case MG_FILE_TYPE:  // 0x25
+      sprintf(buf, "%sdb/artdata%d/%s-mg.go", prefix, ART_FILE_VERSION, name);
       break;
 
     case TG_FILE_TYPE:
       sprintf(buf, "%sfinal/%s-tg.go", prefix, name);
       break;
 
-    case LEVEL_FILE_TYPE:
-      sprintf(buf, "%sfinal/level%d/%s-bt.go", prefix, 0x25, name);
+    case LEVEL_FILE_TYPE:  // 0x27
+      sprintf(buf, "%sfinal/level%d/%s-bt.go", prefix, LEVEL_FILE_VERSION, name);
       break;
 
-    case 0x28:
-    case 0x29:
-      sprintf(buf, "%sfinal/texture-page%d/%s.go", prefix, 0x8, name);
+    case 0x28:  // 0x28
+    case 0x29:  // 0x29
+      sprintf(buf, "%sfinal/texture-page%d/%s.go", prefix, ART_FILE_VERSION, name);
       break;
 
-    case ART_GROUP_FILE_TYPE:
-      // sprintf(buf, "%sfinal/art-group%d/%s-ag.go", prefix, 0x8, name);
+    case ART_GROUP_FILE_TYPE:  // 0x30
+      // sprintf(buf, "%sfinal/art-group%d/%s-ag.go", prefix, ART_FILE_VERSION, name);
       break;
 
-    case VS_FILE_TYPE:
-      sprintf(buf, "%sfinal/level%d/%s-vs.go", prefix, 0x25, name);
+    case VS_FILE_TYPE:  // 0x31
+      sprintf(buf, "%sfinal/level%d/%s-vs.go", prefix, LEVEL_FILE_VERSION, name);
       break;
 
-    case TX_FILE_TYPE:
-      sprintf(buf, "%sfinal/res%d/%s-tx.go", prefix, DGO_FILE_VERSION_, name);
+    case TX_FILE_TYPE:  // 0x32
+      sprintf(buf, "%sfinal/res%d/%s-tx.go", prefix, DGO_FILE_VERSION, name);
       break;
 
-    case VS_BIN_FILE_TYPE:
-      sprintf(buf, "%sfinal/level%d/%s-vs.bin", prefix, 0x25, name);
+    case VS_BIN_FILE_TYPE:  // 0x33
+      sprintf(buf, "%sfinal/level%d/%s-vs.bin", prefix, LEVEL_FILE_VERSION, name);
       break;
 
-    case DGO_TXT_FILE_TYPE:
-      sprintf(buf, "%sfinal/dgo%d/%s.txt", prefix, DGO_FILE_VERSION_, name);
+    case DGO_TXT_FILE_TYPE:  // 0x34
+      sprintf(buf, "%sfinal/dgo%d/%s.txt", prefix, DGO_FILE_VERSION, name);
       break;
 
-    case LEVEL_WITH_EXTENSION_FILE_TYPE:
-      sprintf(buf, "%sfinal/level%d/%s", prefix, 0x25, name);
+    case LEVEL_WITH_EXTENSION_FILE_TYPE:  // 0x35
+      sprintf(buf, "%sfinal/level%d/%s", prefix, LEVEL_FILE_VERSION, name);
       break;
 
-    case DATA_DGO_FILE_TYPE:
-      sprintf(buf, "%sfinal/dgo%d/%s.dgo", prefix, DGO_FILE_VERSION_, name);
+    case DATA_DGO_FILE_TYPE:  // 0x36
+      sprintf(buf, "%sfinal/dgo%d/%s.dgo", prefix, DGO_FILE_VERSION, name);
       break;
-    case GAME_DGO_FILE_TYPE:
-      sprintf(buf, "game/dgo%d/%s.dgo", DGO_FILE_VERSION_, name);
+    case GAME_DGO_FILE_TYPE:  // 0x37
+      sprintf(buf, "game/dgo%d/%s.dgo", DGO_FILE_VERSION, name);
       break;
-    case DATA_CGO_FILE_TYPE:
-      sprintf(buf, "%sfinal/dgo%d/%s.cgo", prefix, DGO_FILE_VERSION_, name);
+    case DATA_CGO_FILE_TYPE:  // 0x38
+      sprintf(buf, "%sfinal/dgo%d/%s.cgo", prefix, DGO_FILE_VERSION, name);
       break;
-    case GAME_CGO_FILE_TYPE:
-      sprintf(buf, "game/dgo%d/%s.cgo", DGO_FILE_VERSION_, name);
-      break;
-
-    case CNT_FILE_TYPE:
-      sprintf(buf, "%sfinal/res%d/game-cnt.go", prefix, DGO_FILE_VERSION_);
+    case GAME_CGO_FILE_TYPE:  // 0x39
+      sprintf(buf, "game/dgo%d/%s.cgo", DGO_FILE_VERSION, name);
       break;
 
-    case RES_FILE_TYPE:
+    case CNT_FILE_TYPE:  // 0x3a
+      sprintf(buf, "%sfinal/res%d/game-cnt.go", prefix, DGO_FILE_VERSION);
+      break;
+
+    case RES_FILE_TYPE:  // 0x3b
       sprintf(buf, "%sfinal/res%d/%s.go", prefix, /*1,*/ name);
       break;
 
@@ -185,27 +184,27 @@ char* MakeFileName(int type, const char* name, int new_string) {
       sprintf(buf, "%sfinal/music%d/%s.bnk", prefix, /*1,*/ name);
       break;
 
-    case VAG_FILE_TYPE:
+    case VAG_FILE_TYPE:  // 0x3e
       sprintf(buf, "%sfinal/vagwad/%s.%s", prefix, name);
       break;
 
-    case MISC_FILE_TYPE:
+    case MISC_FILE_TYPE:  // 0x3f
       sprintf(buf, "%sfinal/misc/%s", prefix, name);
       break;
 
     case MAP_FILE_TYPE:
-      sprintf(buf, "%sfinal/map%d/%s.go", prefix, DGO_FILE_VERSION_, name);
+      sprintf(buf, "%sfinal/map%d/%s.go", prefix, DGO_FILE_VERSION, name);
       break;
 
-    case CL_FILE_TYPE:
-      sprintf(buf, "%sdb/artdata%d/%s-cl.go", prefix, 0x8, name);
+    case CL_FILE_TYPE:  // 0x41
+      sprintf(buf, "%sdb/artdata%d/%s-cl.go", prefix, ART_FILE_VERSION, name);
       break;
 
-    case FLASH_FILE_TYPE:
-      sprintf(buf, "%sfinal/flash%d/%s.go", prefix, DGO_FILE_VERSION_, name);
+    case FLASH_FILE_TYPE // 0x42:
+      sprintf(buf, "%sfinal/flash%d/%s.go", prefix, DGO_FILE_VERSION, name);
       break;
 
-    case REFPLANT_FILE_TYPE:
+    case REFPLANT_FILE_TYPE:  // 0x301
       sprintf(buf, "%sdb/config/refplant/%s", prefix, name);
       break;
     default:

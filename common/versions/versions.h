@@ -40,7 +40,7 @@ constexpr u32 TX_PAGE_VERSION = 8;
 
 namespace jakx {
 constexpr u32 ART_FILE_VERSION = 8;
-constexpr u32 LEVEL_FILE_VERSION = 36;
+constexpr u32 LEVEL_FILE_VERSION = 37;
 constexpr u32 DGO_FILE_VERSION = 1;
 constexpr u32 TX_PAGE_VERSION = 8;
 }  // namespace jakx
