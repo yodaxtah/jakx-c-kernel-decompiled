@@ -1192,7 +1192,7 @@ u64 print_object(u32 obj) {
                obj_ < (ulong)(long)LastSymbol) {
       return print_symbol(obj);
     } else if ((obj_ & OFFSET_MASK) == BASIC_OFFSET) {
-      return call_method_of_type(obj,*(Type **)(obj - 4),2);
+      return call_method_of_type(obj,*(Type **)(obj - 4), GOAL_PRINT_METHOD);
     } else {
       cprintf("#<unknown type %d @ #x%x>", obj_ & OFFSET_MASK, obj_);
     }
