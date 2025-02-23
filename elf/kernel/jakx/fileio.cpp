@@ -48,7 +48,7 @@ char* DecodeFileName(const char* name) {
       result = nullptr;
     }
   } else {
-    return MakeFileName(3, name, 0);
+    return MakeFileName(CODE_FILE_TYPE, name, 0);
   }
   return result;
 }
