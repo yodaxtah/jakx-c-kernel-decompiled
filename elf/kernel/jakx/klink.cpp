@@ -48,7 +48,7 @@ void jak3_begin(link_control* this, Ptr<uint8_t> object_file,
     // TODO: where is unk_init1?
     this->m_busy = (int)true;
     this->m_heap = heap;
-    this->m_entry = nullptr;
+    this->m_entry.offset = 0;
     this->m_keep_debug = (int)false;
     this->m_link_hdr = &l_hdr->core;
     this->m_code_size = 0;
@@ -71,7 +71,7 @@ void jak3_begin(link_control* this, Ptr<uint8_t> object_file,
         ;
       }
       this->m_code_size = size___;
-      if ((int)this->m_link_hdr < (int)m_heap->base || (int)this->m_link_hdr >= (int)m_heap->top) {
+      if ((int)this->m_link_hdr < (int)m_heap->base.c() || (int)this->m_link_hdr >= (int)m_heap->top.c()) {
         if ((int)m_heap->base <= (int)this->m_object_data &&
             (int)this->m_object_data < (int)m_heap->top &&
             (int)this->m_object_data < (int)m_heap->current) {
