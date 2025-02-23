@@ -108,7 +108,7 @@ void jak3_begin(link_control* this, uint8_t* object_file,
         }
       }
     }
-    if ((this->m_flags & 0x10) != 0 && MasterDebug != 0 && DiskBoot == 0) {
+    if ((this->m_flags & LINK_FLAG_FORCE_DEBUG) != 0 && MasterDebug != 0 && DiskBoot == 0) {
       this->m_keep_debug = (int)true;
     }
   }
