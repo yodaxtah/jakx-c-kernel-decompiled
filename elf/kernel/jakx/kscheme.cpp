@@ -865,7 +865,7 @@ Type* alloc_and_init_type(Type** sym,
       type_mem = alloc_heap_object(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP, u32_in_fixed_sym_FIX_SYM_TYPE_TYPE_,
                                    type_size, in_a3_lo);
     } else {
-      type_mem = alloc_heap_object(unaff_s7_lo + 0xa8,
+      type_mem = alloc_heap_object(unaff_s7_lo + FIX_SYM_LOADING_LEVEL,
                                    u32_in_fixed_sym_FIX_SYM_TYPE_TYPE_, type_size, in_a3_lo);
       Type* old_head = *type_list_ptr;
       *type_list_ptr = (Type *)type_mem;
