@@ -596,7 +596,7 @@ u64 kopen(u64 fs, u64 name, u64 mode) {
   int unaff_s7_lo;
   undefined4 symbol_to_cstring_mode = *(int *)(((u32)mode - unaff_s7_lo) + SymbolString) + 4;
   if (!strcmp((char *)(symbol_to_cstring_mode), "read")) {
-    file_stream->file = sceOpen(buffer,1);
+    file_stream->file = sceOpen(buffer, SCE_RDONLY);
   } else if (!strcmp((char *)(symbol_to_cstring_mode), "append")) {
     file_stream->file = sceOpen(buffer, SCE_CREAT | SCE_WRONLY);
   } else {
