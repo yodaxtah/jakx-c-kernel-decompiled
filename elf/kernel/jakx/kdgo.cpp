@@ -66,7 +66,7 @@ Ptr<u8> GetNextDGO(u32* lastObjectFlag) {
   *lastObjectFlag = 1;
   RpcSync(DGO_RPC_CHANNEL_PLUS_1);
   Ptr<u8> buffer(0);
-  if (sLastMsg != nullptr) {
+  if (sLastMsg) {
     if ((sLastMsg->status == DGO_RPC_RESULT_MORE) || (sLastMsg->status == DGO_RPC_RESULT_DONE)) {
       buffer.offset =
           (u8 *)sLastMsg->buffer1;
