@@ -59,7 +59,7 @@ void kprint_init_globals_common() {
  */
 void init_output() {
   bool use_debug;
-  use_debug = !MasterDebug && !DebugSegment; // TODO: Why Jak2 and not Jak3?
+  use_debug = MasterDebug || DebugSegment;
 
   if (use_debug) {
     MessBufArea = kmalloc(kdebugheap, DEBUG_MESSAGE_BUFFER_SIZE, KMALLOC_MEMSET | KMALLOC_ALIGN_256,
