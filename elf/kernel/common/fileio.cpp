@@ -35,13 +35,13 @@ char* strend(char* str) {
  * In this limited decoder, your data must have lower two bits equal to zero.
  * @param loc_ptr pointer to pointer to data to read (will be modified to point to next word)
  * @return decoded word
- * DONE, UNUSED, EXACT
+ * UNUSED, EXACT
  */
 u32 ReadHufWord(u8** loc_ptr) {
-  u8* loc = *loc_ptr;
-  u32 value = (u32)*loc;
-  u8* next_loc = loc + 1;
-  u32 length = value & 3;
+  u8* loc = *loc_ptr;      // pointer to data to read
+  u32 value = (u32)*loc;  // read word
+  u8* next_loc = loc + 1;  // next data to read
+  u32 length = value & 3;  // length of word is stored in lower two bits.
   switch (length) {
     case 1:
       value = (value & 0xfc) | ((uint)loc[1] << 8);
@@ -62,6 +62,7 @@ u32 ReadHufWord(u8** loc_ptr) {
       ;
   }
 
+  // update location pointer
   *loc_ptr = next_loc;
   return value;
 }
@@ -310,7 +311,8 @@ s32 FileSave(char* name, u8* data, s32 size) {
 
   int writeOffset = 0;
   while (size != 0) {
-    int chunkSize = 0x1000000;
+    // in jak 3, this became a loop over smaller writes for some reason.
+    s32 chunkSize = 0x1000000;
     if (size < 0x1000000) {
       chunkSize = size; // one or final write
     }

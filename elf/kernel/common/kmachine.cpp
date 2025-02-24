@@ -257,9 +257,11 @@ void InstallDebugHandler() {
 s32 klength(u64 fs) {
   FileStream* file_stream = Ptr<FileStream>(fs).c();
   if ((*(byte *)&file_stream->flags ^ 1) & 1) {
+    // first flag bit not set. This means no errors
     int end_seek = sceLseek(file_stream->file, 0, SCE_SEEK_END);
     int reset_seek = sceLseek(file_stream->file, 0, SCE_SEEK_SET);
     if (reset_seek < 0 || end_seek < 0) {
+      // seeking failed, flag it
       file_stream->flags |= 1;
     }
     return end_seek;

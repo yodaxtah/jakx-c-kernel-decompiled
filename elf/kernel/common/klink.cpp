@@ -251,6 +251,9 @@ Ptr<u8> c_symlink2(Ptr<u8> objData, Ptr<u8> linkObj, Ptr<u8> relocTable) {
     if (objValue == 0xffffffff) {
       *(objPtr.cast<u8*>()) = linkObj.offset;
     } else {
+      // I don't think we should hit this ever.
+      // if this is hit - there's a good chance something has overwritten the object file data
+      // after linking has started.
       *(objPtr.cast<u8*>()) = (u8 *)((uint)objValue & 0xffff0000 | (int)(objValue + (int)linkObj) - unaff_s7_lo & 0xffffU);
     }
   } while (*relocPtr);

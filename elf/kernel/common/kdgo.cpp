@@ -113,7 +113,6 @@ struct GoalStackArgs {
 
 /*!
  * Check if the given RPC is busy, by channel.
- * DONE.
  */
 u32 RpcBusy(s32 channel) {
   if (channel < numberOfRpcChannels) {
@@ -126,7 +125,6 @@ u32 RpcBusy(s32 channel) {
 /*!
  * Wait for an RPC to not be busy. Prints a stall message if sShowStallMsg is true and we have
  * to wait on the IOP.  Stalling here is bad because it means the rest of the game can't run.
- * DONE, EXACT.
  */
 void RpcSync(s32 channel) {
   if (6 < (uint)channel) {
@@ -139,6 +137,7 @@ void RpcSync(s32 channel) {
     WaitSema(RpcCallEndFunctionArgs_W[channel].sema_id);
     SignalSema(RpcCallEndFunctionArgs_W[channel].sema_id);
     while (RpcBusy(channel)) {
+      // an attempt to avoid spamming SIF?
       sceKernelDelayThread_G(10000);
     }
     if (sShowStallMsg) {
@@ -149,7 +148,6 @@ void RpcSync(s32 channel) {
 
 /*!
  * Setup an RPC.
- * DONE, EXACT.
  */
 s32 RpcBind(s32 channel, s32 id) {
   if (channel < numberOfRpcChannels) {
@@ -245,21 +243,30 @@ int StopIOP_G() {
 void LoadDGOTest() {
   u32 lastObject = 0;
 
+  // backup show stall message and set it to false
+  // EE will be loading DGO in a loop, so it will always be stalling
+  // no need to print it.
   bool lastShowStall = setStallMsg_G(false);
 
+  // pick somewhat arbitrary memory to load the DGO into
   BeginLoadingDGO("TEST.DGO", Ptr<u8>(0x4800000), Ptr<u8>(0x4c00000), Ptr<u8>(0x4000000));
   while (true) {
+    // keep trying to load.
     Ptr<u8> dest_buffer(0);
     do {
       dest_buffer = GetNextDGO(&lastObject);
     } while (!dest_buffer.offset);
 
+    // print the name of the object we loaded, its destination, and its size.
     Msg(6, "Loaded %s at %8.8X length %d\n", (dest_buffer + 4).cast<char>().c(), dest_buffer.offset,
         *(dest_buffer.cast<u32>()));
     if (lastObject) {
       break;
     }
 
+    // okay to load the next one
+    ;
+    // so let's be lazy for now...
     ContinueLoadingDGO(Ptr<u8>(0x4800000));
   }
 

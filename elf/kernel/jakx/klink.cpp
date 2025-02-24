@@ -72,12 +72,21 @@ void jak3_begin(link_control* this, Ptr<uint8_t> object_file,
       }
       this->m_code_size = size___;
       if ((int)this->m_link_hdr < (int)m_heap->base.c() || (int)this->m_link_hdr >= (int)m_heap->top.c()) {
+        // the link block is outside our heap, or in the allocated top part.
+        // so we ignore it, and leave it as somebody else's problem.
+
+        // let's try to move the code part:
         if ((int)m_heap->base <= (int)this->m_object_data &&
             (int)this->m_object_data < (int)m_heap->top &&
             (int)this->m_object_data < (int)m_heap->current) {
           m_heap->current = this->m_object_data;
         }
       } else {
+        // the link block is in the heap. This is problematic because we don't want to hang
+        // on to this long term, but executing the top-level may allocate on this heap, causing
+        // stuff to get added after the hole left by the link data.
+        // So, we make a temporary allocation on the top and move it there.
+
         this->m_moved_link_block = true;
         LinkHeaderV5* new_link_block_mem;
         char* old_link_block_G;
@@ -111,6 +120,8 @@ void jak3_begin(link_control* this, Ptr<uint8_t> object_file,
     if ((this->m_flags & LINK_FLAG_FORCE_DEBUG) && MasterDebug && !DiskBoot) {
       this->m_keep_debug = true;
     }
+    // hack:
+    ;
   }
 }
 
@@ -120,13 +131,22 @@ uint32_t jak3_work(link_control* this) {
     DebugSegment = unaff_s7_lo + 4;
   }
 
+  // set type tag of link block
+
   uint32_t rv;
 
   int unaff_s7_lo;
   uint16_t m_version = this->m_link_hdr->version;
   *(undefined4 *)(this->m_link_hdr[-1].name + 0x37) = *(undefined4 *)(unaff_s7_lo + FIX_SYM_LINK_BLOCK - 1);
-  if (m_version == 5) {
+  if (m_version == 3) {
+    rv = 0;
+  } else if (m_version == 5) {
     rv = jakx_work_v5(this);
+  } else if (m_version == 4 || m_version == 2) {
+    // Note: this is a bit of a hack. Jak 3 doesn't support v2/v4. But, OpenGOAL generates data
+    // objects in this format. We will just try reusing the jak 2 v2/v4 linker here and see if it
+    // works. See corresponding call to jak1_jak2_begin in begin.
+    rv = 0;
   } else {
     rv = 0;
   }
@@ -688,6 +708,7 @@ void jak3_finish(link_control* this, bool jump_from_c_to_goal) {
   // FlushCache(2);
   int old_debug_segment = DebugSegment;
   if (this->m_keep_debug) {
+    // note - this probably doesn't work because DebugSegment isn't *debug-segment*.
     DebugSegment = unaff_s7_lo + 4;
   }
   if ((this->m_flags & LINK_FLAG_FORCE_FAST_LINK)) {
@@ -710,6 +731,7 @@ void jak3_finish(link_control* this, bool jump_from_c_to_goal) {
           (**(code **)(unaff_s7_lo + FIX_SYM_NOTHING_FUNC - 1))();
         }
 
+        // inform compiler that we loaded.
         if ((this->m_flags & LINK_FLAG_OUTPUT_LOAD)) {
           output_segment_load(m_link_hdr->name, (ObjectFileHeader *)m_link_hdr->length_to_get_to_link, this->m_flags);
         }
@@ -747,6 +769,7 @@ Ptr<uint8_t> link_and_exec(Ptr<uint8_t> data,
                            bool jump_from_c_to_goal) {
   if (link_busy()) {
     printf("-------------> saved link is busy\n");
+    // probably won't end well...
   }
   jak3_begin((link_control *)&stack0xffffff30, data, name, size, heap, flags);
   uint32_t done;
@@ -778,7 +801,9 @@ uint64_t link_begin(u64* args) {
   jak3_begin(&saved_link_control_WG, (uint8_t *)args, in_a1_lo, in_a2_lo,
              in_a3_lo, in_t0_lo);
   uint32_t work_result = jak3_work(&saved_link_control_WG);
+  // if we managed to finish in one shot, take care of calling finish
   if (work_result) {
+    // called from goal
     jak3_finish(&saved_link_control_WG, (bool)SUB41(args, 0));
   }
   return (ulong)(work_result != 0);
@@ -786,6 +811,7 @@ uint64_t link_begin(u64* args) {
 uint64_t link_resume() {
   uint32_t work_result = jak3_work(&saved_link_control_WG);
   if (work_result) {
+    // called from goal
     jak3_finish(&saved_link_control_WG, false);
   }
   return (ulong)(work_result != 0);
@@ -799,15 +825,16 @@ uint64_t link_resume() {
  * IT IS VERY FAST
  * but it may use the scratchpad.  It is implemented in GOAL, and falls back to normal C memcpy
  * if GOAL isn't loaded, or if the alignment isn't good enough.
- * DONE.
  */
 void ultimate_memcpy_G(void* dst, void* src, uint32_t size) {
+  // only possible if alignment is good.
   if ((src < dst) && ((int)((int)dst - size) < (int)src)) {
     for (int i = size - 1; i != -1; i--) {
       *(undefined *)((int)dst + i) = *(undefined *)((int)src + i);
     }
   } else if (!((uint)dst & 0xf) && !((uint)src & 0xf) && !((ulong)(int)size & 0xf) && (ulong)(int)size > 0xfff) {
-    if (gfunc_774 == nullptr) {
+    if (!gfunc_774.offset) {
+      // GOAL function is unknown, lets see if its loaded:
       int unaff_s7_lo;
       code* sym_val = *(code **)(unaff_s7_lo + FIX_SYM_ULTIMATE_MEMCPY - 1);
       if (sym_val == nullptr) {
@@ -816,6 +843,7 @@ void ultimate_memcpy_G(void* dst, void* src, uint32_t size) {
       }
       gfunc_774 = sym_val;
     }
+
     (*gfunc_774)();
   } else {
     memcpy(dst, src, (ulong)(int)size);

@@ -45,7 +45,6 @@ void kscheme_init_globals_common() {
  * NOTE: this is a differnt version.
  * Jak 3 uses CRC Polynomial, whereas Jak X uses reversed CRC Polynomial
  * according to Perplexity: https://www.perplexity.ai/search/do-these-two-functions-fill-th-3MdJow3IT2ieoRBdHZapKA#0
- * DONE.
  */
 void CCrc32.Init_T(uint *table_W) {
   for (u32 i = 0; i < 0x100; i++) {
@@ -59,7 +58,6 @@ void CCrc32.Init_T(uint *table_W) {
 
 /*!
  * Take the CRC32 hash of some data
- * DONE.
  */
 uint Crc32_WT(const_uchar* data, int size) {
   if (!Crc32_Initialized_W) {
@@ -81,7 +79,7 @@ uint Crc32_WT(const_uchar* data, int size) {
 u64 delete_illegal(u32 obj) {
   u64 in_v0;
   MsgErr("dkernel: illegal attempt to call delete method of static object @ #x%X\n", obj);
-  return in_v0;
+  return in_v0; // todo, maybe don't return anything?
 }
 
 /*!
@@ -170,6 +168,7 @@ u64 print_structure(u32 s) {
  * Print an integer. Works correctly for 64-bit integers.
  */
 u64 print_integer(u64 obj) {
+  // not sure why this is any better than cprintf("%ld") or similar. Maybe a tiny bit faster?
   char* str = PrintPending.cast<char>().c();
   if (!str) {
     str = (PrintBufArea + 0x18).cast<char>().c();
@@ -198,6 +197,7 @@ u64 print_binteger(u64 obj) {
  * Print floating point number.
  */
 u64 print_float(u32 f) {
+  // again not sure why this is any better than cprintf("%f") or similar. Maybe a tiny bit faster?
   float ff = (float)f;
   char* str = PrintPending.cast<char>().c();
   if (!PrintPending.offset) {
@@ -237,6 +237,7 @@ u64 copy_structure(u32 it, u32 unknown) {
  * Inspect an integer (works correctly on 64-bit integers)
  */
 u64 inspect_integer(u64 obj) {
+  // and now we're using cprintf. Why doesn't print do this?
   cprintf("[%16lx] fixnum %ld\n", obj, obj);
   return obj;
 }
@@ -256,6 +257,7 @@ u64 inspect_float(u32 f) {
   float ff = (float)f;
   cprintf("[%8x] float ", (long)(int)f);
 
+  // likely copy-pasta - no need for this check because of the cprintf immediately before.
   char* str = PrintPending.cast<char>().c();
   if (!str) {
     str = (PrintBufArea + 0x18).cast<char>().c();

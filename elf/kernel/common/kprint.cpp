@@ -58,6 +58,9 @@ void kprint_init_globals_common() {
  * Allocates buffers.
  */
 void init_output() {
+  // Note: slightly different behavior in jak 1/jak 2 here.
+  // I think the jak 2 version makes clear_wrong do the wrong thing if you are masterdebug but not
+  // debugsegment.
   bool use_debug;
   use_debug = MasterDebug || DebugSegment;
 
@@ -69,9 +72,11 @@ void init_output() {
     PrintBufArea = kmalloc(kdebugheap, DEBUG_PRINT_BUFFER_SIZE, KMALLOC_MEMSET | KMALLOC_ALIGN_256,
                            "print-buf");
   } else {
+    // no compiler connection, so we do not allocate buffers
     MessBufArea = Ptr<u8>(0);
     OutputBufArea = Ptr<u8>(0);
 
+    // we still need a (small) print buffer for string maniuplation and debugging prints.
     PrintBufArea =
         kmalloc(kglobalheap, PRINT_BUFFER_SIZE, KMALLOC_MEMSET | KMALLOC_ALIGN_256, "print-buf");
   }
@@ -102,6 +107,7 @@ void clear_print() {
 void reset_output() {
   if (MasterDebug) {
     undefined *unaff_s7_lo;
+// original GOAL:
     sprintf(OutputBufArea.cast<char>().c() + sizeof(ListenerMessageHeader), "reset #x%x\n",
             unaff_s7_lo);
 
@@ -131,6 +137,8 @@ void output_segment_load(const char* name, Ptr<u8> link_block, u32 flags) {
     char false_str[] = "nil";
     char* flag_str = (flags & LINK_FLAG_OUTPUT_TRUE) ? true_str : false_str;
     ObjectFileHeader* lbp = link_block.cast<ObjectFileHeader>();
+    // modified to also include segment sizes, and work from opengoal linker
+    // original game used link_block_v3's here.
     sprintf(buffer, "load \"%s\" %s #x%x #x%x #x%x\n", name, flag_str,
             lbp->code_infos[0].offset + 4, lbp->code_infos[1].offset + 4, lbp->code_infos[2].offset + 4);
     // TODO: Why +4? The struct SegmentInfo might itself be nested at 0x4 in another one:
@@ -399,22 +407,29 @@ void ftoa(char* out_str, float x, s32 desired_len, char pad_char, s32 precision,
   char* current_buff = buff_12f;
   s32 lead_char;
 
+  // do conversion, but only write into the first half of the buffer (128 chars)
   s32 count = cvt_float(x, precision, &lead_char, &buff_130, buff_b1, flags);
 
+  // if it ends up larger than 31 characters, it's probably gone horribly wrong and we should just
+  // put NaN instead. Or maybe somebody requested a lot of precision.  That would be stupid and they
+  // deserve to see NaN.
   if (count > 0x3f) {
     strcpy(&buff_130, "NaN");
     count = 3;
     lead_char = 0;
   }
 
+  // always true because we don't round,
   if (buff_130 != '\0') {
     current_buff = &buff_130;
   }
 
+  // length, including the leading negative (if we need it).
   s32 real_count = (uint)(lead_char != 0) + count;
 
   char* out_ptr = out_str;
 
+  // pad
   if ((desired_len > 0) && (desired_len > real_count) && 0 < i) {
     for (s32 i = 0; i < (desired_len - real_count); i++) {
       *out_ptr = pad_char;
@@ -422,17 +437,20 @@ void ftoa(char* out_str, float x, s32 desired_len, char pad_char, s32 precision,
     }
   }
 
+  // leading
   if (lead_char) {
     *out_ptr = (char)lead_char;
     out_ptr++;
   }
 
+  // copy numbers
   for (s32 i = 0; i < count; i++) {
     *out_ptr = *current_buff;
     out_ptr++;
     current_buff++;
   }
 
+  // null terminate!
   *out_ptr = '\0';
 }
 
@@ -454,21 +472,25 @@ char* kitoa(char* buffer, s64 value, u64 base, s32 length, char pad, u32 flag) {
   s32 negativeValue = 0;
   s64 value_to_print = value;
 
+  // if negative and base ten, we print the opposite of the value and add a negative sign
   if ((value < 0) && base == 10) {
     negativeValue = (s32)value;
     value_to_print = -value;
   }
 
+  // write number in reverse
   int count = 0;
   do {
     buffer[count++] = ConvertTable_G[__umoddi3_Proxy_G(value_to_print,(int)base)];
     value_to_print = __udivdi3_Proxy_G(value_to_print, (int)base);
   } while (value_to_print);
 
+  // append negative if we need to
   if (negativeValue < 0) {
     buffer[count++] = '-';
   }
 
+  // pad (probably some sort of for loop)
   s32 rLen = length;
   if (1 > length - count) {
     if (((length < 1) || (-1 < value)) || ((base != 2 && (base != 16)))) {
@@ -496,6 +518,8 @@ char* kitoa(char* buffer, s64 value, u64 base, s32 length, char pad, u32 flag) {
       rLen--;
     }
   }
+
+  // null terminate, reverse, return!
   buffer[count] = '\0';
   reverse(buffer);
   return buffer;

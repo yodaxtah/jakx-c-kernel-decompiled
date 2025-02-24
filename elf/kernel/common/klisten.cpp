@@ -24,6 +24,7 @@ void klisten_init_globals() {
  */
 void ClearPending() {
   if (!MasterDebug) { // TODO: why is ListenerStatus gone?
+    // if we aren't debugging or connected print the print buffer to stdout.
     if (PrintPending.offset != 0) {
       size_t size = strlen(PrintBufArea.cast<char>().c() + sizeof(ListenerMessageHeader));
       if ((long)size > 0) {
@@ -34,6 +35,7 @@ void ClearPending() {
   } else {
     if (ListenerStatus) {
       if (OutputPending.offset != 0) { // TODO: why is the loop gone here?
+        // note - same 64 kB patch as prints done here
         char* msg = OutputBufArea.cast<char>().c() + sizeof(ListenerMessageHeader);
         size_t size = strlen(msg);
         SendFromBuffer(msg, (s32)size);
@@ -44,6 +46,7 @@ void ClearPending() {
         char* msg = PrintBufArea.cast<char>().c() + sizeof(ListenerMessageHeader);
         size_t size = strlen(msg);
         while (size > 0) {
+          // sends larger than 64 kB are broken by the GoalProtoBuffer thing, so they are split
           size_t send_size = size;
           if ((long)send_size > 64000) {
             send_size = 64000;

@@ -54,22 +54,29 @@ void ShutdownGoalProto() {
  * DONE, added print statements on errors for debugging, EI and SYNC at the end were removed
  */
 void GoalProtoHandler(int event, int param, void* opt) {
+  // verify we got the correct opt pointer.  It's not clear why the opt pointer is used
+  // like this?
   GoalProtoBlock* pb = (GoalProtoBlock*)opt;
   if (&protoBlock != pb) {
     Msg(6, "gproto: BAD OPT POINTER PASSED IN!!!!\n");
     pb = &protoBlock;
   }
 
+  // increment deci2count, if it's set up
   if (pb->deci2count.offset) {
     *(int *)(pb->deci2count - 1) = *(int *)(pb->deci2count - 1) + 1;
   }
 
+  // remember what event this is
   pb->most_recent_event = event;
   pb->most_recent_param = param;
 
   switch (event) {
+    // get some data - param is the size
     case DECI2_READ:
+      // sanity check the size
       if (pb->receive_progress + param <= DEBUG_MESSAGE_BUFFER_SIZE) {
+        // actually get data from DECI2
         s32 received =
             sceDeci2ExRecv(pb->socket, (void *)((int)pb->receive_buffer) + pb->receive_progress, (u16)param);
 
@@ -77,30 +84,45 @@ void GoalProtoHandler(int event, int param, void* opt) {
           pb->receive_progress += received;
         }
       } else {
+        // size was too large
         pb->last_receive_size = -1;
-        protoBlock.receive_progress = 0;
+        protoBlock.receive_progress = 0;  // why use protoBlock here?
       }
       break;
 
+      // read is finished!
     case DECI2_READDONE:
+      // set last_receive_size to indicate that there is a pending message in the buffer.
       pb->last_receive_size = pb->receive_progress;
       pb->receive_progress = 0;
       break;
 
+      // send some data
     case DECI2_WRITE: {
+      // note that we should not attempt to send more than 0xffff bytes at a time, or this will be
+      // wrong.  This is correctly checked for prints, but not for outputs.
+      ;
+      // why and it with 0xffff?  Seems like saturation would be better.  Either way some data
+      // will be lost, so I guess it doesn't matter.
       s32 sent = sceDeci2ExSend(pb->socket, pb->send_ptr, (u16)pb->send_remaining);
       if (sent < 0) {
+        // if we got an error, put it in send status, signaling a send error (negative)
         pb->send_status = sent;
       } else {
+        // otherwise don't touch send status, leave it positive to indicate we're still sending
         pb->send_ptr += sent;
         pb->send_remaining -= sent;
       }
     } break;
 
+      // done sending!
     case DECI2_WRITEDONE:
       if (pb->send_remaining <= 0) {
+        // if we've send everything we want, set status to zero to indicate success
         pb->send_status = 0;
       } else {
+        // otherwise, set send status to a negative number (the negative absolute value of
+        // remaining)
         s32 a = pb->send_remaining;
         if (a < 0) {
           a = -a;
@@ -112,6 +134,7 @@ void GoalProtoHandler(int event, int param, void* opt) {
     case DECI2_CHSTATUS:
       break;
 
+      // other events are undefined, so we just error.
     default:
       pb->last_receive_size = -1;
       break;
@@ -127,11 +150,15 @@ void GoalProtoHandler(int event, int param, void* opt) {
  * removed
  */
 s32 SendFromBufferD(s32 msg_kind, u64 msg_id, char* data, s32 size) {
+  // wait for send to finish or error first...
   while (protoBlock.send_status > 0) {
+    // on actual PS2, the kernel will run this in another thread.
     ;
   }
 
+  // retry at most 10 times until we complete without an error.
   for (s32 i = 0; i < 10; i++) {
+    // or'd with 0x20000000 to get noncache version
     ListenerMessageHeader* header = (ListenerMessageHeader*)((uint)(data - sizeof(ListenerMessageHeader)) | 0x20000000);
     protoBlock.send_remaining = size + sizeof(ListenerMessageHeader);
     protoBlock.send_buffer = header;
@@ -140,26 +167,32 @@ s32 SendFromBufferD(s32 msg_kind, u64 msg_id, char* data, s32 size) {
     protoBlock.send_status = size + sizeof(ListenerMessageHeader);
     // FlushCache(0);
 
+    // set DECI2 message header
     header->deci2_header.len = protoBlock.send_remaining;
     header->deci2_header.rsvd = 0;
     header->deci2_header.proto = DECI2_PROTOCOL;
-    header->deci2_header.src = 'E';
-    header->deci2_header.dst = 'H';
+    header->deci2_header.src = 'E';  // from EE
+    header->deci2_header.dst = 'H';  // to HOST
 
+    // set GOAL message header
     header->msg_kind = (ListenerMessageKind)msg_kind;
     header->u6 = 0;
     header->msg_size = size;
     header->msg_id = msg_id;
 
-    long rv = sceDeci2ReqSend(protoBlock.socket, 0x48);
+    // start send!
+    auto rv = sceDeci2ReqSend(protoBlock.socket, 0x48);
     if (rv < 0) {
       printf("1sceDeci2ReqSend fail, reason code = %08x\n", rv);
       return -6;
     }
+
+    // wait for send to complete or error.
     while (protoBlock.send_status > 0) {
       ;
     }
 
+    // if send completes, exit.  Otherwise if there's an error, just try again.
     if (protoBlock.send_status > -1) { // TODO: Why not check 0 anymore?
       break;
     }

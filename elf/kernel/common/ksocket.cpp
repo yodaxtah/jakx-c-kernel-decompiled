@@ -12,6 +12,8 @@
  * DONE, removed call to FlushCache(0);
  */
 u32 ReceiveToBuffer(char* buff) {
+  // if we received less than the size of the message header, we either got nothing, or there was an
+  // error
   if (protoBlock.last_receive_size < sizeof(ListenerMessageHeader)) {
     return -1;
   }
@@ -20,12 +22,17 @@ u32 ReceiveToBuffer(char* buff) {
   ListenerMessageHeader* gbuff = protoBlock.receive_buffer;
   u32 msg_size = gbuff->msg_size;
 
+  // check it's our protocol
   if (gbuff->deci2_header.proto == DECI2_PROTOCOL) {
+    // null terminate
     *(undefined *)((int)&protoBlock.receive_buffer[1].deci2_header.len + msg_size) = 0;
+    // copy stuff to block
     protoBlock.msg_kind = (u32)(ushort)gbuff->msg_kind;
     protoBlock.msg_id = gbuff->msg_id;
+    // and mark message as received!
     protoBlock.last_receive_size = -1;
   } else {
+    // not our protocol, something has gone wrong.
     MsgErr("dkernel: got a bad packet to goal proto (goal #x%x bytes %d %d %d %d %d)\n",
            protoBlock.receive_buffer, protoBlock.last_receive_size,
            (ulong)(ushort)protoBlock.receive_buffer->msg_kind, (ulong)protoBlock.receive_buffer->u6,

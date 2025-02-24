@@ -54,7 +54,7 @@ void InitListener() {
   *(int *)((int)kernel_packages - 1) =
       new_pair(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP, *(u32 *)(unaff_s7_lo + FIX_SYM_PAIR_TYPE - 1),
                (u32)make_string_from_c("kernel"), *(u32 *)((int)kernel_packages - 1));
-  //  if (MasterDebug) {
+  //  if(MasterDebug) {
   //    SendFromBufferD(MSG_ACK, 0, AckBufArea, 0); // NOTE: No + sizeof
   //  }
 }
@@ -63,9 +63,11 @@ void InitListener() {
  * Handle an incoming listener message
  */
 void ProcessListenerMessage(Ptr<char> msg) {
+  // flag that the listener is connected!
   ListenerStatus = 1;
   switch (protoBlock.msg_kind) {
     case LTT_MSG_POKE:
+      // just flush any pending stuff.
       ClearPending();
       break;
     case LTT_MSG_INSPECT:
@@ -108,12 +110,20 @@ void ProcessListenerMessage(Ptr<char> msg) {
       Ptr<u8> buffer = kmalloc(kdebugheap, MessCount, 0, "listener-link-buf");
       memcpy(buffer.c(), msg.c(), (size_t)MessCount);
       *(u8 **)(ListenerLinkBlock - 1) = buffer + 4;
+      // note - this will stash the linked code in the top level and free it.
+      // it will then be used-after-free, but this is OK because nobody else will allocate.
+      // the kernel dispatcher should immediately execute the listener function to avoid this
+      // getting squashed.
 
+      // this setup allows listener function execution to clean up after itself.
+
+      // we have added the LINK_FLAG_OUTPUT_LOAD
+      // jump from c to goal because this is called from the C++ stack.
       undefined in_t1_lo; // TODO: why would this be true? I expect this to be false...
       *(uint8_t **)(ListenerFunction - 1) = link_and_exec(buffer, "*listener*", MessCount - *(int *)(buffer + 4), kdebugheap,
-                                                           LINK_FLAG_FORCE_DEBUG, (bool)in_t1_lo)
-                                                           ;
-      return;
+                                                          LINK_FLAG_FORCE_DEBUG, (bool)in_t1_lo)
+                                                .offset;
+      return;  // don't ack yet, this will happen after the function runs.
     } break;
     default:
       MsgErr("dkernel: unknown message error: <%d> of %d bytes\n", protoBlock.msg_kind, MessCount);

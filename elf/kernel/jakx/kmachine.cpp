@@ -42,9 +42,17 @@ using namespace ee;
  * Modified to use std::string, and removed call to fflush.
  */
 void InitParms(int argc, const char** argv) {
+  // Modified default settings to boot up the game like normal if no arguments are present.
+  if (false) {
+    ;
+  }
+
   for (int i = 1; i < argc; i++) {
     std::string arg = argv[i];
+    // DVD Settings
+    // ----------------------------
 
+    // the "cd" mode uses the DVD drive for everything. This is how the game runs in retail
     if (arg == "-cd") {
       Msg(6, "dkernel: cd mode\n");
       reboot_G_isodrv_G_overlord_S = 0;
@@ -61,6 +69,7 @@ void InitParms(int argc, const char** argv) {
       isodrv_G_reboot_G = 0;
     }
 
+    // the "cddata" uses the DVD drive for everything but IOP modules.
     if (arg == "-cddata") {
       Msg(6, "dkernel: cddata mode\n");
       fs_S_FS_INITIALIZED_W = 0;
@@ -88,7 +97,7 @@ void InitParms(int argc, const char** argv) {
       Msg(6, "dkernel: preview mode\n");
       strcpy(DebugBootMessage, "preview");
     }
-
+    // the "fakeiso" mode is the other of two modes for testing without the need for DVDs
     if (arg == "-fakeiso") {
       Msg(6, "dkernel: fakeiso mode\n");
       fs_S_FS_INITIALIZED_W = 1;
@@ -97,6 +106,7 @@ void InitParms(int argc, const char** argv) {
       reboot_G_isodrv_G_overlord_S = 1;
     }
 
+    // the "boot" mode is used to set GOAL up for running the game in retail mode
     if (arg == "-boot") {
       Msg(6, "dkernel: boot mode\n");
       MasterDebug = 0;
@@ -104,6 +114,7 @@ void InitParms(int argc, const char** argv) {
       DebugSegment = 0;
     }
 
+    // new for jak 2
     if (arg == "-debug-boot") {
       Msg(6, "dkernel: debug-boot mode\n");
       MasterDebug = 0;
@@ -111,12 +122,14 @@ void InitParms(int argc, const char** argv) {
       DiskBoot = 1;
     }
 
+    // traditional debug mode
     if (arg == "-debug") {
       Msg(6, "dkernel: debug mode\n");
       MasterDebug = 1;
       DebugSegment = 1;
     }
 
+    // the "debug-mem" mode is used to set up GOAL in debug mode, but not to load debug-segments
     if (arg == "-debug-mem") {
       Msg(6, "dkernel: debug-mem mode\n");
       MasterDebug = 1;
@@ -140,10 +153,12 @@ void InitParms(int argc, const char** argv) {
 
     if (arg == "-no-debug-symbols") {
       Msg(6, "dkernel: debug-symbols off\n");
-      DebugSymbols = 0;
+      DebugSymbols = false;
     }
 
-    if ((arg == "-level") && (i + 1 < argc)) {
+    // the "-level [level-name]" mode is used to inform the game to boot a specific level
+    // the default level is "#f".
+    if (arg == "-level" && i + 1 < argc) {
       std::string levelName = argv[++i];
       std::string symbolId = argv[++i];
       Msg(6, "dkernel: level %s %s\n", levelName.c_str(), symbolId.c_str());
@@ -151,13 +166,15 @@ void InitParms(int argc, const char** argv) {
       DebugBootLevelID = DecodeSymbolId(atoi(argv[2])) + 1;
     }
 
-    if ((arg == "-user") && (i + 1 < argc)) {
+    // new for jak 2
+    if (arg == "-user" && i + 1 < argc) {
       i++;
       std::string userName = argv[i];
       Msg(6, "dkernel: user %s\n", userName.c_str());
       strcpy(DebugBootUser, userName.c_str());
     }
 
+    // new for jak 2
     if (arg == "-art") {
       if (i + 1 < argc) { // FIXME
         i++;
@@ -168,6 +185,16 @@ void InitParms(int argc, const char** argv) {
           strcpy(DebugBootMessage, "art-group");
         }
       }
+
+      // an added mode to allow booting without a KERNEL.CGO for testing
+      if (arg == "-nokernel") {
+        ;
+      }
+
+      // an added mode to allow booting without sound for testing
+      if (arg == "-nosound") {
+        ;
+      }
     }
   }
   fflush(*(FILE **)(_impure_ptr + 8));
@@ -175,7 +202,6 @@ void InitParms(int argc, const char** argv) {
 
 /*!
  * This is mostly copy-pasted from jak2 and very simplified until we have overlord 2.
- * DONE.
  */
 s32 InitIOP() {
   FUN_0027c260_usb();
@@ -415,6 +441,8 @@ int InitMachine() {
     if ((MasterDebug || DebugSegment) && (0x4ffffff < (ulong)(long)global_heap_size)) {
       kinitheap(kdebugheap, heap_start + 0x5000000, global_heap_end_W - 0x5004000);
     } else {
+      // if no debug, we make the kheapinfo structure NULL so GOAL knows not to use it.
+      // note: either MasterDebug or DebugSegment is enough to give use the debug heap.
       kdebugheap.offset = 0;
     }
     init_output();
@@ -580,7 +608,6 @@ u32 MouseGetData(u32 mouse) {
 /*!
  * Open a file-stream.  Name is a GOAL string. Mode is a GOAL symbol.  Use 'read for readonly
  * and anything else for write only.
- * DONE
  */
 u64 kopen(u64 fs, u64 name, u64 mode) {
   Ptr<FileStream> file_stream = Ptr<FileStream>(fs).c();
@@ -596,10 +623,14 @@ u64 kopen(u64 fs, u64 name, u64 mode) {
   int unaff_s7_lo;
   undefined4 symbol_to_cstring_mode = *(int *)(((u32)mode - unaff_s7_lo) + SymbolString) + 4;
   if (!strcmp((char *)(symbol_to_cstring_mode), "read")) {
+    // 0x1
     file_stream->file = sceOpen(buffer, SCE_RDONLY);
   } else if (!strcmp((char *)(symbol_to_cstring_mode), "append")) {
+    // new in jak 2!
+    // 0x202
     file_stream->file = sceOpen(buffer, SCE_CREAT | SCE_WRONLY);
   } else {
+    // 0x602
     file_stream->file = sceOpen(buffer, SCE_TRUNC | SCE_CREAT | SCE_WRONLY);
   }
 
@@ -752,7 +783,7 @@ void InitMachineScheme() {
     *(int *)(kernel_packages - 1) =
         (int)new_pair(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP, *(u32 *)(unaff_s7_lo + FIX_SYM_PAIR_TYPE - 1),
                  (u32)make_string_from_c("common"), *(u32 *)(kernel_packages - 1));
-    call_goal_function_by_name("play-boot");
+    call_goal_function_by_name("play-boot"); // new function for jak2!
   }
 }
 

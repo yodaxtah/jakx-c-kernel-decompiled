@@ -83,18 +83,18 @@ u64 alloc_from_heap(u32 heap_symbol, u32 type, s32 size, u32 pp) {
       heap_symbol_ == (long)(unaff_s7_lo + FIX_SYM_DEBUG) ||
       heap_symbol_ == (long)(unaff_s7_lo + FIX_SYM_LOADING_LEVEL) ||
       heap_symbol_ == (long)(unaff_s7_lo + FIX_SYM_PROCESS_LEVEL_HEAP)) {
-    if (!type) {
+    if (!type) {  // no type given, just call it a global-object
       return (long)(int)kmalloc(heap_ptr, size, KMALLOC_MEMSET, "global-object");
     }
 
     Ptr<Type> typ(type);
-    if (!typ->symbol.offset) {
+    if (!typ->symbol.offset) {  // type doesn't have a symbol, just call it a global-object
       return (long)(int)kmalloc(heap_ptr, size, KMALLOC_MEMSET, "global-object");
     }
 
     char *gstr = (char *)(aligned_size + 4);
     gstr_len = *(int *)((int)typ->symbol + (SymbolString - unaff_s7_lo));
-    if (!gstr_len) {
+    if (!gstr_len) {  // string has nothing in it.
       return (long)(int)kmalloc(heap_ptr, size, KMALLOC_MEMSET, "global-object");
     }
 
@@ -127,6 +127,7 @@ u64 alloc_from_heap(u32 heap_symbol, u32 type, s32 size, u32 pp) {
  * Allocate untyped memory.
  */
 u64 alloc_heap_memory(u32 heap, u32 size) {
+  // should never happen on process heap
   u32 in_a3_lo;
   return alloc_from_heap(heap, 0, size, in_a3_lo);
 }
@@ -150,6 +151,7 @@ u64 alloc_heap_object(u32 heap, u32 type, u32 size, u32 pp) {
  * Allocate a structure and get the structure size from the type.
  */
 u64 new_structure(u32 heap, u32 type) {
+  // should never happen on process heap
   u32 in_a3_lo;
   return alloc_from_heap(heap, type, (uint)Ptr<Type>(type)->allocated_size, in_a3_lo);
 }
@@ -158,6 +160,7 @@ u64 new_structure(u32 heap, u32 type) {
  * Allocate a structure with a dynamic size
  */
 u64 new_dynamic_structure(u32 heap_symbol, u32 type, u32 size) {
+  // should never happen on process heap
   u32 in_a3_lo;
   return alloc_from_heap(heap_symbol, type, size, in_a3_lo);
 }
@@ -180,7 +183,11 @@ u64 new_basic(u32 heap, u32 type, u32 /*size*/, u32 pp) {
  * Delete a basic.  Not supported, as it uses kfree.
  */
 void delete_basic(u32 s) {
-  kfree(Ptr<u8>(s - BASIC_OFFSET * 4));
+  // note that the game has a bug here and has s as a uint* and does -4 which is actually a
+  // 16-byte offset. Luckily kfree does nothing so there's no harm done.  But it's a good indication
+  // that the "freeing memory" feature never made it very far in development. This bug exists in
+  // Jak 3 as well.
+  kfree(Ptr<u8>(s - BASIC_OFFSET * 4));  // replicate the bug
 }
 
 /*!
@@ -202,21 +209,25 @@ u64 new_pair(u32 heap, u32 type, u32 car, u32 cdr) {
  * Delete a pair.  BUG
  */
 void delete_pair(u32 s) {
+  // the -8 should be a -2, but s is likely a u32* in the code.
   kfree(Ptr<u8>(s - 8));
 }
 
 u64 make_string(u32 size) {
-  int mem_size = size + 1;
+  ;
+  int mem_size = size + 1;  // null
   if (mem_size < 9) {
-    mem_size = 8;
+    mem_size = 8;  // min size of string
   }
 
+  // total size is mem_size (chars + null term), plus basic_offset (type tag) + 4 (string size)
   u32 in_a3_lo;
   int unaff_s7_lo;
   u64 mem =
       alloc_heap_object(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP, *(u32 *)(unaff_s7_lo + FIX_SYM_STRING_TYPE - 1),
                         mem_size + BASIC_OFFSET + 4, in_a3_lo);
 
+  // set the string size field.
   if (mem) {
     *Ptr<u32>(mem) = size;
   }
@@ -239,10 +250,13 @@ u64 make_string_from_c(const char* c_str) {
   u64 mem =
       alloc_heap_object(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP, *(u32 *)(unaff_s7_lo + FIX_SYM_STRING_TYPE - 1),
                         mem_size + BASIC_OFFSET + 4, in_a3_lo);
+  // there's no check for failed allocation here!
 
+  // string size field
   *Ptr<s32>(mem) = (int)str_size;
 
-  strcpy(Ptr<char>((int *)mem + 1), c_str);
+  // rest is chars
+  strcpy(Ptr<char>((int *)mem + 1).c(), c_str);
   return mem;
 }
 
@@ -257,9 +271,12 @@ u64 make_debug_string_from_c(const char* c_str) {
   int unaff_s7_lo;
   u64 mem = alloc_heap_object(unaff_s7_lo + FIX_SYM_DEBUG, *(u32 *)(unaff_s7_lo + FIX_SYM_STRING_TYPE - 1),
                               mem_size + BASIC_OFFSET + 4, in_a3_lo);
-  
+  // there's no check for failed allocation here!
+
+  // string size field
   *Ptr<s32>(mem) = (int)str_size;
 
+  // rest is chars
   strcpy(Ptr<char>(mem + 4).c(), c_str);
   return mem;
 }
@@ -540,6 +557,7 @@ u64 make_nothing_func() {
   Ptr<u8> mem = Ptr<u8>(alloc_heap_object(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP,
                                           *(u32 *)(unaff_s7_lo + 7), 0x14, in_a3_lo));
 
+  // a single x86-64 ret.
   mem.c()[0] = 0x3e00008;
   mem.c()[1] = 0;
   mem.c()[2] = 0;
@@ -556,6 +574,7 @@ u64 make_zero_func() {
   int unaff_s7_lo;
   Ptr<u8> mem = Ptr<u8>(alloc_heap_object(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP,
                                       *(u32 *)(unaff_s7_lo + 7), 0x14, in_a3_lo));
+  // xor eax, eax
   mem.c()[0] = 0x3e00008;
   mem.c()[1] = 0x24020000;
   mem.c()[2] = 0;
@@ -631,6 +650,7 @@ Ptr<u32> find_symbol_in_area(const char* name, u32 start, u32 end) {
     }
   }
 
+  // failed
   return Ptr<u32>(0);
 }
 
@@ -685,20 +705,28 @@ Ptr<u32> find_symbol_from_c(uint16_t sym_id, const char* name) {
   undefined4 unaff_s7_hi;
   int extended_sym_id = (int)(short)sym_id;
   if (sym_id == 0xffff) {
+    // the ID wasn't provided, so we have to use the name
     if (!name) {
+      // always warn - no name or ID!
       MsgErr("dkernel: attempted to find symbol with NULL name and id #x%x\n", extended_sym_id);
       return Ptr<u32>(0);
     } else {
+      // find the symbol
       Ptr<u32> lookup_result = find_symbol_in_area(name, unaff_s7_lo, LastSymbol);
       if (lookup_result.offset == 0) {
         lookup_result = find_symbol_in_area(name, SymbolTable2, unaff_s7_lo - 0x10);
       }
 
+      // do some sanity checking, but only in retail or if we've explicitly asked for it.
       if (!DebugSegment || ((long)*(int *)(unaff_s7_lo + FIX_SYM_KERNEL_SYMBOL_WARNINGS - 1) != CONCAT44(unaff_s7_hi, unaff_s7_lo))) {
         if (lookup_result.offset == 0) {
+          // lookup by the name failed.
           MsgWarn("dkernel: doing a string->symbol on %s, but could not find the name\n", name);
         } else {
           int sym_string = *(int *)((int)lookup_result + (SymbolString - unaff_s7_lo));
+          // not sure how you could get unknown name here...
+          // but the second check sees if you were only saved by having the symbol string in the
+          // debug heap. This would tell you that the lookup worked, but would fail in retail mode.
           if ((sym_string == UnknownName) || (sym_string >= 1)) {
             MsgWarn(
                 "dkernel: doing a string->symbol on %s, but the symbol has not been marked "
@@ -711,6 +739,7 @@ Ptr<u32> find_symbol_from_c(uint16_t sym_id, const char* name) {
       return lookup_result;
     }
   } else {
+    // just use the ID. warn if there's a name conflict.
     Ptr<u32> sym(unaff_s7_lo + extended_sym_id - 1);
     if (sym.offset != (u32 *)(unaff_s7_lo - 7)) {
       int existing_name = *(int *)((int)sym + (SymbolString - unaff_s7_lo));
@@ -739,10 +768,12 @@ Ptr<u32> find_symbol_from_c(uint16_t sym_id, const char* name) {
  *
  */
 Ptr<u32> intern_from_c(int sym_id, int flags, const char* name) {
+  // first, look up the symbol.
   Ptr<u32> symbol = find_symbol_from_c((uint16_t)sym_id, name);
   kheaplogging = true;
 
   if (symbol.offset == 0) {
+    // the function above can only fail if we didn't give an ID.
     MsgErr("dkernel: attempted to intern symbol %s using the name, but could not find it\n",name);
     kheaplogging = false;
     return Ptr<u32>(0);
@@ -750,39 +781,50 @@ Ptr<u32> intern_from_c(int sym_id, int flags, const char* name) {
 
   int unaff_s7_lo;
   if (symbol.offset == (u32*)(unaff_s7_lo + S7_OFF_FIX_SYM_EMPTY_PAIR)) {
+    // in case it's the empty pair, just return and don't worry about names.
     kheaplogging = false;
     return symbol;
   }
 
+  // if the symbol is new, then the name pointer will be 0, and we need to set it up.
   int* sptr = (int*)((int)symbol + (SymbolString - unaff_s7_lo));
   int current_string = *sptr;
-  if (current_string.offset) {
-    if ((flags & 0x40U) == 0) {
+  if (current_string.offset) {   // existing symbol
+    if ((flags & 0x40U) == 0) {  // symbol-export-string not set
+      // nothing to do!
       kheaplogging = false;
       return symbol;
     }
 
+    // if the symbol-export-string flag is set, we need to make sure that there's a known name
+    // and the name is stored in the global heap:
     if ((current_string != UnknownName) &&
         (current_string < 1)) {
+      // it is, nothing to do.
       kheaplogging = false;
       return symbol;
     }
 
+    // "upgrade" from the debug heap to global. (this could also trigger if the name was previously
+    // unknown)
     MsgWarn("dkernel: upgrading symbol %s (flags #x%x) from debug heap to global\n",name,flags);
     *sptr = make_string_from_c(name);
     kheaplogging = false;
     return symbol;
   }
 
+  // setting up a new symbol case:
   u64 new_string;
   if ((DebugSymbols == 0) && ((flags & 0x40U) == 0)) {
     if (DebugSegment == 0) {
       *sptr = UnknownName;
     } else {
+      // otherwise, no symbols!! save memory!
       new_string = make_debug_string_from_c(name);
       *sptr = new_string;
     }
   } else {
+    // debug symbol mode is on - force it to the global heap no matter what.
     new_string = make_string_from_c(name);
     *sptr = new_string;
   }
@@ -844,15 +886,15 @@ static bool is_valid_type(u32 addr) {
 /*!
  * Given a symbol for the type name, allocate memory for a type and add it to the symbol table.
  * New: in Jak 2, there's a level type list
- * DONE
  */
 Ptr<Type> alloc_and_init_type(Ptr<Ptr<Type>> sym,
-                          u32 method_count,
-                          bool force_global_type) {
+                              u32 method_count,
+                              bool force_global_type) {
   u32 in_a3_lo;
   int unaff_s7_lo;
   kheaplogging = true;
   u32 u32_in_fixed_sym_FIX_SYM_TYPE_TYPE_ = *(u32 *)(unaff_s7_lo + FIX_SYM_TYPE_TYPE - 1);
+  // number of bytes for this type
   uint type_size = method_count * 4 + 0x23 & 0xfffffff0;
   u32 type_mem = 0;
   ;
@@ -861,18 +903,23 @@ Ptr<Type> alloc_and_init_type(Ptr<Ptr<Type>> sym,
       *(int *)(unaff_s7_lo + FIX_SYM_LOADING_LEVEL - 1) != *(int *)(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP - 1)) {
     Type** type_list_ptr = *(Type ***)(LevelTypeList - 1);
     if (type_list_ptr == 0) {
+      // we don't have a type-list... just alloc on global
       MsgErr("dkernel: trying to init loading level type \'%s\' while type-list is undefined\n",
              *(int *)(sym + (SymbolString - unaff_s7_lo)) + 4);
       type_mem = alloc_heap_object(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP, u32_in_fixed_sym_FIX_SYM_TYPE_TYPE_,
                                    type_size, in_a3_lo);
     } else {
+      // we do have a type list! allocate on the level heap
       type_mem = alloc_heap_object(unaff_s7_lo + FIX_SYM_LOADING_LEVEL,
                                    u32_in_fixed_sym_FIX_SYM_TYPE_TYPE_, type_size, in_a3_lo);
+      // link us!
       u32 old_head = *Ptr<u32>(type_list_ptr);
       *Ptr<u32>(type_list_ptr) = type_mem;
+      // I guess we hide this in the memusage method.
       Ptr<Type>(type_mem)->memusage_method.offset = old_head;
     }
   } else {
+    // normal global type
     type_mem = alloc_heap_object(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP,
                                  u32_in_fixed_sym_FIX_SYM_TYPE_TYPE_, type_size, in_a3_lo);
   }
@@ -889,26 +936,42 @@ Ptr<Type> alloc_and_init_type(Ptr<Ptr<Type>> sym,
  * Like intern, but returns a type instead of a symbol. If the type doesn't exist, a new one is
  * allocated.
  */
-Type* intern_type_from_c(int a, int b, const char* name, u64 methods) {
+Ptr<Type> intern_type_from_c(int a, int b, const char* name, u64 methods) {
+  // there's a weird flag system used here.
+  // if methods is a number that's not 0 or 1, its used as the desired number of methods.
+  // If method is 0, and a new type needs to be created, it uses 12 methods
+  // If method is 1, and a new type needs to be created, it uses 44 methods
+  // If method is 0 or 1 and no new type needs to be created, there is no error.
+  // Requesting a type to have fewer methods than the existing type has is ok.
+  // Requesting a type to have more methods than the existing type is not ok and prints an error.
+
   Type** symbol = (Type **)intern_from_c((int)(short)a, b, name);
   Type* sym_value = *(Type **)((int)symbol - 1);
 
   if (!sym_value) {
+    // new type
     u64 n_methods = methods;
 
     if (methods == 0) {
+      // some stupid types like user-defined children of integers have "0" as the method count
       n_methods = 0xc;
     } else if (methods == 1) {
+      // whatever builds the v2/v4 object files (level data) doesn't actually know method counts.
+      // so it just puts a 1.  In this case, we should put lots of methods, just in case.
+      // I guess 44 was the number they picked.
       n_methods = 0x2c;
     }
 
+    // create the type.
     Type** casted_sym = symbol;
     Type* type = alloc_and_init_type(casted_sym, (u32)n_methods, false);
     type->symbol = casted_sym;
     type->num_methods = (u16)n_methods;
     return type;
   } else {
+    // the type exists.
     Ptr<Type> type = Ptr<Type>(sym_value);
+    // note - flags of 0 or 1 will pass through here without triggering the error.
     if ((ulong)(long)(int)((uint)type->num_methods * 4 + 0x23 & 0xfffffff0) < (methods * 4 + 0x23 & 0xfffffff0)) {
       MsgErr(
           "dkernel: trying to redefine a type \'%s\' with %d methods when it had %d, try "
@@ -930,26 +993,33 @@ u64 intern_type(u32 name, u64 methods) {
  * Setup a type which is located in a fixed spot of the symbol table.
  */
 Ptr<Type> set_fixed_type(u32 offset,
-                     const char* name,
-                     Ptr<Ptr<Type>> parent_symbol,
-                     u64 flags,
-                     u32 print,
-                     u32 inspect) {
+                         const char* name,
+                         Ptr<Ptr<Type>> parent_symbol,
+                         u64 flags,
+                         u32 print,
+                         u32 inspect) {
   int unaff_s7_lo;
   kheaplogging = true;
   Type** type_symbol = (Type **)(unaff_s7_lo + offset);
   Ptr<Type> symbol_value = *(Type **)((int)type_symbol - 1);
 
   kheaplogging = false;
+
+  // set the symbol's name and hash
   *(String **)((int)type_symbol + (SymbolString - unaff_s7_lo)) = make_string_from_c(name);
   ;
   NumSymbols++;
 
   if (symbol_value.offset == 0) {
+    // no type memory exists, let's allocate it. force it global
+    // the flag logic here multiplies the method count 2, hopefully
+    // this will set up the symbol
     symbol_value = alloc_and_init_type(type_symbol, (uint)(flags >> 0x20) & 0xffff, true);
   }
 
+  // remember our symbol
   symbol_value->symbol = type_symbol;
+  // make our type a type (we're a basic)
   symbol_value[-1].memusage_method = *(Function **)(unaff_s7_lo + FIX_SYM_TYPE_TYPE - 1);
 
   Ptr<Type> parent_type = *(Type **)((int)parent_symbol - 1);
@@ -979,6 +1049,7 @@ Ptr<Type> set_fixed_type(u32 offset,
 u64 new_type(u32 symbol, u32 parent, u64 flags) {
   ulong n_methods = ((long)flags >> 32) & 0xffff;
   if (n_methods == 0) {
+    // 12 methods used as default, if the user has not provided us with a number
     n_methods = 12;
   }
 
@@ -997,15 +1068,18 @@ u64 new_type(u32 symbol, u32 parent, u64 flags) {
   Ptr<Function>* child_slots = &(new_type_obj->new_method);
   Ptr<Function>* parent_slots = &(Ptr<Type>(parent)->new_method);
   for (ulong i = 0; i < n_methods; i++) {
-    if (i < (ulong)parent_num_methods) {
+    if (i < (ulong)parent_num_methods) {  // bug fix from jak 1
       child_slots[i] = parent_slots[i];
     } else {
       child_slots[i].offset = nullptr;
     }
   }
 
+  // deal with loading-level types
   if (*(int *)(unaff_s7_lo + FIX_SYM_LOADING_LEVEL - 1) == *(int *)(unaff_s7_lo + FIX_SYM_GLOBAL_HEAP - 1)) {
+    // not loading a level
 
+    // we'll consider a type list if it's #f or a valid type
     undefined4 unaff_s7_hi;
     if (original_type_list_value_ && (original_type_list_value_ == CONCAT44(unaff_s7_hi,unaff_s7_lo) ||
                                            (((ulong)(long)SymbolTable2 <= original_type_list_value_ && original_type_list_value_ < 0x8000000 || original_type_list_value - 0x84000 < (Function *)0x7c000) &&
@@ -1014,6 +1088,7 @@ u64 new_type(u32 symbol, u32 parent, u64 flags) {
     }
   } else {
     if (original_type_list_value_ == 0) {
+      // loading a level, but the type is global
       MsgWarn("dkernel: loading-level init of type %s, but was interned global (this is okay)\n",
               *(int *)(symbol_ + SymbolString) + 4);
     } else {
@@ -1024,7 +1099,6 @@ u64 new_type(u32 symbol, u32 parent, u64 flags) {
   ;
   return ret;
 }
-
 /*!
  * Is t1 a t2?
  */
@@ -1061,8 +1135,15 @@ u64 method_set(u32 type_, u32 method_id, u32 method) {
     method_ = (u64)(int)(&type->parent->new_method)[method_id];
   }
 
+  // do the set
   (&type->new_method)[method_id] = (Function *)method_;
 
+  // now, propagate to children
+  // we don't track children directly, so we end up having to iterate the whole symbol to find all
+  // types. This is slow, so we only do it in some cases
+
+  // the condition is either setting *enable-method-set* in GOAL, or if we're debugging without the
+  // disk boot. The point of doing this in debug is just to print warning messages.
   if (*EnableMethodSet || (!FastLink && MasterDebug && !DiskBoot)) {
     ulong sym = CONCAT44(unaff_s7_hi, unaff_s7_lo);
     for (; sym < (ulong)(long)LastSymbol; sym += 4) {
@@ -1234,28 +1315,33 @@ u64 print_pair(u32 obj) {
   if (obj_ == (long)(unaff_s7_lo + S7_OFF_FIX_SYM_EMPTY_PAIR)) {
     cprintf("()");
   } else {
+    // clang-format off
+    // we want to treat ('quote <foo>) as just '<foo> unless
     undefined4 unaff_s7_hi;
-    if ((long)*(int *)(CollapseQuote - 1) == CONCAT44(unaff_s7_hi,unaff_s7_lo)
-        || ((obj_ & OFFSET_MASK) != 2)
-        || *Ptr<s32>(obj - 2) != unaff_s7_lo + FIX_SYM_QUOTE
-        || (*Ptr<s32>(obj + 2) & 7) != 2
-        || *Ptr<long>(*Ptr<s32>(obj + 2) + 2) != (long)(unaff_s7_lo + S7_OFF_FIX_SYM_EMPTY_PAIR)
+    if ((long)*(int *)(CollapseQuote - 1) == CONCAT44(unaff_s7_hi,unaff_s7_lo)   // CollapseQuote is enabled
+        || ((obj_ & OFFSET_MASK) != 2)                   // this object isn't a pair
+        || *Ptr<s32>(obj - 2) != unaff_s7_lo + FIX_SYM_QUOTE // the car isn't 'quote
+        || (*Ptr<s32>(obj + 2) & 7) != 2                   // the cdr isn't a pair
+        || *Ptr<long>(*Ptr<s32>(obj + 2) + 2) != (long)(unaff_s7_lo + S7_OFF_FIX_SYM_EMPTY_PAIR)  // the cddr isn't '()
         ) {
+      // clang-format on
       cprintf("(");
       u32 toPrint = (u32)obj_;
       for (;;) {
         if ((toPrint & OFFSET_MASK) == PAIR_OFFSET) {
+          // print CAR
           print_object(*Ptr<u32>(toPrint - 2));
 
+          // load up CDR
           ulong cdr = *Ptr<ulong>(toPrint + 2);
           toPrint = (u32)cdr;
           if (cdr == (long)(unaff_s7_lo + S7_OFF_FIX_SYM_EMPTY_PAIR)) {
             cprintf(")");
             return obj_;
-          } else {
+          } else {  // continue list
             cprintf(" ");
           }
-        } else {
+        } else {  // improper list
           cprintf(". ");
           print_object(toPrint);
           cprintf(")");
@@ -1294,8 +1380,8 @@ u64 print_symbol(u32 obj) {
 u64 print_type(u32 obj) {
   int unaff_s7_lo;
   ulong obj_ = (ulong)(int)obj;
-  if (((obj_ < (ulong)(long)SymbolTable2 || 0x7ffffff < obj_) &&
-       (0x7bfff < obj - 0x84000))
+  if (((obj_ < (ulong)(long)SymbolTable2 || 0x7ffffff < obj_) &&  // not in normal memory
+       (0x7bfff < obj - 0x84000))                // not in kernel memory
       || ((obj_ & OFFSET_MASK) != BASIC_OFFSET ||
       (*Ptr<s32>(obj - 4) != *(int *)(unaff_s7_lo + FIX_SYM_TYPE_TYPE - 1)))) {
     cprintf("#<invalid type #x%x>", obj_);
@@ -1312,12 +1398,12 @@ u64 print_string(u32 obj) {
   int unaff_s7_lo;
   undefined4 unaff_s7_hi;
   ulong obj_ = (ulong)(int)obj;
-  if ((((obj_ < (ulong)(long)SymbolTable2.offset) || (0x7ffffff < obj_)) &&
-       (0x7bfff < obj - 0x84000))
+  if ((((obj_ < (ulong)(long)SymbolTable2.offset) || (0x7ffffff < obj_)) &&  // not in normal memory
+       (0x7bfff < obj - 0x84000))                // not in kernel memory
       || ((obj_ & OFFSET_MASK) != BASIC_OFFSET) ||
      *Ptr<s32>(obj - 4) != *(int *)(unaff_s7_lo + FIX_SYM_STRING_TYPE - 1)) {
     if (obj_ == CONCAT44(unaff_s7_hi, unaff_s7_lo)) {
-      cprintf("#f");
+      cprintf("#f");  // new in jak 2.
 
     } else {
       cprintf("#<invalid string #x%x>", obj_);
@@ -1353,14 +1439,20 @@ u64 asize_of_basic(u32 it) {
  * false positive for this check.
  */
 u64 copy_basic(u32 obj, u32 heap, u32 /*unused*/, u32 pp) {
+  // determine size of basic. We call a method instead of using asize_of_basic in case the type has
+  // overridden the default asize_of method.
   u64 heap_ = (u64)(int)heap;
   u64 size = call_method_of_type(obj, Ptr<Type>(*Ptr<u32>(obj - BASIC_OFFSET)), GOAL_ASIZE_METHOD);
   u64 result;
 
   if ((heap_ & 1) != 0) {
+    // we think we're creating a new copy on a heap.  First allocate memory...
     result = alloc_heap_object(heap, *(u32 *)(obj - BASIC_OFFSET), (u32)size, pp);
+    // then copy! (minus the type tag, alloc_heap_object already did it for us)
     memcpy(Ptr<u32>(result).c(), Ptr<u32>(obj).c(), (u64)(int)((u32)size - BASIC_OFFSET));
   } else {
+    ;
+    // copy directly (including type tag)
     memcpy(Ptr<u32>(heap - BASIC_OFFSET).c(), Ptr<u32>(obj - BASIC_OFFSET).c(), size);
     result = heap_;
   }
@@ -1412,8 +1504,8 @@ u64 inspect_pair(u32 obj) {
 u64 inspect_string(u32 obj) {
   int unaff_s7_lo;
   ulong obj_ = (ulong)(int)obj;
-  if (((obj_ < (ulong)(long)SymbolTable2.offset || 0x7ffffff < obj_) &&
-      (0x7bfff < obj - 0x84000))
+  if (((obj_ < (ulong)(long)SymbolTable2.offset || 0x7ffffff < obj_) &&  // not in normal memory
+      (0x7bfff < obj - 0x84000))                // not in kernel memory
       || ((obj_ & OFFSET_MASK) != BASIC_OFFSET ||
       *Ptr<s32>(obj - 4) != *(int *)(unaff_s7_lo + FIX_SYM_STRING_TYPE - 1))) {
     cprintf("#<invalid string #x%x>\n", obj_);
@@ -1430,8 +1522,8 @@ u64 inspect_string(u32 obj) {
 u64 inspect_symbol(u32 obj) {
   int unaff_s7_lo;  
   ulong obj_ = (ulong)(int)obj;
-  if (((obj_ < (ulong)(long)SymbolTable2.offset || 0x7ffffff < obj_) &&
-       (0x7bfff < obj - 0x84000))
+  if (((obj_ < (ulong)(long)SymbolTable2.offset || 0x7ffffff < obj_) &&  // not in normal memory
+       (0x7bfff < obj - 0x84000))                // not in kernel memory
       || ((obj_ ^ 1) & 1) != 0 || obj_ < (ulong)(long)SymbolTable2.offset || obj_ >= (ulong)(long)LastSymbol.offset) {
     cprintf("#<invalid symbol #x%x>\n", obj_);
   } else {
@@ -1448,8 +1540,8 @@ u64 inspect_symbol(u32 obj) {
 u64 inspect_type(u32 obj) {
   int unaff_s7_lo;
   ulong obj_ = (ulong)(int)obj;
-  if (((obj_ < (ulong)(long)SymbolTable2.offset || 0x7ffffff < obj_) &&
-       (0x7bfff < obj - 0x84000))
+  if (((obj_ < (ulong)(long)SymbolTable2.offset || 0x7ffffff < obj_) &&  // not in normal memory
+       (0x7bfff < obj - 0x84000))                // not in kernel memory
       || ((obj_ & OFFSET_MASK) != BASIC_OFFSET ||
       *Ptr<s32>(obj - 4) != *(int *)(unaff_s7_lo + FIX_SYM_TYPE_TYPE - 1))) {
     cprintf("#<invalid type #x%x>\n", obj_);
@@ -1477,10 +1569,11 @@ u64 inspect_type(u32 obj) {
 u64 inspect_basic(u32 obj) {
   ulong unaff_s7;
   ulong obj_ = (ulong)(int)obj;
-  if (((obj_ < (ulong)(long)SymbolTable2.offset || 0x7ffffff < obj_) &&
-       (0x7bfff < obj - 0x84000))
+  if (((obj_ < (ulong)(long)SymbolTable2.offset || 0x7ffffff < obj_) &&  // not in normal memory
+       (0x7bfff < obj - 0x84000))                // not in kernel memory
       || ((obj_ & OFFSET_MASK) != BASIC_OFFSET)) {
     if (obj_ == unaff_s7) {
+      // added in jak2 (and inlined in jak 3, but only the final version?)
       return inspect_symbol(obj);
     } else {
       cprintf("#<invalid basic #x%x>\n", obj_);
@@ -1525,12 +1618,13 @@ int InitHeapAndSymbol() {
       kmalloc(kglobalheap, 4 * GOAL_MAX_SYMBOLS, KMALLOC_MEMSET, "symbol-table").cast<u32>();
   Ptr<u8> SymbolString_ =
       kmalloc(kglobalheap, 4 * GOAL_MAX_SYMBOLS, KMALLOC_MEMSET, "string-table").cast<u32>();
-  SymbolString.offset += 2 * GOAL_MAX_SYMBOLS;
+  SymbolString.offset += 2 * GOAL_MAX_SYMBOLS;  // point to the middle
   LastSymbol = symbol_table + 0xff00;
   SymbolTable2 = symbol_table + 5;
   Ptr<u8> s7 = symbol_table + 0x8001;
   NumSymbols = 0;
   reset_output();
+  // empty pair (this is extra confusing).
   *(u8 **)(s7 + FIX_SYM_EMPTY_CAR - 1) = s7 + S7_OFF_FIX_SYM_EMPTY_PAIR;
   *(u8 **)(s7 + FIX_SYM_EMPTY_CDR - 1) = s7 + S7_OFF_FIX_SYM_EMPTY_PAIR;
   *(kheapinfo **)(symbol_table + FIX_SYM_GLOBAL_HEAP - 1) = kglobalheap.offset;

@@ -74,6 +74,7 @@ s32 goal_main(int argc, const char** argv) {
       masterConfig.language = (u16)Language::English;
       break;
   }
+  // Set up aspect ratio override in demo
   if (!strcmp(DebugBootMessage, "demo") || !strcmp(DebugBootMessage, "demo-shared")) {
     masterConfig.aspect = SCE_ASPECT_FULL;
   }
@@ -105,27 +106,42 @@ s32 goal_main(int argc, const char** argv) {
 }
 
 void KernelDispatch(u32 dispatcher_func) {
+  // place our stack at the end of EE memory
+
+  // try to get a message from the listener, and process it if needed
   Ptr<char> new_message = WaitForMessageAndAck();
   if (new_message.offset) {
     ProcessListenerMessage(new_message);
   }
 
+  // remember the old listener
   int old_listener_function = *(int *)(ListenerFunction - 1);
 
+  // run the kernel!
   (*(code *)dispatcher_func)();
 
+  // flush stdout
   ClearPending();
 
+  // now run the extra "kernel function"
   undefined4 unaff_s7_lo;
   undefined4 unaff_s7_hi;
   code* bonus_function = *(code **)(KernelFunction - 1);
   if ((long)(int)bonus_function != CONCAT44(unaff_s7_hi, unaff_s7_lo)) {
+    // clear the pending kernel function
     *(undefined4 *)(KernelFunction - 1) = unaff_s7_lo;
+    // and run
     (*bonus_function)();
   }
 
+  // send ack to indicate that the listener function has been processed and the result printed
   if (MasterDebug && *(int *)(ListenerFunction - 1) != old_listener_function) {
     SendAck();
+  }
+
+  // prevent crazy spinning if we're not vsyincing (added)
+  if (false) {
+    ;
   }
 }
 
