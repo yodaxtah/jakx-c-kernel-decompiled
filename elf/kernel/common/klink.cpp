@@ -253,7 +253,7 @@ Ptr<u8> c_symlink2(Ptr<u8> objData, Ptr<u8> linkObj, Ptr<u8> relocTable) {
     } else {
       *(objPtr.cast<u8*>()) = (u8 *)((uint)objValue & 0xffff0000 | (int)(objValue + (int)linkObj) - unaff_s7_lo & 0xffffU);
     }
-  } while (*relocPtr != 0);
+  } while (*relocPtr);
 
   return make_ptr(relocPtr + 1);
 }
