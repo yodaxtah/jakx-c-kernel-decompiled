@@ -132,12 +132,12 @@ s32 SendFromBufferD(s32 msg_kind, u64 msg_id, char* data, s32 size) {
   }
 
   for (s32 i = 0; i < 10; i++) {
-    ListenerMessageHeader* header = (ListenerMessageHeader*)((uint)(data - 0x18) | 0x20000000); // SIZEOF
-    protoBlock.send_remaining = size + 0x18; // SIZEOF
+    ListenerMessageHeader* header = (ListenerMessageHeader*)((uint)(data - sizeof(ListenerMessageHeader)) | 0x20000000);
+    protoBlock.send_remaining = size + sizeof(ListenerMessageHeader);
     protoBlock.send_buffer = header;
     protoBlock.send_ptr = (u8*)header;
 
-    protoBlock.send_status = size + 0x18; // SIZEOF
+    protoBlock.send_status = size + sizeof(ListenerMessageHeader);
     // FlushCache(0);
 
     header->deci2_header.len = protoBlock.send_remaining;

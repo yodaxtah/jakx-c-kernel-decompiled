@@ -66,7 +66,7 @@ void jak3_begin(link_control* this, Ptr<uint8_t> object_file,
       this->m_object_data = (uint8_t *)(l_hdr->core.name + (size___ - 0x15)); // SIZEOF
       size___ = size - size___;
       if (version == 5) {
-        size___ = (size - l_hdr->core.link_length) - 0x50; // SIZEOF
+        size___ = (size - l_hdr->core.link_length) - sizeof(LinkHeaderV5);
       } else {
         ;
       }
@@ -85,14 +85,14 @@ void jak3_begin(link_control* this, Ptr<uint8_t> object_file,
         if (m_link_hdr->version == 5) {
           old_link_block_G = (char *)(object_file + m_link_hdr->length_to_get_to_link);
 
-          new_link_block_mem = (LinkHeaderV5 *)kmalloc(this->m_heap, m_link_hdr->link_length + 0x50, // SIZEOF
+          new_link_block_mem = (LinkHeaderV5 *)kmalloc(this->m_heap, m_link_hdr->link_length + sizeof(LinkHeaderV5),
                                                        KMALLOC_TOP, "link-block");
 
-          m_link_hdr->length_to_get_to_link = 0x50; // SIZEOF
+          m_link_hdr->length_to_get_to_link = sizeof(LinkHeaderV5);
 
-          memcpy(new_link_block_mem_temp, object_file, 0x50); // SIZEOF
+          memcpy(new_link_block_mem_temp, object_file, sizeof(LinkHeaderV5));
           ultimate_memcpy_G(new_link_block_mem + 1, old_link_block_G, m_link_hdr->link_length);
-          memcpy(new_link_block_mem, new_link_block_mem_temp, 0x50); // SIZEOF
+          memcpy(new_link_block_mem, new_link_block_mem_temp, sizeof(LinkHeaderV5));
         } else {
           new_link_block_mem = (LinkHeaderV5 *)kmalloc(this->m_heap, m_link_hdr->length_to_get_to_code,
                                                        KMALLOC_TOP, "link-block");

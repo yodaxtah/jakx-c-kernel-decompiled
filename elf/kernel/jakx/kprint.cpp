@@ -42,7 +42,7 @@ s32 format_impl_jak3(uint64_t* args) {
 
   char* print_temp = PrintPending.cast<char>().c();
   if (!PrintPending.offset) {
-    print_temp = PrintBufArea.cast<char>().c() + 0x18; // SIZEOF
+    print_temp = PrintBufArea.cast<char>().c() + sizeof(ListenerMessageHeader);
   }
   PrintPending = make_ptr(strend(print_temp)).cast<u8>();
 

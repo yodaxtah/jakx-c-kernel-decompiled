@@ -82,7 +82,7 @@ void init_output() {
  */
 void clear_output() {
   if (MasterDebug) {
-    strcpy((char*)Ptr<u8>(OutputBufArea + 0x18).c(), ""); // SIZEOF, TODO: .cast<char>?
+    strcpy((char*)Ptr<u8>(OutputBufArea + sizeof(ListenerMessageHeader)).c(), "");
     OutputPending = Ptr<u8>(0);
   }
 }
@@ -91,7 +91,7 @@ void clear_output() {
  * Clear all data in the print buffer
  */
 void clear_print() {
-  *Ptr<u8>(PrintBufArea + 0x18) = 0; // SIZEOF
+  *Ptr<u8>(PrintBufArea + sizeof(ListenerMessageHeader)) = 0;
   PrintPending = Ptr<u8>(0);
 }
 
@@ -102,10 +102,10 @@ void clear_print() {
 void reset_output() {
   if (MasterDebug) {
     undefined *unaff_s7_lo;
-    sprintf(OutputBufArea.cast<char>() + 0x18, "reset #x%x\n", // SIZEOF
+    sprintf(OutputBufArea.cast<char>().c() + sizeof(ListenerMessageHeader), "reset #x%x\n",
             unaff_s7_lo);
 
-    OutputPending = OutputBufArea + 0x18; // SIZEOF
+    OutputPending = OutputBufArea + sizeof(ListenerMessageHeader);
   }
 }
 
@@ -115,9 +115,9 @@ void reset_output() {
  */
 void output_unload(const char* name) {
   if (MasterDebug) {
-    sprintf(strend((char *)(OutputBufArea.cast<char>().c() + 0x18)), // SIZEOF
+    sprintf(strend(OutputBufArea.cast<char>().c() + sizeof(ListenerMessageHeader)),
             "unload \"%s\"\n", name);
-    OutputPending = OutputBufArea + 0x18; // SIZEOF
+    OutputPending = OutputBufArea + sizeof(ListenerMessageHeader);
   }
 }
 
@@ -126,7 +126,7 @@ void output_unload(const char* name) {
  */
 void output_segment_load(const char* name, Ptr<u8> link_block, u32 flags) {
   if (MasterDebug) {
-    char* buffer = strend(OutputBufArea.cast<char>().c() + 0x18); // SIZEOF
+    char* buffer = strend(OutputBufArea.cast<char>().c() + sizeof(ListenerMessageHeader));
     char true_str[] = "t";
     char false_str[] = "nil";
     char* flag_str = (flags & LINK_FLAG_OUTPUT_TRUE) ? true_str : false_str;
@@ -135,7 +135,7 @@ void output_segment_load(const char* name, Ptr<u8> link_block, u32 flags) {
             lbp->code_infos[0].offset + 4, lbp->code_infos[1].offset + 4, lbp->code_infos[2].offset + 4);
     // TODO: Why +4? The struct SegmentInfo might itself be nested at 0x4 in another one:
     // ObjectFileHeader --contains--> SomeStruct of 16 bytes --contains--> SegmentInfo.
-    OutputPending = OutputBufArea + 0x18; // SIZEOF
+    OutputPending = OutputBufArea + sizeof(ListenerMessageHeader);
   }
 }
 
@@ -150,9 +150,9 @@ void cprintf(const char* format, ...) {
   va_start(args, format);
   char* str = PrintPending.cast<char>().c();
   if (!PrintPending.offset)
-    str = PrintBufArea.cast<char>().c() + 0x18; // SIZEOF
-  PrintPending = make_ptr(strend(str));
-  vsprintf((char*)PrintPending.c(), format, args); // NOTE: .cast<char>().c() ?
+    str = PrintBufArea.cast<char>().c() + sizeof(ListenerMessageHeader);
+  PrintPending = make_ptr(strend(str)).cast<u8>();
+  vsprintf((char*)PrintPending.c(), format, args);
 
   va_end(args);
 }

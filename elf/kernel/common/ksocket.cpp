@@ -12,7 +12,7 @@
  * DONE, removed call to FlushCache(0);
  */
 u32 ReceiveToBuffer(char* buff) {
-  if (protoBlock.last_receive_size < 0x18) { // SIZEOF
+  if (protoBlock.last_receive_size < sizeof(ListenerMessageHeader)) {
     return -1;
   }
 
@@ -52,7 +52,7 @@ s32 SendFromBuffer(char* buff, s32 size) {
  */
 void InitListenerConnect() {
   if (MasterDebug) {
-    return strcpy(&AckBufArea, "ack\n");
+    return strcpy(&AckBufArea, "ack\n"); // NOTE: no + sizeof here
   }
 }
 
@@ -74,14 +74,14 @@ Ptr<char> WaitForMessageAndAck() {
   if (!MasterDebug) {
     MessCount = -1;
   } else {
-    MessCount = ReceiveToBuffer((char*)(MessBufArea.c() + 0x18)); // SIZEOF
+    MessCount = ReceiveToBuffer((char*)MessBufArea.c() + sizeof(ListenerMessageHeader));
   }
 
   if (MessCount < 0) {
     return Ptr<char>(0);
   }
 
-  return MessBufArea.cast<char>() + 0x18; // SIZEOF
+  return MessBufArea.cast<char>() + sizeof(ListenerMessageHeader);
 }
 
 /*!

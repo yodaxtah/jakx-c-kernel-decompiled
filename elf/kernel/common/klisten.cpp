@@ -25,23 +25,23 @@ void klisten_init_globals() {
 void ClearPending() {
   if (!MasterDebug) { // TODO: why is ListenerStatus gone?
     if (PrintPending.offset != 0) {
-      size_t size = strlen(PrintBufArea.cast<char>().c() + 0x18); // SIZEOF
+      size_t size = strlen(PrintBufArea.cast<char>().c() + sizeof(ListenerMessageHeader));
       if ((long)size > 0) {
-        printf("%s", PrintBufArea.cast<char>().c() + 0x18); // SIZEOF
+        printf("%s", PrintBufArea.cast<char>().c() + sizeof(ListenerMessageHeader));
       }
       clear_print();
     }
   } else {
     if (ListenerStatus) {
       if (OutputPending.offset != 0) { // TODO: why is the loop gone here?
-        char* msg = OutputBufArea.cast<char>().c() + 0x18; // SIZEOF
+        char* msg = OutputBufArea.cast<char>().c() + sizeof(ListenerMessageHeader);
         size_t size = strlen(msg);
         SendFromBuffer(msg, (s32)size);
         clear_output();
       }
 
       if (PrintPending.offset != 0) {
-        char* msg = PrintBufArea.cast<char>().c() + 0x18; // SIZEOF
+        char* msg = PrintBufArea.cast<char>().c() + sizeof(ListenerMessageHeader);
         size_t size = strlen(msg);
         while (size > 0) {
           size_t send_size = size;
