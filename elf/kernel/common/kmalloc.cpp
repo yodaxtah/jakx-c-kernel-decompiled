@@ -191,11 +191,11 @@ Ptr<u8> kmalloc(Ptr<kheapinfo> heap, s32 size, u32 flags, char const* name) {
 
     if ((heap == &kglobalheapinfo) && (kheaplogging != false)) {
       if (strcmp(name, "string") == 0) {
-        MemItemsCount[0]++;
-        MemItemsSize[0] += size;
+        MemItemsCount[STRING]++;
+        MemItemsSize[STRING] += size;
       } else if (strcmp(name, "type") == 0) {
-        MemItemsCount[1]++;
-        MemItemsSize[1] += size;
+        MemItemsCount[TYPE]++;
+        MemItemsSize[TYPE] += size;
       }
     }
     return Ptr<u8>(memstart);
