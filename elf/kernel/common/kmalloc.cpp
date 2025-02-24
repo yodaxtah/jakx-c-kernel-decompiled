@@ -80,7 +80,7 @@ Ptr<kheapinfo> kheapstatus(Ptr<kheapinfo> heap) {
       (int)heap->current - (int)heap->base, (int)heap->top_base - (int)heap->base, (int)heap->top_base - (int)heap->top,
       (int)heap->top_base - (int)heap->base, NumSymbols, 0x4000);
 
-  if (heap == &kglobalheapinfo) {
+  if (heap == kglobalheap) {
     Msg(6, "\t %d bytes before stack\n", GLOBAL_HEAP_END);
   }
 
@@ -127,7 +127,7 @@ Ptr<u8> kmalloc(Ptr<kheapinfo> heap, s32 size, u32 flags, char const* name) {
   if (heap.offset == 0) {
     Msg(6, "--------------------> kmalloc: alloc %s mem %s #x%x (a:%d  %d bytes)\n", "DEBUG", name, 0,
         alignment_flag, size);
-    heap = &kglobalheapinfo;
+    heap = kglobalheap;
   }
 
   u8* memstart;
@@ -157,7 +157,7 @@ Ptr<u8> kmalloc(Ptr<kheapinfo> heap, s32 size, u32 flags, char const* name) {
       memset(Ptr<u8>(memstart).c(), 0, size);
     // TODO: This if statement wasn't in the code's execution up until jak 3; why?
     // Naughty Dog could have moved this out of the if statement in Jak X...
-    if ((heap == &kglobalheapinfo) && (kheaplogging != false)) {
+    if ((heap == kglobalheap) && (kheaplogging != false)) {
       if (strcmp(name, "string") == 0) {
         MemItemsCount[0]++;
         MemItemsSize[0] += size;
@@ -189,7 +189,7 @@ Ptr<u8> kmalloc(Ptr<kheapinfo> heap, s32 size, u32 flags, char const* name) {
     if ((flags & KMALLOC_MEMSET) != 0)
       memset(Ptr<u8>(memstart).c(), 0, size);
 
-    if ((heap == &kglobalheapinfo) && (kheaplogging != false)) {
+    if ((heap == kglobalheap) && (kheaplogging != false)) {
       if (strcmp(name, "string") == 0) {
         MemItemsCount[STRING]++;
         MemItemsSize[STRING] += size;

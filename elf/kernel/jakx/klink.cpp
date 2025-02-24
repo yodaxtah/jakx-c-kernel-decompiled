@@ -31,8 +31,8 @@ void jak3_begin(link_control* this, Ptr<uint8_t> object_file,
   if (false /*is_opengoal_object()*/) {
     // this if clause/statement is not present in the code
   } else {
-    if (heap == &kglobalheapinfo) {
-      kmemopen_from_c(&kglobalheapinfo, name);
+    if (heap == kglobalheap) {
+      kmemopen_from_c(kglobalheap, name);
       this->m_on_global_heap = true;
     } else {
       this->m_on_global_heap = false;

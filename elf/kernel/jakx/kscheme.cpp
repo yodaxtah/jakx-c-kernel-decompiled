@@ -1887,7 +1887,7 @@ int InitHeapAndSymbol() {
   LevelTypeList = intern_from_c(-1, 0, "*level-type-list*");
 
   *EnableMethodSet = *EnableMethodSet + 1;
-  load_and_link_dgo_from_c("kernel", &kglobalheapinfo,
+  load_and_link_dgo_from_c("kernel", kglobalheap,
                           LINK_FLAG_OUTPUT_LOAD | LINK_FLAG_EXECUTE | LINK_FLAG_PRINT_LOGIN,
                           0x400000, (bool)0); // TODO: false?
   *EnableMethodSet = *EnableMethodSet - 1;
